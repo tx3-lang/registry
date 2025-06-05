@@ -1,0 +1,74 @@
+party MyParty;
+
+type MyRecord {
+    field1: Int,
+    field2: Bytes,
+    field3: Bytes,
+    field4: List<Int>,
+}
+
+type MyVariant {
+    Case1 {
+        field1: Int,
+        field2: Bytes,
+        field3: Int,
+    },
+    Case2,
+}
+
+policy OnlyHashPolicy = 0xABCDEF1234;
+
+asset StaticAsset = 0xABCDEF1234.MYTOKEN;
+
+policy FullyDefinedPolicy {
+    hash: 0xABCDEF1234,
+    script: 0xABCDEF1234,
+    ref: 0xABCDEF1234,
+}
+
+tx my_tx(
+    quantity: Int,
+    validUntil: Int,
+    metadata: Bytes,
+) {
+    input source {
+        from: MyParty,
+        datum_is: MyRecord,
+        min_amount: Ada(quantity),
+        redeemer: MyVariant::Case1 {
+            field1: 10,
+            field2: 0xAFAFAF,
+            field3: quantity,
+        },
+    }
+
+    mint {
+        amount: StaticAsset(100),
+        redeemer: (),
+    }
+
+    mint {
+        amount: AnyAsset(0xAB11223344, "OTHER_TOKEN", 10),
+        redeemer: (),
+    }
+
+    output {
+        to: MyParty,
+        datum: MyRecord {
+            field1: quantity,
+            field2: 54,
+            field4: [1, 2, 3, source.field1],
+            ...source
+        },
+        amount: AnyAsset(source.field3, source.field2, source.field1) + Ada(40),
+    }
+
+    validity {
+        since_slot: 1735700400000,
+        until_slot: validUntil,
+    }
+
+    metadata {
+        1: metadata,
+    }
+}

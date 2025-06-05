@@ -1,0 +1,100 @@
+{
+  "protocols": [{
+    "name": "asteria",
+    "scope": "txpipe",
+    "repository_url": "https://github.com/txpipe/asteria",
+    "protocol_path": "asteria.tx3",
+    "published_date": 1727787600,
+    "readme": "# Asteria\n\nA Cardano bot challenge to showcase the capabilities of the eUTxO model.\n\n## Mechanics\n\nIn this bot challenge you compete by moving a ship (your bot) through a 2D grid. The ship that reaches the center is allowed to collect the rewards.\n\nShips are implemented as UTxOs with a datum holding a pair of (x, y) coordinates that represent their position in the 2D grid. To move a ship, a transaction must consume the UTxO and create a new one with holding the new position.\n\n![grid](https:\/\/github.com\/txpipe\/asteria\/assets\/653886\/d5d35b42-b554-4eaa-a798-84fe7b0b9787)\n\nMovement of the ships is constrained by a _Space-Time_ on-chain script that limits their velocity. Strictly speaking, the max distance that a ship can move in any given transaction has a constant upper bound. Distances are defined using [Manhattan distance] to simplify the math.\n\n![move tx](https:\/\/github.com\/txpipe\/asteria\/assets\/653886\/ddcbc786-8947-4c0a-b0bc-4cd7de1bcd0f)\n\nMovement of the ships is also constrained by a _fuel_ token that is required for any change in position. An specifc amount of _fuel_ is required per distance unit. The lack of the required fuel amount will block the movement of the ship.\n\n![gather tx](https:\/\/github.com\/txpipe\/asteria\/assets\/653886\/5c3af5bc-5aad-4598-b35e-90e0729e82df)\n\nTo accumulate fuel, ships must _gather_ these tokens which are distributed randomly across the same grid. To gather a fuel token, your ship needs to be in the same coordinates as the fuel.\n\nTo create a ship, a participant must mint the corresponding NFT from the valid policy id. A minimum amount of ADA will be requried for the mint. This ADA used to mint the ships will be increment the rewards locked for the winner. The initial position of the ship is decided by the player but is contrainted to the external boundary of the grid.\n\nA unique UTxO will be place at the center of the grid to hold the rewards for the winner of the challenge. To claim rewards, a ship must be located at the center of the grid. Each claim is allowed to collect 1\/2 of the total rewards.\n\n## Backstory\n\n\/\/ TODO\n\n## Getting started\n\n\/\/ TODO\n\n## Monitoring progress\n\nWe have a basic visual 2D map that allows you to show the position of all the ships and fuel in real-time (updated at each block). We encourage developers to create their own visualizers, we'll showcase any project in the homepage of the challenge."
+  },{
+    "name": "transfer",
+    "scope": "example",
+    "protocol_path": "transfer.tx3",
+    "published_date": 1727787600,
+    "readme": "# Transfer Protocol\n\nA simple ADA transfer protocol that enables sending a specified quantity of ADA from a sender to a receiver. The protocol automatically handles change calculation, returning the remaining balance (minus transaction fees) back to the sender.\n\n## Features\n\n- **Simple transfers**: Transfer any amount of ADA between two parties\n- **Automatic change handling**: Remaining balance is automatically returned to sender\n- **Fee management**: Transaction fees are automatically deducted from the sender's change\n- **Minimum balance validation**: Ensures sender has sufficient funds before transfer\n\n## Usage\n\nThe protocol requires:\n- `quantity`: The amount of ADA to transfer (in lovelace)\n- `Sender`: The party sending the ADA\n- `Receiver`: The party receiving the ADA\n\nThis is an ideal example protocol for understanding basic TX3 transaction structure and UTxO management."
+  },{
+    "name": "faucet",
+    "scope": "example",
+    "protocol_path": "faucet.tx3",
+    "published_date": 1727787600,
+    "readme": "# Faucet Protocol\n\nA simple faucet protocol that allows users to claim tokens using a password. The protocol mints custom tokens (MyToken) when a valid password is provided."
+  },{
+    "name": "swap",
+    "scope": "example",
+    "protocol_path": "swap.tx3",
+    "published_date": 1727787600,
+    "readme": "# Token Swap Protocol\n\nA decentralized exchange (DEX) protocol for swapping tokens. Implements a basic automated market maker (AMM) with pool state management for token pairs."
+  },{
+    "name": "vesting",
+    "scope": "example",
+    "protocol_path": "vesting.tx3",
+    "published_date": 1727787600,
+    "readme": "# Token Vesting Protocol\n\nA time-locked vesting protocol that allows owners to lock tokens for beneficiaries until a specified time. Uses a TimeLock policy to enforce the vesting schedule."
+  },{
+    "name": "buidlr_fest",
+    "scope": "example",
+    "protocol_path": "buidlr_fest.tx3",
+    "published_date": 1727787600,
+    "readme": "# Buidlr Fest Event Protocol\n\nAn event ticketing protocol for purchasing tickets with ADA. Designed for developer events and conferences with delegation (DRep) integration."
+  },{
+    "name": "disordered",
+    "scope": "example",
+    "protocol_path": "disordered.tx3",
+    "published_date": 1727787600,
+    "readme": "# Disordered Protocol\n\nAn example protocol demonstrating transaction ordering and UTxO management patterns in the TX3 language."
+  },{
+    "name": "jpg",
+    "scope": "example",
+    "protocol_path": "jpg.tx3",
+    "published_date": 1727787600,
+    "readme": "# JPG NFT Protocol\n\nA protocol for handling NFT transactions and metadata management, specifically designed for image-based non-fungible tokens."
+  },{
+    "name": "lang_tour",
+    "scope": "example",
+    "protocol_path": "lang_tour.tx3",
+    "published_date": 1727787600,
+    "readme": "# TX3 Language Tour\n\nA comprehensive tutorial protocol showcasing various features and capabilities of the TX3 programming language through practical examples."
+  },{
+    "name": "levvy_simple",
+    "scope": "example",
+    "protocol_path": "levvy.simple.tx3",
+    "published_date": 1727787600,
+    "readme": "# Levvy Simple Protocol\n\nA simplified version of the Levvy protocol for basic financial operations and smart contract interactions."
+  },{
+    "name": "levvy",
+    "scope": "example",
+    "protocol_path": "levvy.tx3",
+    "published_date": 1727787600,
+    "readme": "# Levvy Protocol\n\nA comprehensive financial protocol for advanced smart contract operations, lending, and DeFi interactions on Cardano."
+  },{
+    "name": "order_book",
+    "scope": "example",
+    "protocol_path": "order-book.tx3",
+    "published_date": 1727787600,
+    "readme": "# Order Book Protocol\n\nA decentralized order book implementation for trading assets. Supports limit orders, market orders, and order matching mechanisms."
+  },{
+    "name": "plutus_addresses",
+    "scope": "example",
+    "protocol_path": "plutus_addresses.tx3",
+    "published_date": 1727787600,
+    "readme": "# Plutus Addresses Protocol\n\nAn example protocol demonstrating the use of Plutus script addresses and smart contract interactions in the Cardano ecosystem."
+  },{
+    "name": "splash",
+    "scope": "example",
+    "protocol_path": "splash.tx3",
+    "published_date": 1727787600,
+    "readme": "# Splash Protocol\n\nA demonstration protocol showcasing various TX3 language features and transaction patterns."
+  },{
+    "name": "swap_static",
+    "scope": "example",
+    "protocol_path": "swap_static.tx3",
+    "published_date": 1727787600,
+    "readme": "# Static Swap Protocol\n\nA static version of the token swap protocol with fixed parameters and simplified logic for educational purposes."
+  },{
+    "name": "transfer_nft",
+    "scope": "example",
+    "protocol_path": "transfer_nft.tx3",
+    "published_date": 1727787600,
+    "readme": "# NFT Transfer Protocol\n\nA specialized protocol for transferring non-fungible tokens (NFTs) between parties while maintaining proper ownership and metadata integrity."
+  }]
+}

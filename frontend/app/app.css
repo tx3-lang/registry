@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  @apply bg-white dark:bg-[#0C0505];
+
+  @apply text-gray-700 dark:text-white
+}
+
+.btn-outline-primary-gradient {
+  @apply relative z-0;
+}
+
+.btn-outline-primary-gradient::after { 
+  @apply absolute top-0 left-0 right-0 bottom-0 -z-10;
+  @apply border border-solid border-transparent;
+  content: '';
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+}
+
+.border-bottom-gradient {
+  @apply relative z-0;
+}
+
+.border-bottom-gradient::after { 
+  @apply absolute top-0 left-0 right-0 bottom-0 -z-10;
+  @apply border-b border-solid border-transparent;
+  content: '';
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+}
+
+.header {
+  @apply grid grid-cols-[auto,1fr,auto] xl:grid-cols-[minmax(0,1fr),minmax(500px,1fr),minmax(0,1fr)] gap-4;
+  grid-template-areas: "logo center nav";
+}
+
+.header {
+  @apply grid gap-4;
+  grid-template-columns: 1fr 1fr;
+
+  grid-template-areas: "logo nav" "center center";
+}
+
+@media (min-width: 768px) {
+  .header {
+    @apply grid-cols-[auto,1fr,auto] xl:grid-cols-[1fr,minmax(500px,1fr),1fr];
+    grid-template-areas: "logo center nav";
+  }
+}

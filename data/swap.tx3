@@ -1,0 +1,48 @@
+type PoolState {
+    pair_a: AnyAsset,
+    pair_b: AnyAsset,
+}
+
+type SwapParams {
+    ask_value: AnyAsset,
+    bid_value: AnyAsset,
+}
+
+party Buyer;
+
+party Dex;
+
+tx swap(
+    ask: AnyAsset,
+    bid: AnyAsset,
+) {
+    input pool {
+        from: Dex,
+        datum_is: PoolState,
+
+        redeemer: SwapParams {
+            ask_value: ask,
+            bid_value: bid,
+        },
+    }
+    
+    input payment {
+        from: Buyer,    
+        min_amount: fees + bid,
+    }
+    
+    output {
+        to: Dex,
+        datum: PoolState {
+            pair_a: pool.pair_a - bid.amount,
+            pair_b: pool.pair_b + ask.amount,
+            ...pool
+        },
+        amount: pool,
+    }
+
+    output {
+        to: Buyer,
+        amount: payment + ask - bid - fees,
+    }
+}
