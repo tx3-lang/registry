@@ -34,6 +34,7 @@ interface PaginationInfo {
 }
 
 interface Protocol {
+  description: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   publishedDate: Scalars['Int']['output'];
@@ -91,4 +92,5 @@ interface Tx {
   name: Scalars['String']['output'];
   parameters: Scalars['JSONObject']['output'];
   tir: Scalars['String']['output'];
+  tirVersion: Scalars['String']['output'];
 }

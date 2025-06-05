@@ -26,7 +26,7 @@ impl ProtocolQuery {
                     Page {{ TotalCount ItemCount }}
                     Repos {{
                         Name
-                        NewestImage {{ Tag Vendor Title Source LastUpdated }}
+                        NewestImage {{ Tag Vendor Title Source Description LastUpdated }}
                     }}
                 }}
             }}
@@ -76,6 +76,7 @@ impl ProtocolQuery {
                             scope: repo.newest_image.vendor.clone().unwrap_or_default(),
                             version: repo.newest_image.tag.clone().unwrap_or_default(),
                             repository_url: repo.newest_image.source.clone(),
+                            description: repo.newest_image.description.clone(),
                             published_date,
                             source,
                             readme: None,
@@ -101,7 +102,7 @@ impl ProtocolQuery {
                 ExpandedRepoInfo(repo: "{}") {{
                     Summary {{
                         Name
-                        NewestImage {{ Tag Vendor Title Source LastUpdated }}
+                        NewestImage {{ Tag Vendor Title Source Description LastUpdated }}
                     }}
                 }}
             }}
@@ -137,6 +138,7 @@ impl ProtocolQuery {
                         name: summary.newest_image.title.unwrap_or_default(),
                         scope: summary.newest_image.vendor.unwrap_or_default(),
                         repository_url: summary.newest_image.source,
+                        description: summary.newest_image.description,
                         published_date,
                         source,
                         readme,

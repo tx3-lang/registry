@@ -39,6 +39,7 @@ type Protocol {
 	version: String!
 	readme: String
 	source: String
+	description: String
 	transactions: [Tx!]!
 }
 
@@ -86,9 +87,10 @@ type Query {
 }
 
 type Tx {
-	tir: String!
 	name: String!
 	parameters: JSONObject!
+	tir: String!
+	tirVersion: String!
 }
 
 """

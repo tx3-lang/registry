@@ -59,6 +59,8 @@ pub struct ImageSummary {
     pub title: Option<String>,
     #[serde(rename = "Source")]
     pub source: Option<String>,
+    #[serde(rename = "Description")]
+    pub description: Option<String>,
     #[serde(rename = "LastUpdated")]
     pub last_updated: Option<String>,
 }

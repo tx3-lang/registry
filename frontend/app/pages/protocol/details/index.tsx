@@ -39,6 +39,7 @@ export function ProtocolDetails({ protocol }: { protocol: Protocol; }) {
           <h2 className="inline text-primary-400">@{protocol.scope}</h2>
           <span className="text-white/60"> • v{protocol.version}</span>
         </div>
+        <p className="text-white/30 mt-6">{protocol.description}</p>
 
         <div className="flex mt-14 border-b-[#3E3E3E] border-b gap-8">
           <TabName

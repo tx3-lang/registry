@@ -17,13 +17,15 @@ pub struct Protocol {
     version: String,
     readme: Option<String>,
     source: Option<String>,
+    description: Option<String>,
 }
 
 #[derive(SimpleObject, Deserialize, Serialize, Clone)]
 pub struct Tx {
-    tir: String,
     name: String,
     parameters: HashMap<String, String>,
+    tir: String,
+    tir_version: String,
 }
 
 #[ComplexObject]
@@ -38,9 +40,10 @@ impl Protocol {
                 parameters.insert(param.0.clone(), format!("{:?}", param.1));
             }
             txs.push(Tx {
-                tir: hex::encode(prototx.ir_bytes()),
                 name: tx.name.clone(),
                 parameters,
+                tir: hex::encode(prototx.ir_bytes()),
+                tir_version: tx3_lang::ir::IR_VERSION.to_string(),
             });
         }
         txs

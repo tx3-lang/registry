@@ -83,10 +83,12 @@ export const DETAIL_QUERY = gql`
       publishedDate
       repositoryUrl
       readme
+      description
       transactions {
-        tir
         name
         parameters
+        tir
+        tirVersion
       }
     }
   }

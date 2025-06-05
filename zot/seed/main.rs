@@ -16,6 +16,7 @@ pub struct ProtocolJson {
     pub repository_url: Option<String>,
     pub protocol_path: String,
     pub readme: Option<String>,
+    pub description: Option<String>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -25,6 +26,7 @@ pub struct Metadata {
     pub scope: String,
     pub published_date: i64,
     pub repository_url: Option<String>,
+    pub description: Option<String>,
 }
 
 fn get_client() -> Client {
@@ -66,7 +68,8 @@ async fn push(protocol: &ProtocolJson, protocol_file: String) -> Result<(), Box<
             name: protocol.name.clone(),
             scope: protocol.scope.clone(),
             published_date: protocol.published_date.as_i64().unwrap_or_default(),
-            repository_url: protocol.repository_url.clone()
+            repository_url: protocol.repository_url.clone(),
+            description: protocol.description.clone(),
         })?,
         media_type: manifest::IMAGE_CONFIG_MEDIA_TYPE.to_string(),
         annotations: None,
@@ -87,6 +90,7 @@ async fn push(protocol: &ProtocolJson, protocol_file: String) -> Result<(), Box<
             ("org.opencontainers.image.title".to_string(), protocol.name.clone()),
             ("org.opencontainers.image.version".to_string(), "1.0.0".to_string()),
             ("org.opencontainers.image.source".to_string(), protocol.repository_url.clone().unwrap_or_default()),
+            ("org.opencontainers.image.description".to_string(), protocol.description.clone().unwrap_or_default()),
         ]))
     );
 

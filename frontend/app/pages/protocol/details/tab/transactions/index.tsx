@@ -24,8 +24,8 @@ const Transaction: React.FunctionComponent<TransactionProps> = (props) => {
   const handleExecute = async () => {
     const protoTx: ProtoTx = {
       tir: {
-        version: 'v1alpha3',
         encoding: 'hex',
+        version: props.tx.tirVersion,
         bytecode: props.tx.tir
       },
       args: parameters
