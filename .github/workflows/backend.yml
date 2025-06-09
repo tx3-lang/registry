@@ -24,4 +24,4 @@ jobs:
           file: docker/Dockerfile.backend
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/txpipe/tx3-registry-backend:${{ github.sha }}
+          tags: ghcr.io/tx3-lang/registry-backend:${{ github.sha }}
