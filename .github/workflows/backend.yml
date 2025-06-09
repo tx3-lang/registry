@@ -1,4 +1,6 @@
 name: Backend
+permissions:
+  packages: write
 
 on:
   workflow_dispatch: {}
