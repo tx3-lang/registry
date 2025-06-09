@@ -66,11 +66,12 @@ interface Props extends ButtonVariants {
   onClick?: MouseEventHandler<HTMLButtonElement>;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  loading?: boolean;
 }
 
 export function Button({ type, children, onClick, ...buttonProps }: PropsWithChildren<Props>) {
   return (
-    <button type={type} onClick={!buttonProps.disabled ? onClick : undefined} className={button(buttonProps)}>
+    <button type={type} onClick={!buttonProps.disabled ? onClick : undefined} className={button(buttonProps)} disabled={buttonProps.loading}>
       {children}
     </button>
   );
