@@ -35,14 +35,14 @@ export function Dropdown({ label, value, showValue, options, onOptionSelected }:
         )}
         <ChevronDownIcon width="18" height="18" />
       </MenuButton>
-      <MenuItems anchor="bottom end" className="bg-woodsmoke-950 border border-zinc-900 rounded-xl p-4 z-10 shadow-[0px_0px_12.3px_0px_rgba(250,250,250,0.08)] flex flex-col gap-2 text-zinc-300 min-w-64 mt-1 outline-0 custom-scrollbar">
+      <MenuItems anchor="bottom end" className="bg-woodsmoke-950 border border-zinc-900 rounded-lg p-4 z-10 shadow-[0px_0px_12.3px_0px_rgba(250,250,250,0.06)] flex flex-col gap-2 text-zinc-300 min-w-64 mt-1 outline-0 custom-scrollbar">
         {options.map(option => (
           <MenuItem key={option.value}>
             <button
               type="button"
               className={clsx(
-                'text-left py-2 px-2.5 rounded-lg transition-all hover:bg-woodsmoke-900 hover:font-semibold cursor-pointer',
-                { 'text-primary-500 font-semibold': option.value === activeOption?.value },
+                'text-left py-2 px-4 rounded-lg transition-all hover:bg-woodsmoke-900 hover:font-semibold cursor-pointer',
+                { 'text-blue-500': option.value === activeOption?.value },
               )}
               onClick={() => {
                 setActiveOption(option);
