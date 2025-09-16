@@ -18,7 +18,7 @@ export function meta({ data }: Route.MetaArgs) {
 export async function loader({ context, params }: Route.LoaderArgs) {
   const id = `${params.name}/${params.scope}`;
 
-  const result: {protocol: Query['protocol']} = await context.queryClient.fetchQuery({
+  const result: { protocol: Query['protocol']; } = await context.queryClient.fetchQuery({
     queryKey: detailQueryKeyGenerator(id),
     queryFn: requestGraphQL<{ protocol: Query['protocol']; }, QueryProtocolArgs>(
       DETAIL_QUERY,

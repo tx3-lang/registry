@@ -1,5 +1,5 @@
 import { Link, useSearchParams } from 'react-router';
-import { Card } from '~/components/ui/Card';
+import clsx from 'clsx';
 import { Button } from '~/components/ui/Button';
 import { ChevronLeftIcon } from '~/components/icons/chevron-left';
 import { ChevronRightIcon } from '~/components/icons/chevron-right';
@@ -14,13 +14,13 @@ interface CatalogueProps {
 function PackageCard({ protocol }: { protocol: Protocol; }) {
   return (
     <Link to={`/protocol/${protocol.scope}/${protocol.name}`}>
-      <Card>
+      <div className="py-6 px-8 border border-zinc-900 bg-woodsmoke-950 rounded-lg">
         <h3 className="text-lg font-semibold">{protocol.name}</h3>
         <div className="mt-2">
-          <span className="text-primary-400">@{protocol.scope}</span>
-          <span className="text-white/50"> • v{protocol.version}</span>
+          <span className="text-primary-600">@{protocol.scope}</span>
+          <span className="text-zinc-400"> • v{protocol.version}</span>
         </div>
-      </Card>
+      </div>
     </Link>
   );
 }
@@ -43,21 +43,19 @@ export function Catalogue({ className, protocols }: CatalogueProps) {
   const endCursor = +(protocols.pageInfo.endCursor ?? 0) + 1;
   const totalNodes = protocols.metadata?.totalNodes ?? 0;
   return (
-    <section className={className}>
+    <section className={clsx('container px-[162px]', className)}>
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-semibold">Protocols</h2>
-        <div>
-          <Dropdown
-            label="Sort by:"
-            value={searchParams.get('sort') ?? DEFAULT_SORT}
-            showValue
-            options={sortOptions}
-            onOptionSelected={value => {
-              searchParams.set('sort', value);
-              setSearchParams(searchParams, { preventScrollReset: true });
-            }}
-          />
-        </div>
+        <Dropdown
+          label="Sort by:"
+          value={searchParams.get('sort') ?? DEFAULT_SORT}
+          showValue
+          options={sortOptions}
+          onOptionSelected={value => {
+            searchParams.set('sort', value);
+            setSearchParams(searchParams, { preventScrollReset: true });
+          }}
+        />
       </div>
       <div className="grid grid-cols-3 gap-6 mt-8">
         {protocols.nodes.map(protocol => (
@@ -65,8 +63,8 @@ export function Catalogue({ className, protocols }: CatalogueProps) {
         ))}
       </div>
       <div className="mt-8 flex items-center justify-center gap-6">
-        <span className="text-white/50">
-          Showing {startCursor}-{endCursor} of {totalNodes}
+        <span className="text-zinc-400 text-sm">
+          Displaying {startCursor}-{endCursor} of {totalNodes}
         </span>
         <div className="flex gap-3">
           <Button
@@ -79,7 +77,7 @@ export function Catalogue({ className, protocols }: CatalogueProps) {
               setSearchParams(searchParams, { preventScrollReset: true });
             }}
           >
-            <ChevronLeftIcon />
+            <ChevronLeftIcon width={16} height={16} />
           </Button>
           <Button
             type="button"
@@ -91,7 +89,7 @@ export function Catalogue({ className, protocols }: CatalogueProps) {
               setSearchParams(searchParams, { preventScrollReset: true });
             }}
           >
-            <ChevronRightIcon />
+            <ChevronRightIcon width={16} height={16} />
           </Button>
         </div>
       </div>

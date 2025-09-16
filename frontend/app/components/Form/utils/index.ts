@@ -1,12 +1,14 @@
-import * as yup from "yup";
-import { yupResolver } from "@hookform/resolvers/yup";
+import type { AnySchema, AnyObjectSchema } from 'yup';
+import type { FieldValues, Resolver } from 'react-hook-form';
+import * as yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
 
-import { FieldType } from "../";
-import * as Schema from "./schemas";
+// Components
 
-import type { Field } from "../";
-import type { AnySchema, AnyObjectSchema } from "yup";
-import type { FieldValues, Resolver } from "react-hook-form";
+import { FieldType, type Field } from '~/components/Form';
+
+// Local
+import * as Schema from './schemas';
 
 const getFieldSchema = (fieldType: FieldType, required: boolean): AnySchema => {
   let schema: yup.StringSchema | yup.NumberSchema | yup.BooleanSchema = Schema.Text;
@@ -22,7 +24,7 @@ const getFieldSchema = (fieldType: FieldType, required: boolean): AnySchema => {
 };
 
 export function buildFormResolver<T extends FieldValues = any>(fields: Field[]): Resolver<T> {
-  const schema = {} as {[key: string]: AnySchema};
+  const schema = {} as { [key: string]: AnySchema; };
   for (const field of fields) {
     schema[field.name] = getFieldSchema(field.type, field.required ?? false);
   }

@@ -40,7 +40,7 @@ export function Info({ protocol, className }: Props) {
 
       <div>
         <p className="text-white/50">Install</p>
-        <p className="w-fit mt-4 px-8 py-4 flex items-center gap-3 font-roboto bg-gradient-to-b from-[#434343]/[0.35] to-transparent rounded-lg backdrop-blur-[14.605px]">
+        <p className="w-fit mt-4 px-8 py-4 flex items-center gap-3 font-roboto bg-linear-to-b from-[#434343]/35 to-transparent rounded-lg backdrop-blur-[14.605px]">
           <span>trix install {protocol.scope}/{protocol.name}</span>
           <button type="button" onClick={() => navigator.clipboard.writeText(`trix install ${protocol.scope}/${protocol.name}`)}>
             <CopyIcon />

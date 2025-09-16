@@ -1,14 +1,22 @@
 import type { SVGProps } from 'react';
 
-export function ChevronRightIcon(props: SVGProps<SVGSVGElement>) {
+// Tabler Icons chevron-Right
+export function ChevronRightIcon({ strokeWidth = 1.5, ...props }: SVGProps<SVGSVGElement>) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" {...props}>
-      <path
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="1.5"
-        d="m9.613 7.2 4.8 4.8-4.8 4.8"
-      />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      viewBox="0 0 24 24"
+      strokeWidth={strokeWidth}
+      {...props}
+    >
+      <path stroke="none" d="M0 0h24v24H0z" />
+      <path d="m9 6 6 6-6 6" />
     </svg>
   );
 }

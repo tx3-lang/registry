@@ -1,26 +1,25 @@
-import React from "react";
-import { useForm } from "react-hook-form";
-import type { ReactNode } from "react";
-import type { UseFormRegister, UseFormGetFieldState, FormState, FieldValues, SubmitHandler } from "react-hook-form";
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import type { ReactNode } from 'react';
+import type { UseFormRegister, UseFormGetFieldState, FormState, FieldValues, SubmitHandler } from 'react-hook-form';
 
-import { buildFormResolver } from "./utils";
-
-import { Button } from "../ui/Button";
+import { Button } from '../ui/Button';
+import { buildFormResolver } from './utils';
 
 export enum FormMode {
-  Submit = "Submit",
-  Blur = "Blur"
+  Submit = 'Submit',
+  Blur = 'Blur',
 }
 
 export enum FieldType {
-  Int = "Int",
-  Bool = "Bool",
-  Bytes = "Bytes",
-  Address = "Address",
-  UtxoRef = "UtxoRef",
-  Custom = "Custom",
-  Select = "Select",
-  Text = "Text",
+  Int = 'Int',
+  Bool = 'Bool',
+  Bytes = 'Bytes',
+  Address = 'Address',
+  UtxoRef = 'UtxoRef',
+  Custom = 'Custom',
+  Select = 'Select',
+  Text = 'Text',
 }
 
 export interface Field {
@@ -28,12 +27,12 @@ export interface Field {
   type: FieldType;
   label?: string | null;
   placeholder?: string;
-  defaultValue?: string|number|boolean;
+  defaultValue?: string | number | boolean;
   required?: boolean;
   hidden?: boolean;
   options?: {
-    value: string,
-    label: string
+    value: string;
+    label: string;
   }[];
   prefix?: ReactNode;
   suffix?: ReactNode;
@@ -42,7 +41,7 @@ export interface Field {
 export interface FormProps {
   mode?: FormMode;
   fields: Field[];
-  onSubmit: SubmitHandler<Record<string, string|number|boolean>>;
+  onSubmit: SubmitHandler<Record<string, string | number | boolean>>;
 }
 
 interface InputProps<T extends FieldValues = any> {
@@ -54,48 +53,52 @@ interface InputProps<T extends FieldValues = any> {
 
 const Input: React.FC<InputProps> = (props: InputProps) => (
   <div className="input-container">
-    {props.field.label !== null &&
-      <label htmlFor={props.field.name} className="input-label">
-        {props.field.label || props.field.name}
-      </label>
-    }
+    {props.field.label !== null
+      && (
+        <label htmlFor={props.field.name} className="input-label">
+          {props.field.label || props.field.name}
+        </label>
+      )}
     <div className="flex flex-row gap-2 items-center">
       {!!props.field.prefix && (
         <div className="w-fit mr-2">
           {props.field.prefix}
         </div>
       )}
-      {props.field.type !== FieldType.Select &&
-        <input
-          type="text"
-          className="form-input input"
-          placeholder={props.field.placeholder}
-          disabled={props.formState.isSubmitting}
-          {...props.register(props.field.name, { required: true })}
-        />
-      }
-      {props.field.type === FieldType.Select &&
-        <select
-          className="form-input input"
-          disabled={props.formState.isSubmitting}
-          {...props.register(props.field.name, { required: true })}
-        >
-          {props.field.options?.map((option, index) =>
-            <option key={index} value={option.value}>{option.label}</option>
-          )}
-        </select>
-      }
+      {props.field.type !== FieldType.Select
+        && (
+          <input
+            type="text"
+            className="form-input input"
+            placeholder={props.field.placeholder}
+            disabled={props.formState.isSubmitting}
+            {...props.register(props.field.name, { required: true })}
+          />
+        )}
+      {props.field.type === FieldType.Select
+        && (
+          <select
+            className="form-input input"
+            disabled={props.formState.isSubmitting}
+            {...props.register(props.field.name, { required: true })}
+          >
+            {props.field.options?.map((option, index) =>
+              <option key={index} value={option.value}>{option.label}</option>,
+            )}
+          </select>
+        )}
       {!!props.field.suffix && (
         <div className="w-fit ml-2">
           {props.field.suffix}
         </div>
       )}
     </div>
-    {props.getFieldState(props.field.name, props.formState).error !== undefined &&
-      <p className="input-error">
-        {props.getFieldState(props.field.name, props.formState).error?.message}
-      </p>
-    }
+    {props.getFieldState(props.field.name, props.formState).error !== undefined
+      && (
+        <p className="input-error">
+          {props.getFieldState(props.field.name, props.formState).error?.message}
+        </p>
+      )}
   </div>
 );
 
@@ -106,7 +109,7 @@ const Form: React.FC<FormProps> = (props: FormProps) => {
         acc[field.name] = field.defaultValue;
       }
       return acc;
-    }, {} as Record<string, string|number|boolean>),
+    }, {} as Record<string, string | number | boolean>),
     resolver: buildFormResolver(props.fields),
     mode: props.mode === FormMode.Blur ? 'onBlur' : 'onSubmit',
   });
@@ -116,29 +119,32 @@ const Form: React.FC<FormProps> = (props: FormProps) => {
       const values = getValues();
       props.onSubmit(values);
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit(props.onSubmit)} onChange={handleChange}>
-      {props.fields.map((field, index) => !field.hidden &&
-        <Input
-          key={index}
-          field={field}
-          formState={formState}
-          register={register}
-          getFieldState={getFieldState}
-        />
+      {props.fields.map((field, index) => !field.hidden
+        && (
+          <Input
+            key={index}
+            field={field}
+            formState={formState}
+            register={register}
+            getFieldState={getFieldState}
+          />
+        ),
       )}
 
-      {(!props.mode || props.mode === FormMode.Submit) &&
-        <div className="text-right">
-          <Button type="submit" loading={formState.isSubmitting}>
-            Try it out
-          </Button>
-        </div>
-      }
+      {(!props.mode || props.mode === FormMode.Submit)
+        && (
+          <div className="text-right">
+            <Button type="submit" loading={formState.isSubmitting}>
+              Try it out
+            </Button>
+          </div>
+        )}
     </form>
   );
-}
+};
 
 export default Form;

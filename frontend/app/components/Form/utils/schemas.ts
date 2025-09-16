@@ -1,4 +1,4 @@
-import * as yup from "yup";
+import * as yup from 'yup';
 
 export const Text = yup.string()
   .typeError('The field value must be a valid string');
@@ -16,7 +16,7 @@ export const Bytes = yup.string()
 export const Address = yup.string()
   .matches(/^[a-zA-Z0-9_]*$/, {
     message: 'The field value must be a valid address',
-    excludeEmptyString: true
+    excludeEmptyString: true,
   })
   .typeError('The field value must be a valid address');
 

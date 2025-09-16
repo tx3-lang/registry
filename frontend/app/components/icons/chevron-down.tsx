@@ -1,16 +1,22 @@
 import type { SVGProps } from 'react';
 
-export function ChevronDownIcon(props: SVGProps<SVGSVGElement>) {
+// Tabler Icons chevron-down
+export function ChevronDownIcon({ strokeWidth = 1.5, ...props }: SVGProps<SVGSVGElement>) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" {...props}>
-      <path
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeMiterlimit="10"
-        strokeWidth="1.5"
-        d="m19.92 8.95-6.52 6.52c-.77.77-2.03.77-2.8 0L4.08 8.95"
-      />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      viewBox="0 0 24 24"
+      strokeWidth={strokeWidth}
+      {...props}
+    >
+      <path stroke="none" d="M0 0h24v24H0z" />
+      <path d="m6 9 6 6 6-6" />
     </svg>
   );
 }

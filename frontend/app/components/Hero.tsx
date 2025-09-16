@@ -9,8 +9,8 @@ interface Props {
 export function Hero({ className, onSearch }: Props) {
   return (
     <section className={clsx(className)}>
-      <h1 className="text-4xl font-bold text-center">Registry for UTxO Protocols</h1>
-      <SearchBar className="mt-14 mx-auto  max-w-[836px]" onSearch={onSearch} />
+      <h1 className="text-4xl font-bold text-center tracking-wide ">Registry for UTxO Protocols</h1>
+      <SearchBar className="mt-8 mx-auto max-w-[836px]" onSearch={onSearch} />
     </section>
   );
 }

@@ -13,10 +13,10 @@ export function Home({ protocols }: { protocols: ProtocolConnection; }) {
   return (
     <>
       <Header appName="Registry" />
-      <main className="mt-20">
+      <main className="mt-14">
         <Hero onSearch={setSearch} />
         <Catalogue
-          className="mt-20"
+          className="mt-14"
           protocols={protocols}
         />
       </main>
