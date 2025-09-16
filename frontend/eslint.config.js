@@ -18,7 +18,7 @@ export default [
   includeIgnoreFile(gitignorePath),
   {
     files: ['**/*.{ts,tsx,js,jsx,cjs}'],
-    ignores: ['build/**/*', 'app/entry.server.tsx', 'app/entry.client.tsx', 'app/spec/**/*'],
+    ignores: ['build/**/*', 'app/entry.server.tsx', 'app/entry.client.tsx', 'app/spec/**/*', '@types/graphql.d.ts'],
     languageOptions: {
       ecmaVersion: 2020,
       parser: parserTs,
@@ -42,17 +42,17 @@ export default [
       ],
     },
     rules: {
-      ...stylistic.configs['recommended-flat'].rules,
+      ...stylistic.configs.recommended.rules,
       '@stylistic/semi': ['error', 'always'],
       '@stylistic/jsx-one-expression-per-line': 'off',
       '@stylistic/quotes': ['error', 'single', { avoidEscape: true }],
       '@stylistic/quote-props': ['error', 'as-needed'],
       '@stylistic/indent': ['error', indentSize],
-      '@stylistic/jsx-indent': ['error', indentSize],
       '@stylistic/jsx-curly-brace-presence': ['error', 'never'],
       '@stylistic/object-curly-spacing': ['error', 'always'],
       '@stylistic/object-curly-newline': ['error', { multiline: true, consistent: true }],
       '@stylistic/array-bracket-newline': ['error', 'consistent'],
+      '@stylistic/max-statements-per-line': ['error', { max: 1, ignoredNodes: ['BreakStatement'] }],
       '@stylistic/max-len': [
         'error',
         {
