@@ -4,10 +4,10 @@ import { requestGraphQL } from '~/gql/gql.server';
 import { ProtocolDetails as Page } from '~/pages/protocol/details';
 import type { Route } from './+types/protocol.$scope.$name';
 
-export function meta({ data }: Route.MetaArgs) {
+export function meta({ params }: Route.MetaArgs) {
   let title = 'Tx3';
-  if (data?.protocol?.name) {
-    title = `Tx3 - ${data.protocol.name}`;
+  if (params.name) {
+    title = `Tx3 - ${params.name}`;
   }
   return [
     { title },

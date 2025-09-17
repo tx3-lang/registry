@@ -11,7 +11,7 @@ interface Props {
 export function Header({ className, appName, appLink, centerNode }: Props) {
   return (
     <header className={clsx('border-b border-zinc-800 py-8', className)}>
-      <div className="container px-20 header-grid">
+      <div className="container header-grid">
         <div className="flex items-center gap-4 leading-relaxed tracking-[0.51px]" style={{ gridArea: 'logo' }}>
           <Link to="/">
             <img src="/logo.svg" alt="Logo" className="mt-[-2px] h-full w-auto inline-block" />

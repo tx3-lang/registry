@@ -1,7 +1,7 @@
 import type { SVGProps } from 'react';
 
-// Tabler Icons arrow-left
-export function ArrowLeftIcon({ strokeWidth = 1.5, ...props }: SVGProps<SVGSVGElement>) {
+// Tabler Icons info-circle
+export function InfoCircleIcon({ strokeWidth = 1.5, ...props }: SVGProps<SVGSVGElement>) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -16,7 +16,8 @@ export function ArrowLeftIcon({ strokeWidth = 1.5, ...props }: SVGProps<SVGSVGEl
       {...props}
     >
       <path stroke="none" d="M0 0h24v24H0z" />
-      <path d="M5 12h14M5 12l6 6M5 12l6-6" />
+      <path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0M12 9h.01" />
+      <path d="M11 12h1v4h1" />
     </svg>
   );
 }

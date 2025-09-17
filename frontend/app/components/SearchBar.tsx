@@ -59,7 +59,7 @@ export function SearchBar({ className, dark }: Props) {
 
   return (
     <div className="flex items-center gap-14">
-      <search className={twMerge('flex relative gap-8 w-full items-center text-zinc-400', className, dark && 'text-white/90')}>
+      <search className={twMerge('flex relative gap-8 w-full items-center text-zinc-400', className, dark && 'text-zinc-500')}>
         <SearchIcon className="absolute left-6 pointer-events-none" width="24" height="24" />
         <input
           ref={searchRef}
@@ -68,7 +68,7 @@ export function SearchBar({ className, dark }: Props) {
           onChange={e => setSearch(e.target.value)}
           value={search}
           name="search-text"
-          className={twMerge('text-lg w-full rounded-full py-2.5 px-15 text-zinc-800 placeholder:text-zinc-400 placeholder:text-lg placeholder:font-normal', dark && 'border border-white/50 bg-white/2 placeholder:text-white/50')}
+          className={twMerge('text-lg w-full rounded-full py-2.5 px-15 text-zinc-800 placeholder:text-zinc-400 placeholder:text-lg placeholder:font-normal', dark && 'border border-zinc-800 placeholder:text-zinc-500 text-zinc-200 bg-transparent')}
         />
         <TimesIcon
           className={

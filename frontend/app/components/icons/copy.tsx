@@ -1,18 +1,23 @@
 import type { SVGProps } from 'react';
 
-export function CopyIcon(props: SVGProps<SVGSVGElement>) {
+// Tabler Icons copy
+export function CopyIcon({ strokeWidth = 1.5, ...props }: SVGProps<SVGSVGElement>) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" {...props}>
-      <path
-        fill="currentColor"
-        d="M9 3.75A5.75 5.75 0 0 0 3.25 9.5v7.107a.75.75 0 1 0 1.5 0V9.5A4.25 4.25 0 0 1 9 5.25h7.013a.75.75 0 1 0 0-1.5H9Z"
-      />
-      <path
-        fill="currentColor"
-        fillRule="evenodd"
-        d="M18.403 7.293a44.4 44.4 0 0 0-9.806 0 2.01 2.01 0 0 0-1.774 1.76 42.6 42.6 0 0 0 0 9.894 2.01 2.01 0 0 0 1.774 1.76c3.24.362 6.565.362 9.806 0a2.01 2.01 0 0 0 1.774-1.76 42.598 42.598 0 0 0 0-9.894 2.01 2.01 0 0 0-1.774-1.76Zm-9.64 1.491c3.13-.35 6.343-.35 9.473 0a.51.51 0 0 1 .45.444c.371 3.17.371 6.373 0 9.544a.51.51 0 0 1-.45.444c-3.13.35-6.342.35-9.472 0a.51.51 0 0 1-.45-.444 41 41 0 0 1 0-9.544.51.51 0 0 1 .45-.444Z"
-        clipRule="evenodd"
-      />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      viewBox="0 0 24 24"
+      strokeWidth={strokeWidth}
+      {...props}
+    >
+      <path stroke="none" d="M0 0h24v24H0z" />
+      <path d="M7 9.67A2.67 2.67 0 0 1 9.67 7h8.66A2.67 2.67 0 0 1 21 9.67v8.66A2.67 2.67 0 0 1 18.33 21H9.67A2.67 2.67 0 0 1 7 18.33z" />
+      <path d="M4.01 16.74A2 2 0 0 1 3 15V5c0-1.1.9-2 2-2h10c.75 0 1.16.38 1.5 1" />
     </svg>
   );
 }

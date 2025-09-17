@@ -35,14 +35,35 @@
   --color-woodsmoke-950: #0F0F12;
 }
 
+/* Utilities */
 @utility container {
-  max-width: 1440px;
-  margin-inline: auto;
+  @apply px-20 mx-auto 2xl:max-w-[1440px] xl:max-w-[1440px];
 }
+
+@utility prose-tx3 {
+  --tw-prose-body: var(--color-zinc-200);
+  --tw-prose-headings: var(--color-zinc-50);
+  --tw-prose-lead: var(--color-zinc-400);
+  --tw-prose-links: var(--color-blue-400);
+  --tw-prose-bold: var(--color-zinc-50);
+  --tw-prose-counters: var(--color-zinc-200);
+  --tw-prose-bullets: var(--color-zinc-200);
+  --tw-prose-hr: var(--color-zinc-300);
+  --tw-prose-quotes: var(--color-zinc-50);
+  --tw-prose-quote-borders: var(--color-zinc-300);
+  --tw-prose-captions: var(--color-zinc-400);
+  --tw-prose-code: var(--color-zinc-50);
+  --tw-prose-pre-code: var(--color-zinc-100);
+  --tw-prose-pre-bg: var(--color-zinc-50);
+  --tw-prose-th-borders: var(--color-zinc-300);
+  --tw-prose-td-borders: var(--color-zinc-200);
+}
+
+/* Layers */
 
 @layer base {
   body {
-    @apply dark:bg-zinc-950 dark:text-zinc-50;
+    @apply dark:bg-zinc-950 dark:text-zinc-50 min-h-dvh flex flex-col overflow-x-hidden;
   }
 }
 

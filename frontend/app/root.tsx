@@ -55,7 +55,7 @@ export default function App() {
   return (
     <>
       <Outlet />
-      <Footer className="mt-14" />
+      <Footer />
     </>
   );
 }

@@ -1,4 +1,3 @@
-import clsx from 'clsx';
 import type { ReactNode } from 'react';
 
 interface TabProps {
@@ -11,11 +10,9 @@ interface TabProps {
 export function TabName({ icon, name, onClick, active }: TabProps) {
   return (
     <button
+      data-active={active}
       type="button"
-      className={clsx(
-        'flex items-center gap-2 pb-1.5 after:border-b-4 border-bottom-gradient border-transparent text-lg',
-        active ? 'bg-linear-to-r from-secondary-400 to-secondary-500 text-transparent bg-clip-text after:bg-linear-to-r after:from-secondary-400 after:to-secondary-500 after:bg-clip-border' : 'text-white/60',
-      )}
+      className="flex items-center px-3 py-2 gap-2 text-zinc-500 data-[active=true]:text-zinc-50 cursor-pointer transition-colors duration-300 hover:text-zinc-300"
       onClick={onClick}
     >
       {icon}
