@@ -19,9 +19,8 @@ export function ToTopButton() {
 
   return (
     <Button
-      spacing="icon"
+      size="icon"
       type="button"
-      color="primary"
       className={clsx(
         'rounded-full p-4 fixed bottom-18 transition-opacity duration-300 right-14',
         'xl:right-auto xl:left-1/2 xl:translate-x-[calc(720px-56px-100%)]',

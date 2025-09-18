@@ -2,28 +2,22 @@ import type { MouseEventHandler, PropsWithChildren } from 'react';
 import { tv, type VariantProps } from 'tailwind-variants';
 
 const button = tv({
-  base: 'text-base flex flex-row gap-3 cursor-pointer',
+  base: 'text-base flex items-center flex-row gap-3 cursor-pointer rounded-lg',
   variants: {
-    spacing: {
-      compact: 'py-2 px-6 rounded-full',
-      base: 'px-6 py-3.5 rounded-full',
-      icon: 'p-2 rounded-lg',
-    },
-    text: {
-      small: 'text-sm',
-      base: 'text-base',
-      large: 'text-lg',
-    },
-    weight: {
-      semibold: 'font-semibold',
-      normal: 'font-normal',
-    },
-    outlined: {
-      true: 'bg-transparent',
+    size: {
+      m: 'px-5 py-3 font-medium rounded-full',
+      s: 'px-4 py-2.5 text-sm rounded-lg',
+      icon: 'p-2 rounded-full',
     },
     color: {
-      primary: 'bg-primary-600 text-white',
-      white: 'bg-white text-primary-600',
+      primary: '',
+      zinc: '',
+    },
+    variant: {
+      solid: '',
+      outlined: 'border',
+      ghost: 'bg-transparent',
+      underlined: 'bg-transparent underline underline-offset-4',
     },
     disabled: {
       true: 'bg-zinc-400 text-zinc-50 cursor-not-allowed',
@@ -31,24 +25,21 @@ const button = tv({
   },
 
   compoundVariants: [
-    {
-      outlined: true,
-      color: 'primary',
-      class: 'border border-primary-400/30 text-primary-400',
-    },
-    {
-      outlined: true,
-      color: 'white',
-      class: 'bg-transparent border border-white/30 text-white',
-    },
+    // COLOR => Primary
+    { color: 'primary', variant: 'solid', class: 'bg-primary-600 text-zinc-50 hover:bg-primary-700' },
+    { color: 'primary', variant: 'outlined', class: 'border-primary-800 text-primary-600 hover:border-primary-950 hover:text-primary:800' },
+    { color: 'primary', variant: ['ghost', 'underlined'], class: 'text-primary-600 hover:text-primary-800' },
+
+    // COLOR => Zinc
+    { color: 'zinc', variant: 'solid', class: 'bg-zinc-50 text-zinc-950 hover:bg-zinc-200' },
+    { color: 'zinc', variant: 'outlined', class: 'border-zinc-800 hover:bg-woodsmoke-900 text-zinc-200 hover:text-zinc-100' },
+    { color: 'zinc', variant: ['ghost', 'underlined'], class: 'text-zinc-300 hover:text-zinc-100' },
   ],
 
   defaultVariants: {
     color: 'primary',
-    spacing: 'base',
-    text: 'base',
-    weight: 'semibold',
-    solid: true,
+    variant: 'solid',
+    size: 'm',
   },
 });
 
