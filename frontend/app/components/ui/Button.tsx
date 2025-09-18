@@ -13,6 +13,9 @@ const button = tv({
       primary: '',
       zinc: '',
     },
+    full: {
+      true: 'w-full justify-center',
+    },
     variant: {
       solid: '',
       outlined: 'border',

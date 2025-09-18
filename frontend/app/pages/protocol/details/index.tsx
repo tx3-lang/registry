@@ -20,6 +20,7 @@ import { TabReadme } from './tab/readme';
 import { TabTransactions } from './tab/transactions';
 import { TabTx3File } from './tab/tx3File';
 import { TabDiagrams } from './tab/diagrams';
+import { TabDeploy } from './tab/deploy';
 
 const validTabs = ['readme', 'transactions', 'tx3-file', 'diagrams', 'deploy'] as const;
 type Tab = typeof validTabs[number];
@@ -97,6 +98,7 @@ export function ProtocolDetails({ protocol }: { protocol: Protocol; }) {
           {activeTab === 'transactions' && <TabTransactions protocol={protocol} />}
           {activeTab === 'tx3-file' && <TabTx3File protocol={protocol} />}
           {activeTab === 'diagrams' && <TabDiagrams protocol={protocol} />}
+          {activeTab === 'deploy' && <TabDeploy protocol={protocol} />}
         </div>
 
         <div className="container px-14 py-4">
