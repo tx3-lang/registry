@@ -84,6 +84,7 @@ export const DETAIL_QUERY = gql`
       repositoryUrl
       readme
       description
+      source
       transactions {
         name
         parameters

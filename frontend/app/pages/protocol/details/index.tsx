@@ -18,6 +18,7 @@ import { ProtocolIcon } from '~/components/icons/protocol';
 // Tabs
 import { TabReadme } from './tab/readme';
 import { TabTransactions } from './tab/transactions';
+import { TabTx3File } from './tab/tx3File';
 
 const validTabs = ['readme', 'transactions', 'tx3-file', 'diagrams', 'deploy'] as const;
 type Tab = typeof validTabs[number];
@@ -93,6 +94,7 @@ export function ProtocolDetails({ protocol }: { protocol: Protocol; }) {
         >
           {activeTab === 'readme' && <TabReadme protocol={protocol} />}
           {activeTab === 'transactions' && <TabTransactions protocol={protocol} />}
+          {activeTab === 'tx3-file' && <TabTx3File protocol={protocol} />}
         </div>
 
         <div className="container px-14 py-4">
