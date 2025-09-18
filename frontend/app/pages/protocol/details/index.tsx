@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from 'react-router';
+import clsx from 'clsx';
 
 // Components
-import clsx from 'clsx';
 import { TabName } from '~/components/TabName';
 import { SearchBar } from '~/components/SearchBar';
 import { ToTopButton } from '~/components/ToTopButton';
@@ -19,6 +19,7 @@ import { ProtocolIcon } from '~/components/icons/protocol';
 import { TabReadme } from './tab/readme';
 import { TabTransactions } from './tab/transactions';
 import { TabTx3File } from './tab/tx3File';
+import { TabDiagrams } from './tab/diagrams';
 
 const validTabs = ['readme', 'transactions', 'tx3-file', 'diagrams', 'deploy'] as const;
 type Tab = typeof validTabs[number];
@@ -95,6 +96,7 @@ export function ProtocolDetails({ protocol }: { protocol: Protocol; }) {
           {activeTab === 'readme' && <TabReadme protocol={protocol} />}
           {activeTab === 'transactions' && <TabTransactions protocol={protocol} />}
           {activeTab === 'tx3-file' && <TabTx3File protocol={protocol} />}
+          {activeTab === 'diagrams' && <TabDiagrams protocol={protocol} />}
         </div>
 
         <div className="container px-14 py-4">
