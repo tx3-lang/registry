@@ -101,7 +101,7 @@ export function ProtocolDetails({ protocol }: { protocol: Protocol; }) {
           {activeTab === 'deploy' && <TabDeploy protocol={protocol} />}
         </div>
 
-        <div className="container px-14 py-4">
+        <div className="container py-4">
           <Link to="/" className="flex items-center gap-3 w-fit text-zinc-400 hover:text-zinc-100 font-medium py-3">
             <ArrowLeftIcon width="20" height="20" /> Back to all Protocols
           </Link>

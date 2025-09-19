@@ -11,7 +11,7 @@ export function TabTx3File({ protocol }: Props) {
     <div className="container py-8">
       {protocol.source
         ? (
-          <CodeBlock code={protocol.source} />
+          <CodeBlock code="party Participant;" className="bg-zinc-950 border border-zinc-800 rounded-md px-8 py-6" />
         )
         : (
           <EmptyState title="No Tx3 Source" description="No tx3 file available." />
