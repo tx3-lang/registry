@@ -70,7 +70,7 @@ export function Catalogue({ className, protocols }: CatalogueProps) {
           <Button
             type="button"
             color="primary"
-            spacing="icon"
+            size="icon"
             disabled={!protocols.pageInfo.hasPreviousPage}
             onClick={() => {
               searchParams.set('page', `${Math.max(1, page - 1)}`);
@@ -82,7 +82,7 @@ export function Catalogue({ className, protocols }: CatalogueProps) {
           <Button
             type="button"
             color="primary"
-            spacing="icon"
+            size="icon"
             disabled={!protocols.pageInfo.hasNextPage}
             onClick={() => {
               searchParams.set('page', `${page + 1}`);

@@ -101,9 +101,7 @@ const Transaction: React.FunctionComponent<TransactionProps> = props => {
         <div className="px-8 py-5">
           <p className="border-b border-zinc-900 text-zinc-700 pb-1 flex">
             <span className="flex-1 basis-1/4">Name</span>
-            {tryMode && (
-              <span className="flex-1 basis-3/4">Values</span>
-            )}
+            <span className="flex-1 basis-3/4">Description</span>
           </p>
           {Object.keys(props.tx.parameters).map(key => (
             <div key={key} className="border-b last:border-b-0 border-zinc-900 flex py-4 last:pb-0">
@@ -115,23 +113,27 @@ const Transaction: React.FunctionComponent<TransactionProps> = props => {
                   {props.tx.parameters[key]}
                 </p>
               </div>
-              {tryMode && (
-                <div className="flex-1 basis-3/4">
+              <div className="flex-1 basis-3/4 flex flex-col gap-3">
+                <p className="text-sm text-zinc-50">
+                  Lorem ipsum dolor sit amet consectetur. Nunc donec velit at lorem neque vulputate vel.
+                  Sit purus orci aliquet nullam.
+                </p>
+                {tryMode && (
                   <input
                     type={props.tx.parameters[key] === 'Int' ? 'number' : 'text'}
                     className="w-full rounded-lg py-2.5 px-4 bg-woodsmoke-950 border border-zinc-800 text-zinc-100 text-sm"
                     value={parameters[key]}
                     onChange={e => updateParameter(key, props.tx.parameters[key], e.target.value)}
                   />
-                </div>
-              )}
+                )}
+              </div>
             </div>
           ),
           )}
         </div>
 
         {response && (
-          <div className="px-8 py-6">
+          <div className="px-8 py-6 max-h-55 flex">
             <Alert type={response.type} title="Response" textToCopy={response.message}>
               {response.message}
             </Alert>

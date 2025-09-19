@@ -59,7 +59,7 @@ export function TabDeploy({ protocol }: Props) {
 
       <div className="relative bg-zinc-950 border border-zinc-800 pt-5 pb-6 px-8 rounded-md mt-9 flex flex-row gap-8">
         <div className="flex flex-col gap-6 flex-1">
-          <h4 className="flex flex-row gap-3 items-center font-medium text-zinc-200">
+          <h4 className="flex flex-row gap-2 items-center font-medium text-zinc-200">
             <TerminalIcon width="24" height="24" />
             Manual Deployment
           </h4>
@@ -71,7 +71,7 @@ export function TabDeploy({ protocol }: Props) {
         </div>
         <div className="min-h-full w-0.25 bg-zinc-900" />
         <div className="flex flex-col gap-6 flex-1">
-          <h4 className="flex flex-row gap-3 items-center font-medium text-zinc-200">
+          <h4 className="flex flex-row gap-2 items-center font-medium text-zinc-200">
             <TerminalIcon width="24" height="24" />
             One-click Deploy
           </h4>

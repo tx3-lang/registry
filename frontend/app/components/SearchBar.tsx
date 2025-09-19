@@ -68,7 +68,7 @@ export function SearchBar({ className, dark }: Props) {
           onChange={e => setSearch(e.target.value)}
           value={search}
           name="search-text"
-          className={twMerge('text-lg w-full rounded-full py-2.5 px-15 text-zinc-800 placeholder:text-zinc-400 placeholder:text-lg placeholder:font-normal', dark && 'border border-zinc-800 placeholder:text-zinc-500 text-zinc-200 bg-transparent')}
+          className={twMerge('text-lg w-full rounded-full py-2.5 px-15 text-zinc-800 placeholder:text-zinc-400 placeholder:text-lg placeholder:font-normal', dark && 'border border-zinc-800 placeholder:text-zinc-500 text-zinc-200 bg-transparent ring-zinc-500')}
         />
         <TimesIcon
           className={
