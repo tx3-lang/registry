@@ -93,6 +93,7 @@ interface QueryProtocolsArgs {
 interface Tx {
   name: Scalars['String']['output'];
   parameters: Scalars['JSONObject']['output'];
+  svg: Maybe<Scalars['String']['output']>;
   tir: Scalars['String']['output'];
   tirVersion: Scalars['String']['output'];
 }

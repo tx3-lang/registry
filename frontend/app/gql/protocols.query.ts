@@ -90,6 +90,7 @@ export const DETAIL_QUERY = gql`
         parameters
         tir
         tirVersion
+        svg
       }
     }
   }

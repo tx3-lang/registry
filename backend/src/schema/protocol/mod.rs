@@ -6,6 +6,8 @@ use async_graphql::{ComplexObject, Enum, SimpleObject, ID};
 mod query;
 pub use query::ProtocolQuery;
 
+use crate::ast_to_svg;
+
 #[derive(SimpleObject, Clone)]
 #[graphql(complex)]
 pub struct Protocol {
@@ -21,11 +23,15 @@ pub struct Protocol {
 }
 
 #[derive(SimpleObject, Deserialize, Serialize, Clone)]
+#[graphql(complex)]
 pub struct Tx {
     name: String,
     parameters: HashMap<String, String>,
     tir: String,
     tir_version: String,
+
+    #[graphql(skip)]
+    protocol_source: Option<String>,
 }
 
 #[ComplexObject]
@@ -34,19 +40,34 @@ impl Protocol {
         let mut txs = vec![];
         let protocol = tx3_lang::Protocol::from_string(self.source.clone().unwrap()).load().unwrap();
         for tx in protocol.txs() {
-            let prototx = protocol.new_tx(tx.name.as_str()).unwrap();
+            let prototx = protocol.new_tx(&tx.name.value).unwrap();
             let mut parameters: HashMap<String, String> = HashMap::new();
             for param in prototx.find_params() {
                 parameters.insert(param.0.clone(), format!("{:?}", param.1));
             }
             txs.push(Tx {
-                name: tx.name.clone(),
+                name: tx.name.value.clone(),
                 parameters,
                 tir: hex::encode(prototx.ir_bytes()),
                 tir_version: tx3_lang::ir::IR_VERSION.to_string(),
+                protocol_source: self.source.clone(),
             });
         }
         txs
+    }
+}
+
+#[ComplexObject]
+impl Tx {
+    async fn svg(&self) -> Option<String> {
+        if let Some(source) = &self.protocol_source {
+            let protocol = tx3_lang::Protocol::from_string(source.clone()).load().unwrap();
+            let ast= protocol.ast();
+            let tx_def = protocol.txs().find(|t| t.name.value == self.name)?;
+            Some(ast_to_svg::tx_to_svg(ast, tx_def))
+        } else {
+            None
+        }
     }
 }
 

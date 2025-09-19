@@ -91,6 +91,7 @@ type Tx {
 	parameters: JSONObject!
 	tir: String!
 	tirVersion: String!
+	svg: String
 }
 
 """

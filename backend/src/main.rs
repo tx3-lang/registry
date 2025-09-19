@@ -6,6 +6,7 @@ use rocket_cors::{AllowedHeaders, AllowedOrigins};
 
 mod schema;
 mod oci;
+mod ast_to_svg;
 
 #[macro_use]
 extern crate rocket;
