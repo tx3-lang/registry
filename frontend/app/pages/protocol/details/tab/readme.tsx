@@ -15,9 +15,9 @@ export function TabReadme({ protocol }: Props) {
     + ' prose-pre:whitespace-pre-wrap prose-pre:break-words'; // Preformatted
 
   return (
-    <div className="bg-zinc-950 to-50% flex flex-col flex-1">
-      <div className="flex container flex-1">
-        {!protocol.readme
+    <div className="bg-zinc-950 flex flex-col flex-1">
+      <div className="flex container flex-1 bg-gradient-to-r from-woodsmoke-950 from-50% to-zinc-950 to-50%">
+        {protocol.readme
           ? (
             <div className={markdownClasses}>
               <Markdown

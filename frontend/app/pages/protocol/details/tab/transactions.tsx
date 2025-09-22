@@ -104,9 +104,9 @@ const Transaction: React.FunctionComponent<TransactionProps> = props => {
             <span className="flex-1 basis-3/4">Description</span>
           </p>
           {Object.keys(props.tx.parameters).map(key => (
-            <div key={key} className="border-b last:border-b-0 border-zinc-900 flex py-4 last:pb-0">
+            <div key={key} className="border-b last:border-b-0 border-zinc-900 flex py-4 last:pb-0 gap-1">
               <div className="flex-1 basis-1/4">
-                <p className="text-zinc-50 text-base">
+                <p className="text-zinc-50 text-base wrap-anywhere">
                   {key} <span className="text-rose-400">*</span>
                 </p>
                 <p className="text-zinc-600 text-sm font-mono mt-2">

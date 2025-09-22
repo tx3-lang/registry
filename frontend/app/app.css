@@ -52,9 +52,9 @@
   --tw-prose-quotes: var(--color-zinc-50);
   --tw-prose-quote-borders: var(--color-zinc-300);
   --tw-prose-captions: var(--color-zinc-400);
-  --tw-prose-code: var(--color-zinc-50);
+  --tw-prose-code: var(--color-zinc-500);
   --tw-prose-pre-code: var(--color-zinc-100);
-  --tw-prose-pre-bg: var(--color-zinc-50);
+  --tw-prose-pre-bg: var(--color-zinc-800);
   --tw-prose-th-borders: var(--color-zinc-300);
   --tw-prose-td-borders: var(--color-zinc-200);
 }

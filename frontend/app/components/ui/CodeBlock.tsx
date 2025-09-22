@@ -17,7 +17,7 @@ export function CodeBlock({ className, code, lang = 'tx3' }: CodeBlockProps) {
     theme: 'aurora-x',
     transformers: [{
       pre(node) {
-        node.properties.class = clsx(node.properties.class, 'text-sm font-mono', className);
+        node.properties.class = clsx(node.properties.class, 'text-sm font-mono overflow-x-auto', className);
         delete node.properties.style;
       },
     }],
