@@ -64,7 +64,7 @@ impl Tx {
             let protocol = tx3_lang::Protocol::from_string(source.clone()).load().unwrap();
             let ast= protocol.ast();
             let tx_def = protocol.txs().find(|t| t.name.value == self.name)?;
-            Some(ast_to_svg::tx_to_svg(ast, tx_def))
+            Some(ast_to_svg::tx_to_svg(ast, tx_def, self.parameters.clone().into_keys().collect()))
         } else {
             None
         }

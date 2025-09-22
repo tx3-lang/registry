@@ -65,7 +65,7 @@ fn get_icon_svg(party_type: &PartyType, x: &i32, y: &i32, width: &i32, height: &
         y = y,
         width = width,
         height = height,
-        svg = svg
+        svg = svg,
     )
 }
 
@@ -167,12 +167,128 @@ fn get_outputs(tx: &TxDef) -> Vec<Parameter> {
         .collect()
 }
 
+fn sort_parties_by_connections(parties: &[Party], parameters: &[Parameter]) -> Vec<usize> {
+    let mut party_indices: Vec<usize> = (0..parties.len()).collect();
+    
+    // Create connections map: party_name -> [parameter_indices]
+    let mut connections_map: std::collections::HashMap<String, Vec<usize>> = std::collections::HashMap::new();
+    for (param_idx, param) in parameters.iter().enumerate() {
+        if let Some(ref party_name) = param.party {
+            connections_map.entry(party_name.clone()).or_insert_with(Vec::new).push(param_idx);
+        }
+    }
+    
+    // Sort using an algorithm that minimizes line crossings
+    optimize_party_order(&mut party_indices, parties, &connections_map);
+    
+    party_indices
+}
+
+fn optimize_party_order(
+    party_indices: &mut Vec<usize>, 
+    parties: &[Party], 
+    connections_map: &std::collections::HashMap<String, Vec<usize>>
+) {
+    // Simple bubble sort algorithm to minimize crossings by swapping adjacent parties
+    let mut improved = true;
+    while improved {
+        improved = false;
+        for i in 0..party_indices.len().saturating_sub(1) {
+            if would_reduce_crossings(party_indices, i, parties, connections_map) {
+                party_indices.swap(i, i + 1);
+                improved = true;
+            }
+        }
+    }
+}
+
+fn would_reduce_crossings(
+    party_indices: &[usize],
+    swap_pos: usize,
+    parties: &[Party],
+    connections_map: &std::collections::HashMap<String, Vec<usize>>
+) -> bool {
+    if swap_pos + 1 >= party_indices.len() {
+        return false;
+    }
+    
+    let party_a_idx = party_indices[swap_pos];
+    let party_b_idx = party_indices[swap_pos + 1];
+    
+    let party_a = &parties[party_a_idx];
+    let party_b = &parties[party_b_idx];
+    
+    let connections_a = connections_map.get(&party_a.name).map(|v| v.as_slice()).unwrap_or(&[]);
+    let connections_b = connections_map.get(&party_b.name).map(|v| v.as_slice()).unwrap_or(&[]);
+    
+    // Calculate current crossings vs crossings after swap
+    let current_crossings = count_crossings_between_parties(
+        swap_pos, swap_pos + 1, connections_a, connections_b
+    );
+    
+    let swapped_crossings = count_crossings_between_parties(
+        swap_pos + 1, swap_pos, connections_b, connections_a
+    );
+    
+    swapped_crossings < current_crossings
+}
+
+fn count_crossings_between_parties(
+    party_a_pos: usize,
+    party_b_pos: usize,
+    connections_a: &[usize],
+    connections_b: &[usize]
+) -> usize {
+    let mut crossings = 0;
+    for &conn_a in connections_a {
+        for &conn_b in connections_b {
+            // If party_a is above party_b but its connection is below party_b's connection
+            if party_a_pos < party_b_pos && conn_a > conn_b {
+                crossings += 1;
+            }
+            // If party_a is below party_b but its connection is above party_b's connection
+            if party_a_pos > party_b_pos && conn_a < conn_b {
+                crossings += 1;
+            }
+        }
+    }
+    crossings
+}
+
+
+fn sort_parameters_by_connections(parameters: &[Parameter], parties: &[Party]) -> Vec<usize> {
+    let mut param_indices: Vec<usize> = (0..parameters.len()).collect();
+    
+    // Crear mapa de party_name -> posición en el array ordenado de parties
+    let party_positions: std::collections::HashMap<String, usize> = parties
+        .iter()
+        .enumerate()
+        .map(|(pos, party)| (party.name.clone(), pos))
+        .collect();
+    
+    // Ordenar parámetros para que sigan el mismo orden que sus parties conectadas
+    param_indices.sort_by(|&a, &b| {
+        let party_pos_a = parameters[a].party.as_ref()
+            .and_then(|name| party_positions.get(name))
+            .copied()
+            .unwrap_or(usize::MAX);
+        let party_pos_b = parameters[b].party.as_ref()
+            .and_then(|name| party_positions.get(name))
+            .copied()
+            .unwrap_or(usize::MAX);
+        
+        party_pos_a.cmp(&party_pos_b)
+    });
+    
+    param_indices
+}
+
 // SVG Rendering Functions
 fn render_party(party: &Party, x: i32, y: i32) -> String {
     format!(
         r#"<svg x="{x}" y="{y}" width="{unit}" height="{unit}" viewBox="0 0 {unit} {unit}">
     {image_svg}
-        <text x="50%" y="{text_y}%" text-anchor="middle" font-size="{font_size}%" font-family="monospace" fill="rgb(255, 255, 255)">{name}</text>
+        <text x="50%" y="{text_y}%" text-anchor="middle" font-size="{font_size}%" font-family="monospace" fill="white">{name}</text>
     </svg>"#,
         x = x,
         y = y,
@@ -184,36 +300,37 @@ fn render_party(party: &Party, x: i32, y: i32) -> String {
     )
 }
 
-fn render_parameter(param: &Parameter, x: i32, y: i32) -> String {
+fn render_parameter(param: &Parameter, x: i32, y: i32, is_input: bool) -> String {
     format!(
         r#"
-        <g transform="translate(-{unit},{half_unit})">
+        <g transform="translate(-{unit},{quarter_unit})">
         <svg x="{x}" y="{y}" width="{width}" height="{height}" viewBox="0 0 {unit} {quarter_unit}">
-            <text x="50%" y="10%" text-anchor="middle" dominant-baseline="hanging" font-size="10%" font-family="monospace" fill="rgb(255, 255, 255)">{name}</text>
-            <line x1="20%" y1="90%" x2="80%" y2="90%" stroke="rgb(255, 255, 255)" stroke-width="0.25"/>
-            <line x1="70%" y1="80%" x2="80%" y2="90%" stroke="rgb(255, 255, 255)" stroke-width="0.25"/>
-            <line x1="70%" y1="100%" x2="80%" y2="90%" stroke="rgb(255, 255, 255)" stroke-width="0.25"/>
+            <text x="{text_position}" y="10%" text-anchor="middle" dominant-baseline="hanging" font-size="10%" font-family="monospace" fill="white">{name}</text>
+            <line x1="{line_start}" y1="85%" x2="{line_end}" y2="85%" stroke="{color}" stroke-width="0.25"/>
+            <circle cx="{circle_cx}" cy="85%" r="0.5" fill="{color}" />
         </svg>
     </g>"#,
         x = x,
         y = y,
         unit = UNIT,
-        half_unit = UNIT / 2,
         quarter_unit = UNIT / 4,
         width = UNIT * 2,
         height = UNIT / 2,
-        name = param.name
+        name = param.name,
+        line_start = if is_input { "20%" } else { "0%" },
+        line_end = if is_input { "100%" } else { "80%" },
+        text_position = if is_input { "60%" } else { "40%" },
+        circle_cx = if is_input { "20%" } else { "80%" },
+        color = if is_input { "rgba(81, 162, 255, 1)" } else { "rgba(255,0,127,1)" },
     )
 }
 
-fn render_tx(tx: &TxDef, x: i32, y: i32) -> String {
-    format!(
+fn render_tx(tx: &TxDef, params: &Vec<String>, x: i32, y: i32) -> String {
+    let mut tx_box = format!(
         r#"<g transform="translate(-{unit})">
         <svg x="{x}" y="{y}" width="{width}" height="{height}" viewBox="0 0 {unit} {double_unit}">
             <rect width="100%" height="100%" rx="{corner}" ry="{corner}" fill-opacity="0" stroke="white" stroke-width="0.25" stroke-linecap="round" stroke-linejoin="round"/>
-            <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-size="10%" font-family="monospace" fill="rgb(255, 255, 255)">{name}</text>
-        </svg>
-    </g>"#,
+            <text x="50%" y="2" text-anchor="middle" dominant-baseline="middle" font-size="10%" font-family="monospace" font-weight="bold" fill="rgb(255, 255, 255)">{name}</text>"#,
         x = x,
         y = y,
         unit = UNIT,
@@ -222,14 +339,41 @@ fn render_tx(tx: &TxDef, x: i32, y: i32) -> String {
         height = UNIT * 4,
         corner = UNIT as f64 / 10.0,
         name = tx.name.value
-    )
+    );
+
+    for (i, param_name) in params.iter().enumerate() {
+        write!(
+            tx_box,
+            r#"<text x="50%" y="{y}" text-anchor="middle" dominant-baseline="middle" font-size="8%" font-family="monospace" fill="white">{param}</text>"#,
+            y = (i as f64 * 1.5) + (UNIT / 4) as f64 + 2.0,
+            param = param_name
+        )
+        .unwrap();
+    }
+
+    tx_box.push_str("</svg>");
+    tx_box.push_str("</g>");
+
+    tx_box
 }
 
-pub fn tx_to_svg(ast: &Program, tx: &TxDef) -> String {
+// Agregar params/args en la cajita de transaccion.
+pub fn tx_to_svg(ast: &Program, tx: &TxDef, params: Vec<String>) -> String {
     let input_parties = get_input_parties(ast, tx);
     let output_parties = get_output_parties(ast, tx);
     let inputs = get_inputs(tx);
     let outputs = get_outputs(tx);
+
+    // Ordenar para minimizar cruces
+    let input_party_order = sort_parties_by_connections(&input_parties, &inputs);
+    let output_party_order = sort_parties_by_connections(&output_parties, &outputs);
+    
+    // Ahora ordenar parámetros basándose en el orden optimizado de parties
+    let ordered_input_parties: Vec<Party> = input_party_order.iter().map(|&i| input_parties[i].clone()).collect();
+    let ordered_output_parties: Vec<Party> = output_party_order.iter().map(|&i| output_parties[i].clone()).collect();
+    
+    let input_param_order = sort_parameters_by_connections(&inputs, &ordered_input_parties);
+    let output_param_order = sort_parameters_by_connections(&outputs, &ordered_output_parties);
 
     let mut svg = String::new();
 
@@ -241,88 +385,100 @@ pub fn tx_to_svg(ast: &Program, tx: &TxDef) -> String {
     ).unwrap();
 
     // Render transaction box in the center
-    write!(svg, "{}", render_tx(tx, CANVA_WIDTH / 2, 0)).unwrap();
+    write!(svg, "{}", render_tx(tx, &params, CANVA_WIDTH / 2, 0)).unwrap();
 
-    // Render input parties on the left
-    for (i, party) in input_parties.iter().enumerate() {
-        write!(svg, "{}", render_party(party, 0, UNIT * i as i32)).unwrap();
+    // Render input parties on the left (usando el orden optimizado)
+    for (render_pos, &party_idx) in input_party_order.iter().enumerate() {
+        let party = &input_parties[party_idx];
+        write!(svg, "{}", render_party(party, 0, UNIT * render_pos as i32)).unwrap();
     }
 
-    // Render output parties on the right
-    for (i, party) in output_parties.iter().enumerate() {
+    // Render output parties on the right (usando el orden optimizado)
+    for (render_pos, &party_idx) in output_party_order.iter().enumerate() {
+        let party = &output_parties[party_idx];
         write!(
             svg,
             "{}",
-            render_party(party, CANVA_WIDTH - UNIT, UNIT * i as i32)
+            render_party(party, CANVA_WIDTH - UNIT, UNIT * render_pos as i32)
         )
         .unwrap();
     }
 
-    // Render input parameters
+    // Draw lines from input parties to input parameters
+    for (param_render_pos, &param_idx) in input_param_order.iter().enumerate() {
+        let input = &inputs[param_idx];
+        if let Some(ref name) = input.party {
+            if let Some(original_party_idx) = input_parties.iter().position(|p| &p.name == name) {
+                // Encontrar la posición de renderizado de esta party
+                if let Some(party_render_pos) = input_party_order.iter().position(|&idx| idx == original_party_idx) {
+                    write!(
+                        svg,
+                        "<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0.4\" stroke-dasharray=\"1,1\" stroke-opacity=\"0.5\"/>",
+                        UNIT,
+                        UNIT * (party_render_pos as i32) + UNIT / 2,
+                        CANVA_WIDTH / 4 - UNIT / 8,
+                        (UNIT * (param_render_pos as i32 + 1) - UNIT / 4) - 1,
+                    ).unwrap();
+                }
+            }
+        }
+    }
+
+    // Draw lines from output parameters to output parties
+    for (param_render_pos, &param_idx) in output_param_order.iter().enumerate() {
+        let output = &outputs[param_idx];
+        if let Some(ref name) = output.party {
+            if let Some(original_party_idx) = output_parties.iter().position(|p| &p.name == name) {
+                // Encontrar la posición de renderizado de esta party
+                if let Some(party_render_pos) = output_party_order.iter().position(|&idx| idx == original_party_idx) {
+                    write!(
+                        svg,
+                        "<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0.4\" stroke-dasharray=\"1,1\" stroke-opacity=\"0.5\"/>",
+                        CANVA_WIDTH / 2 + CANVA_WIDTH / 4 + UNIT / 8,
+                        (UNIT * (param_render_pos as i32 + 1) - UNIT / 4) - 1,
+                        (CANVA_WIDTH - UNIT),
+                        (UNIT * (party_render_pos as i32) + UNIT / 2)
+                    ).unwrap();
+                }
+            }
+        }
+    }
+
+    // Render input parameters (usando el orden optimizado)
     write!(
         svg,
         r#"<g transform="translate({half_unit})">"#,
         half_unit = UNIT / 2
     )
     .unwrap();
-    for (i, input) in inputs.iter().enumerate() {
+    for (render_pos, &param_idx) in input_param_order.iter().enumerate() {
+        let input = &inputs[param_idx];
         write!(
             svg,
             "{}",
-            render_parameter(input, CANVA_WIDTH / 4, UNIT * i as i32)
+            render_parameter(input, CANVA_WIDTH / 4, UNIT * render_pos as i32, true)
         )
         .unwrap();
     }
     write!(svg, "</g>").unwrap();
 
-    // Render output parameters
+    // Render output parameters (usando el orden optimizado)
     write!(
         svg,
         r#"<g transform="translate(-{half_unit})">"#,
         half_unit = UNIT / 2
     )
     .unwrap();
-    for (i, output) in outputs.iter().enumerate() {
+    for (render_pos, &param_idx) in output_param_order.iter().enumerate() {
+        let output = &outputs[param_idx];
         write!(
             svg,
             "{}",
-            render_parameter(output, CANVA_WIDTH * 3 / 4, UNIT * i as i32)
+            render_parameter(output, CANVA_WIDTH * 3 / 4, UNIT * render_pos as i32, false)
         )
         .unwrap();
     }
     write!(svg, "</g>").unwrap();
-
-    // Draw lines from input parties to input parameters
-    for (input_index, input) in inputs.iter().enumerate() {
-        if let Some(ref name) = input.party {
-            if let Some(party_index) = input_parties.iter().position(|p| &p.name == name) {
-                write!(
-                svg,
-                    "<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0.4\" stroke-dasharray=\"1,1\" stroke-opacity=\"0.5\"/>",
-                UNIT,
-                UNIT * (party_index as i32) + UNIT / 2,
-                CANVA_WIDTH / 4 - UNIT / 8,
-                UNIT * (input_index as i32 + 1) - UNIT / 16,
-            ).unwrap();
-            }
-        }
-    }
-
-    // Draw lines from output parameters to output parties
-    for (output_index, output) in outputs.iter().enumerate() {
-        if let Some(ref name) = output.party {
-            if let Some(party_index) = output_parties.iter().position(|p| &p.name == name) {
-                write!(
-                svg,
-                    "<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0.4\" stroke-dasharray=\"1,1\" stroke-opacity=\"0.5\"/>",
-                CANVA_WIDTH / 2 + CANVA_WIDTH / 4 + UNIT / 8,
-                UNIT * (output_index as i32 + 1) - UNIT / 16,
-                (CANVA_WIDTH - UNIT),
-                (UNIT * (party_index as i32) + UNIT / 2)
-            ).unwrap();
-            }
-        }
-    }
 
     svg.push_str("</svg>");
 

@@ -64,6 +64,7 @@ export function TabDeploy({ protocol }: Props) {
             Manual Deployment
           </h4>
           <ListBox items={manualDeploymentItems} />
+          {/* https://docs.txpipe.io/tx3 */}
           <Button variant="outlined" color="zinc" className="rounded-lg" full>
             <FileDescriptionIcon width="20" height="20" />
             Read the docs
