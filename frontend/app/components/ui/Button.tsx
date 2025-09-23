@@ -2,59 +2,47 @@ import type { MouseEventHandler, PropsWithChildren } from 'react';
 import { tv, type VariantProps } from 'tailwind-variants';
 
 const button = tv({
-  base: 'text-base flex flex-row gap-3',
+  base: 'text-base flex items-center flex-row gap-3 cursor-pointer rounded-lg',
   variants: {
-    spacing: {
-      compact: 'py-2 px-6 rounded-full',
-      base: 'px-6 py-3.5 rounded-full',
-      icon: 'p-1.5 rounded-lg',
-    },
-    text: {
-      small: 'text-sm',
-      base: 'text-base',
-      large: 'text-lg',
-    },
-    weight: {
-      semibold: 'font-semibold',
-      normal: 'font-normal',
-    },
-    outlined: {
-      true: 'bg-transparent',
+    size: {
+      m: 'px-5 py-3 font-medium rounded-full',
+      s: 'px-4 py-2.5 text-sm',
+      icon: 'p-2',
     },
     color: {
-      primary: 'bg-primary-400 text-white',
-      'primary-gradient': 'bg-gradient-to-r from-primary-400 to-primary-500 text-white border border-white/30',
-      white: 'bg-white text-primary-400',
+      primary: '',
+      zinc: '',
+    },
+    full: {
+      true: 'w-full justify-center',
+    },
+    variant: {
+      solid: '',
+      outlined: 'border',
+      ghost: 'bg-transparent',
+      underlined: 'bg-transparent underline underline-offset-4',
     },
     disabled: {
-      true: 'bg-white/70 opacity-50 cursor-not-allowed',
+      true: 'bg-zinc-400 text-zinc-50 cursor-not-allowed opacity-50',
     },
   },
 
   compoundVariants: [
-    {
-      outlined: true,
-      color: 'primary',
-      class: 'border border-primary-400/30 text-primary-400',
-    },
-    {
-      outlined: true,
-      color: 'white',
-      class: 'bg-transparent border border-white/30 text-white',
-    },
-    {
-      outlined: true,
-      color: 'primary-gradient',
-      class: 'after:rounded-full bg-clip-text text-transparent btn-outline-primary-gradient after:bg-gradient-to-r after:from-primary-400 after:to-primary-500 after:bg-origin-border',
-    },
+    // COLOR => Primary
+    { color: 'primary', variant: 'solid', class: 'bg-primary-600 text-zinc-50 hover:bg-primary-700', disabled: false },
+    { color: 'primary', variant: 'outlined', class: 'border-primary-800 text-primary-600 hover:border-primary-950 hover:text-primary:800', disabled: false },
+    { color: 'primary', variant: ['ghost', 'underlined'], class: 'text-primary-600 hover:text-primary-800', disabled: false },
+
+    // COLOR => Zinc
+    { color: 'zinc', variant: 'solid', class: 'bg-zinc-50 text-zinc-950 hover:bg-zinc-200', disabled: false },
+    { color: 'zinc', variant: 'outlined', class: 'border-zinc-800 hover:bg-woodsmoke-900 text-zinc-200 hover:text-zinc-100', disabled: false },
+    { color: 'zinc', variant: ['ghost', 'underlined'], class: 'text-zinc-300 hover:text-zinc-100', disabled: false },
   ],
 
   defaultVariants: {
-    color: 'primary-gradient',
-    spacing: 'base',
-    text: 'base',
-    weight: 'semibold',
-    solid: true,
+    color: 'primary',
+    variant: 'solid',
+    size: 'm',
   },
 });
 
@@ -67,11 +55,18 @@ interface Props extends ButtonVariants {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   loading?: boolean;
+  title?: string;
 }
 
-export function Button({ type, children, onClick, ...buttonProps }: PropsWithChildren<Props>) {
+export function Button({ type, children, onClick, title, ...buttonProps }: PropsWithChildren<Props>) {
   return (
-    <button type={type} onClick={!buttonProps.disabled ? onClick : undefined} className={button(buttonProps)} disabled={buttonProps.loading}>
+    <button
+      type={type}
+      onClick={!buttonProps.disabled ? onClick : undefined}
+      className={button(buttonProps)}
+      disabled={buttonProps.loading || buttonProps.disabled}
+      title={title}
+    >
       {children}
     </button>
   );

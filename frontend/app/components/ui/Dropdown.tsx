@@ -25,24 +25,24 @@ export function Dropdown({ label, value, showValue, options, onOptionSelected }:
   }, [value]);
 
   return (
-    <Menu>
-      <MenuButton className="flex flex-row gap-2 py-3 px-4 rounded-full items-center text-white text-sm border border-white/50">
+    <Menu as="div">
+      <MenuButton className="flex flex-row gap-3 py-2.5 px-4 rounded-lg items-center text-sm border text-zinc-500 border-zinc-800 cursor-pointer">
         {!!label && (
-          <span className="opacity-50">{label}</span>
+          <span>{label}</span>
         )}
         {(showValue && activeOption) && (
-          <span>{activeOption?.label}</span>
+          <span className="text-zinc-100">{activeOption?.label}</span>
         )}
-        <ChevronDownIcon width="14" height="14" />
+        <ChevronDownIcon width="18" height="18" />
       </MenuButton>
-      <MenuItems anchor="bottom end" className="bg-white rounded-xl p-4 flex flex-col gap-2 text-black/90 min-w-64 mt-0.5">
+      <MenuItems anchor="bottom end" className="bg-woodsmoke-950 border border-zinc-900 rounded-lg p-4 z-10 shadow-[0px_0px_12.3px_0px_rgba(250,250,250,0.06)] flex flex-col gap-2 text-zinc-300 min-w-64 mt-1 outline-0 custom-scrollbar">
         {options.map(option => (
           <MenuItem key={option.value}>
             <button
               type="button"
               className={clsx(
-                'text-left py-1.5 px-2 rounded-[10px] transition-all hover:bg-primary-400/10 hover:font-semibold',
-                { 'text-primary-400 font-semibold': option.value === activeOption?.value },
+                'text-left py-2 px-4 rounded-lg transition-all hover:bg-woodsmoke-900 hover:font-semibold cursor-pointer',
+                { 'text-blue-500': option.value === activeOption?.value },
               )}
               onClick={() => {
                 setActiveOption(option);

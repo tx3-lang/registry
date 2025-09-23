@@ -2,7 +2,7 @@ import {
   LIST_QUERY,
   listQueryKeyGenerator,
   generateListArgs,
-  DEFAULT_PAGINATION
+  DEFAULT_PAGINATION,
 } from '~/gql/protocols.query';
 
 import { requestGraphQL } from '~/gql/gql.server';

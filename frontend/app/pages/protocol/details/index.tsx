@@ -1,17 +1,29 @@
 import { Link, useSearchParams } from 'react-router';
+import clsx from 'clsx';
 
-import { DocumentIcon } from '~/components/icons/document';
+// Components
 import { TabName } from '~/components/TabName';
 import { SearchBar } from '~/components/SearchBar';
 import { ToTopButton } from '~/components/ToTopButton';
 import { Header } from '~/components/Header';
+
+// Icons
 import { ArrowLeftIcon } from '~/components/icons/arrow-left';
+import { InfoCircleIcon } from '~/components/icons/info-circle';
+import { Stack2Icon } from '~/components/icons/stack-2';
+import { CodeIcon } from '~/components/icons/code';
+import { ChartDots3Icon } from '~/components/icons/chart-dots-3';
+import { ProtocolIcon } from '~/components/icons/protocol';
+
+// Tabs
 import { TabReadme } from './tab/readme';
 import { TabTransactions } from './tab/transactions';
-import { Info } from './info';
+import { TabTx3File } from './tab/tx3File';
+import { TabDiagrams } from './tab/diagrams';
+import { TabDeploy } from './tab/deploy';
 
-type Tab = 'readme' | 'transactions';
-const validTabs: Tab[] = ['readme', 'transactions'];
+const validTabs = ['readme', 'transactions', 'tx3-file', 'diagrams', 'deploy'] as const;
+type Tab = typeof validTabs[number];
 
 function getValidTab(tab?: string): Tab {
   if (!tab) return 'readme';
@@ -31,43 +43,70 @@ export function ProtocolDetails({ protocol }: { protocol: Protocol; }) {
     <>
       <Header
         appName="Registry"
-        centerNode={<SearchBar className="md:max-w-[500px]" dark />}
+        centerNode={<SearchBar className="md:max-w-[426px] mx-auto" dark />}
       />
-      <main className="mt-20">
-        <h1 className="text-3xl font-semibold mt-20">{protocol.name}</h1>
-        <div className="mt-2 text-xl">
-          <h2 className="inline text-primary-400">@{protocol.scope}</h2>
-          <span className="text-white/60"> • v{protocol.version}</span>
-        </div>
-        <p className="text-white/30 mt-6">{protocol.description}</p>
-
-        <div className="flex mt-14 border-b-[#3E3E3E] border-b gap-8">
-          <TabName
-            icon={<DocumentIcon width="18" height="18" gradient={activeTab === 'readme' ? 'secondary' : undefined} />}
-            name="Readme"
-            active={activeTab === 'readme'}
-            onClick={() => setSearchParams({ activeTab: 'readme' })}
-          />
-          <TabName
-            icon={<DocumentIcon width="18" height="18" gradient={activeTab === 'transactions' ? 'secondary' : undefined} />}
-            name="Transactions"
-            active={activeTab === 'transactions'}
-            onClick={() => setSearchParams({ activeTab: 'transactions' })}
-          />
-        </div>
-
-        <div className="flex gap-14 mt-8 items-start">
-          <div className="w-full">
-            {activeTab === 'readme' && <TabReadme readme={protocol.readme} />}
-            {activeTab === 'transactions' && <TabTransactions protocol={protocol} />}
+      <main className="mt-8 flex flex-col flex-1">
+        <div className="container relative after:content-[''] after:absolute after:w-[719px] after:h-[559.95px] after:bg-[radial-gradient(ellipse_359px_280px_at_center,#5A5BED_0%,rgba(37,45,71,0)_100%)] after:-right-[223px] after:-top-12.5 after:-z-1 after:opacity-15">
+          <div className="border-l-[7px] border-zinc-800 rounded-sm pl-4">
+            <h1 className="text-3xl font-semibold">{protocol.name}</h1>
+            <div className="mt-2">
+              <h2 className="inline text-primary-600">@{protocol.scope}</h2>
+              <span className="opacity-50"> • v{protocol.version}</span>
+            </div>
           </div>
-          <Info protocol={protocol} className="max-w-[460px] sticky top-8" />
+
+          <div className="flex mt-8 gap-2">
+            <TabName
+              icon={<InfoCircleIcon width="20" height="20" />}
+              name="Readme"
+              active={activeTab === 'readme'}
+              onClick={() => setSearchParams({ activeTab: 'readme' })}
+            />
+            <TabName
+              icon={<Stack2Icon width="20" height="20" />}
+              name="Transactions"
+              active={activeTab === 'transactions'}
+              onClick={() => setSearchParams({ activeTab: 'transactions' })}
+            />
+            <TabName
+              icon={<CodeIcon width="20" height="20" />}
+              name="Tx3 File"
+              active={activeTab === 'tx3-file'}
+              onClick={() => setSearchParams({ activeTab: 'tx3-file' })}
+            />
+            <TabName
+              icon={<ChartDots3Icon width="20" height="20" />}
+              name="Diagrams"
+              active={activeTab === 'diagrams'}
+              onClick={() => setSearchParams({ activeTab: 'diagrams' })}
+            />
+            <TabName
+              icon={<ProtocolIcon width="20" height="20" />}
+              name="Deploy"
+              active={activeTab === 'deploy'}
+              onClick={() => setSearchParams({ activeTab: 'deploy' })}
+            />
+          </div>
+        </div>
+
+        <div className={clsx(
+          'border-y border-zinc-800 w-full flex flex-col flex-1',
+          activeTab !== 'readme' && 'bg-woodsmoke-950',
+        )}
+        >
+          {activeTab === 'readme' && <TabReadme protocol={protocol} />}
+          {activeTab === 'transactions' && <TabTransactions protocol={protocol} />}
+          {activeTab === 'tx3-file' && <TabTx3File protocol={protocol} />}
+          {activeTab === 'diagrams' && <TabDiagrams protocol={protocol} />}
+          {activeTab === 'deploy' && <TabDeploy protocol={protocol} />}
+        </div>
+
+        <div className="container py-4">
+          <Link to="/" className="flex items-center gap-3 w-fit text-zinc-400 hover:text-zinc-100 font-medium py-3">
+            <ArrowLeftIcon width="20" height="20" /> Back to all Protocols
+          </Link>
         </div>
         <ToTopButton />
-
-        <Link to="/" className="flex items-center gap-3 w-fit text-white/80 hover:underline hover:underline-offset-[3px] hover:text-primary-400 mt-14">
-          <ArrowLeftIcon width="18" height="18" /> Back to all Protocols
-        </Link>
       </main>
     </>
   );

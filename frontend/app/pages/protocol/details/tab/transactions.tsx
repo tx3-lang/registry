@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
-import { TRPClient } from "tx3-trp";
-import type { TxEnvelope, ProtoTx } from 'tx3-trp';
+import { TRPClient, type ProtoTxRequest, type ResolveResponse } from 'tx3-sdk/trp';
 
+// Components
+import { Alert } from '~/components/ui/Alert';
 import { Button } from '~/components/ui/Button';
+
+// Config
+import { TRP_PREVIEW } from '~/trp-config';
 
 interface Props {
   protocol: Protocol;
@@ -12,122 +16,165 @@ interface TransactionProps {
   tx: Tx;
 }
 
-const Transaction: React.FunctionComponent<TransactionProps> = (props) => {
+interface Response {
+  type: 'success' | 'error';
+  message: string;
+}
+
+function LoadingButton({ asyncOnClick }: { asyncOnClick: () => Promise<void>; }) {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const onClick = async () => {
+    setIsLoading(true);
+    await asyncOnClick();
+    setIsLoading(false);
+  };
+
+  return (
+    <Button type="button" color="zinc" size="s" onClick={onClick} loading={isLoading}>
+      {isLoading ? 'Executing...' : 'Execute'}
+    </Button>
+  );
+}
+
+const Transaction: React.FunctionComponent<TransactionProps> = props => {
   const [tryMode, setTryMode] = useState<boolean>(false);
-  const [parameters, setParameters] = useState<Record<string, string|number>>({});
-  const [response, setResponse] = useState<string|null>(null);
+  const [parameters, setParameters] = useState<Record<string, string | number>>({});
+  const [response, setResponse] = useState<Response | null>(null);
 
   const updateParameter = (key: string, type: string, value: string) => {
     setParameters({ ...parameters, [key]: type === 'Int' ? parseInt(value) : value });
-  }
+  };
 
   const handleExecute = async () => {
-    const protoTx: ProtoTx = {
+    const protoTx: ProtoTxRequest = {
       tir: {
         encoding: 'hex',
         version: props.tx.tirVersion,
-        bytecode: props.tx.tir
+        bytecode: props.tx.tir,
       },
-      args: parameters
+      args: parameters,
     };
 
     const result = await resolveTx(protoTx).catch(error => {
+      // eslint-disable-next-line no-console
       console.error(error);
+      // eslint-disable-next-line no-console
       console.error(error.cause);
-      setResponse(`${error.message}${error.cause?`\n(${error.cause})`:""}`);
+      setResponse({
+        type: 'error',
+        message: `${error.message}\nCause: ${JSON.stringify(error.cause)}` || 'Unknown error',
+      });
     });
 
     if (result) {
-      setResponse(result.tx);
+      setResponse({
+        type: 'success',
+        message: result.tx,
+      });
     }
   };
 
-  const resolveTx = async (tx: ProtoTx): Promise<TxEnvelope> => {
-    const client = new TRPClient({
-      endpoint: "https://cardano-preview.trp-m1.demeter.run",
-      headers: { "dmtr-api-key": "trpjodqbmjblunzpbikpcrl" },
-    });
+  const resolveTx = async (tx: ProtoTxRequest): Promise<ResolveResponse> => {
+    // TODO: allow user to select which trp endpoint to use in the future
+    const client = new TRPClient(TRP_PREVIEW);
 
     return await client.resolve(tx);
-  }
+  };
 
   return (
-    <div className="bg-white/5 border border-[#3E3E3E] p-6 mb-8 rounded-md">
-      <h3 className="text-xl font-semibold text-primary-400 mb-8">Transaction {props.tx.name}</h3>
-
-      <div className="border border-[#3E3E3E] rounded-md">
-        <div className="bg-white/5 py-3 px-4 flex justify-between items-center">
-          <h3 className="text-lg text-white/80 flex-1">Parameters</h3>
-          {!tryMode && (
-            <div className="flex-none">
-              <Button spacing="compact" weight="semibold" color="primary-gradient" text="small" onClick={() => setTryMode(true)}>
-                Try it out
-              </Button>
-            </div>
-          )}
-          {tryMode && (
-            <div className="flex-none">
-              <Button spacing="compact" weight="semibold" color="white" text="small" className="inline-block mr-3" outlined onClick={() => setTryMode(false)}>
-                Cancel
-              </Button>
-              <Button spacing="compact" weight="semibold" color="primary-gradient" text="small" className="inline-block" onClick={handleExecute}>
-                Execute
-              </Button>
-            </div>
-          )}
-        </div>
-        <div className="px-4 py-6">
-          <p className="border-b border-b-white/10 text-white/30 text-base pb-1 flex">
-            <span className="flex-1 basis-1/4">Name</span>
-            {tryMode && (
-              <span className="flex-1 basis-3/4">Values</span>
-            )}
+    <div className="flex gap-9">
+      <div className="w-45">
+        <h3 className="text-lg font-semibold text-zinc-50">{props.tx.name}</h3>
+        {!!props.tx.description && (
+          <p className="mt-3.5 text-zinc-600">
+            {props.tx.description}
           </p>
-          {Object.keys(props.tx.parameters).map((key, index) =>
-            <div key={index} className="border-b border-b-white/10 py-3 flex">
-              <div className="flex-1 basis-1/4">
-                <p className="text-white text-base mb-1">
-                  {key}
-                </p>
-                <p className="text-white/30 text-sm font-roboto">
-                  {props.tx.parameters[key]}
-                </p>
-              </div>
-              {tryMode && (
-                <div className="flex-1 basis-3/4">
-                  <input
-                    type={props.tx.parameters[key] === "Int" ? "number" : "text"}
-                    className="w-full rounded-lg py-3 px-4 bg-white/5"
-                    value={parameters[key]}
-                    onChange={e => updateParameter(key, props.tx.parameters[key], e.target.value)}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
-      {response && (
-        <div className="border border-[#3E3E3E] rounded-md mt-8">
-          <div className="bg-white/5 py-3 px-4 flex justify-between items-center">
-            <h3 className="text-lg text-white/80 flex-1">Response</h3>
+      <div className="w-full border border-zinc-800 bg-zinc-950 rounded-md">
+        <div className="py-3 px-8 flex justify-between items-center border-b border-zinc-800">
+          <h3 className="text-lg text-zinc-400">Parameters</h3>
+          <div className="flex gap-5">
+            {!tryMode
+              ? (
+                <Button type="button" variant="outlined" color="zinc" size="s" onClick={() => setTryMode(true)}>
+                  Try it out
+                </Button>
+              )
+              : (
+                <>
+                  <Button
+                    type="button"
+                    color="zinc"
+                    variant="outlined"
+                    size="s"
+                    onClick={() => {
+                      setTryMode(false);
+                      setResponse(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <LoadingButton asyncOnClick={handleExecute} />
+                </>
+              )}
           </div>
-          <p className="p-4 font-roboto text-white text-wrap break-all">
-            {response}
-          </p>
         </div>
-      )}
+        <div className="px-8 py-5">
+          <p className="border-b border-zinc-900 text-zinc-700 pb-1 flex">
+            <span className="flex-1 basis-1/4">Name</span>
+            <span className="flex-1 basis-3/4">Description</span>
+          </p>
+          {props.tx.parameters.map(param => (
+            <div key={param.name} className="border-b last:border-b-0 border-zinc-900 flex py-4 last:pb-0 gap-1">
+              <div className="flex-1 basis-1/4">
+                <p className="text-zinc-50 text-base wrap-anywhere">
+                  {param.name} <span className="text-rose-400">*</span>
+                </p>
+                <p className="text-zinc-600 text-sm font-mono mt-2">
+                  {param.type}
+                </p>
+              </div>
+              <div className="flex-1 basis-3/4 flex flex-col gap-3">
+                {!!param.description && (
+                  <p className="text-sm text-zinc-50">
+                    {param.description}
+                  </p>
+                )}
+                {tryMode && (
+                  <input
+                    type={param.type === 'Int' ? 'number' : 'text'}
+                    className="w-full rounded-lg py-2.5 px-4 bg-woodsmoke-950 border border-zinc-800 text-zinc-100 text-sm"
+                    value={parameters[param.name]}
+                    onChange={e => updateParameter(param.name, param.type, e.target.value)}
+                  />
+                )}
+              </div>
+            </div>
+          ),
+          )}
+        </div>
+
+        {response && (
+          <div className="px-8 py-6 max-h-55 flex">
+            <Alert type={response.type} title="Response" textToCopy={response.message}>
+              {response.message}
+            </Alert>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
 export function TabTransactions({ protocol }: Props) {
   return (
-    <div>
-      {protocol.transactions.map((tx, index) =>
-        <Transaction key={index} tx={tx} />
-      )}
+    <div className="container pt-8 pb-14 flex flex-col gap-8">
+      {protocol.transactions.map(tx => (
+        <Transaction key={tx.name} tx={tx} />
+      ))}
     </div>
   );
 }
