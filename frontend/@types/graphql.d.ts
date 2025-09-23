@@ -12,8 +12,6 @@ interface Scalars {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
-  /** A scalar that can represent any JSON Object value. */
-  JSONObject: { input: any; output: any; }
 }
 
 /** Information about pagination in a connection */
@@ -91,9 +89,16 @@ interface QueryProtocolsArgs {
 }
 
 interface Tx {
+  description: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
-  parameters: Scalars['JSONObject']['output'];
+  parameters: Array<TxParam>;
   svg: Maybe<Scalars['String']['output']>;
   tir: Scalars['String']['output'];
   tirVersion: Scalars['String']['output'];
+}
+
+interface TxParam {
+  description: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  type: Scalars['String']['output'];
 }

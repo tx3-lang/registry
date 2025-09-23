@@ -78,6 +78,7 @@ export const DETAIL_QUERY = gql`
     protocol(scope: $scope, name: $name) {
       id
       name
+      description
       scope
       version
       publishedDate
@@ -87,7 +88,11 @@ export const DETAIL_QUERY = gql`
       source
       transactions {
         name
-        parameters
+        parameters {
+          name
+          type
+          description
+        }
         tir
         tirVersion
         svg

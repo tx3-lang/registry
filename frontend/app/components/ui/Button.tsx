@@ -55,15 +55,17 @@ interface Props extends ButtonVariants {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   loading?: boolean;
+  title?: string;
 }
 
-export function Button({ type, children, onClick, ...buttonProps }: PropsWithChildren<Props>) {
+export function Button({ type, children, onClick, title, ...buttonProps }: PropsWithChildren<Props>) {
   return (
     <button
       type={type}
       onClick={!buttonProps.disabled ? onClick : undefined}
       className={button(buttonProps)}
       disabled={buttonProps.loading || buttonProps.disabled}
+      title={title}
     >
       {children}
     </button>

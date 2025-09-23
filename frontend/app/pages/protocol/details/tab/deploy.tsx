@@ -1,4 +1,8 @@
 import type { ReactNode } from 'react';
+
+// Components
+import { TerminalIcon } from '~/components/icons/terminal';
+import { VectorSplineIcon } from '~/components/icons/vector-spline';
 import { BellRinging2Icon } from '~/components/icons/bell-ringing-2';
 import { BoltIcon } from '~/components/icons/bolt';
 import { DownloadIcon } from '~/components/icons/download';
@@ -8,10 +12,6 @@ import { GraphIcon } from '~/components/icons/graph';
 import { PlugConnectedIcon } from '~/components/icons/plug-connected';
 import { RocketIcon } from '~/components/icons/rocket';
 import { ShieldCheckIcon } from '~/components/icons/shield-check';
-
-// Components
-import { TerminalIcon } from '~/components/icons/terminal';
-import { VectorSplineIcon } from '~/components/icons/vector-spline';
 import { Button } from '~/components/ui/Button';
 
 interface Props {
@@ -65,7 +65,16 @@ export function TabDeploy({ protocol }: Props) {
           </h4>
           <ListBox items={manualDeploymentItems} />
           {/* https://docs.txpipe.io/tx3 */}
-          <Button variant="outlined" color="zinc" className="rounded-lg" full>
+          <Button
+            type="button"
+            variant="outlined"
+            color="zinc"
+            className="rounded-lg"
+            full
+            onClick={() => {
+              window.open('https://docs.txpipe.io/tx3', '_blank', 'noopener,noreferrer');
+            }}
+          >
             <FileDescriptionIcon width="20" height="20" />
             Read the docs
           </Button>
@@ -77,7 +86,7 @@ export function TabDeploy({ protocol }: Props) {
             One-click Deploy
           </h4>
           <ListBox items={oneClickDeploymentItems} removeLastBorder />
-          <Button color="zinc" className="rounded-lg" full>
+          <Button color="zinc" className="rounded-lg" full disabled title="Coming soon">
             <RocketIcon width="20" height="20" />
             Deploy with Tx3 Cloud
           </Button>

@@ -1,6 +1,5 @@
 use std::fmt;
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
+// use serde::{Deserialize, Serialize};
 use async_graphql::{ComplexObject, Enum, SimpleObject, ID};
 
 mod query;
@@ -22,11 +21,19 @@ pub struct Protocol {
     description: Option<String>,
 }
 
-#[derive(SimpleObject, Deserialize, Serialize, Clone)]
+#[derive(SimpleObject, Clone)]
+pub struct TxParam {
+    name: String,
+    r#type: String,
+    description: Option<String>,
+}
+
+#[derive(SimpleObject, Clone)]
 #[graphql(complex)]
 pub struct Tx {
     name: String,
-    parameters: HashMap<String, String>,
+    description: Option<String>,
+    parameters: Vec<TxParam>,
     tir: String,
     tir_version: String,
 
@@ -41,12 +48,20 @@ impl Protocol {
         let protocol = tx3_lang::Protocol::from_string(self.source.clone().unwrap()).load().unwrap();
         for tx in protocol.txs() {
             let prototx = protocol.new_tx(&tx.name.value).unwrap();
-            let mut parameters: HashMap<String, String> = HashMap::new();
+            let mut parameters: Vec<TxParam> = Vec::new();
             for param in prototx.find_params() {
-                parameters.insert(param.0.clone(), format!("{:?}", param.1));
+                parameters.push(TxParam {
+                    name: param.0.clone(),
+                    r#type: format!("{:?}", param.1),
+                    // TODO: Add description when supported in tx3-lang
+                    description: None,
+                });
             }
+            parameters.sort_by_key(|p| p.name.clone());
             txs.push(Tx {
                 name: tx.name.value.clone(),
+                // TODO: Add description when supported in tx3-lang
+                description: None,
                 parameters,
                 tir: hex::encode(prototx.ir_bytes()),
                 tir_version: tx3_lang::ir::IR_VERSION.to_string(),
@@ -64,7 +79,7 @@ impl Tx {
             let protocol = tx3_lang::Protocol::from_string(source.clone()).load().unwrap();
             let ast= protocol.ast();
             let tx_def = protocol.txs().find(|t| t.name.value == self.name)?;
-            Some(ast_to_svg::tx_to_svg(ast, tx_def, self.parameters.clone().into_keys().collect()))
+            Some(ast_to_svg::tx_to_svg(ast, tx_def, self.parameters.iter().map(|p| p.name.clone()).collect()))
         } else {
             None
         }

@@ -330,7 +330,7 @@ fn render_tx(tx: &TxDef, params: &Vec<String>, x: i32, y: i32) -> String {
         r#"<g transform="translate(-{unit})">
         <svg x="{x}" y="{y}" width="{width}" height="{height}" viewBox="0 0 {unit} {double_unit}">
             <rect width="100%" height="100%" rx="{corner}" ry="{corner}" fill-opacity="0" stroke="white" stroke-width="0.25" stroke-linecap="round" stroke-linejoin="round"/>
-            <text x="50%" y="2" text-anchor="middle" dominant-baseline="middle" font-size="10%" font-family="monospace" font-weight="bold" fill="rgb(255, 255, 255)">{name}</text>"#,
+            <text x="50%" y="3" text-anchor="middle" dominant-baseline="middle" font-size="10%" font-family="monospace" font-weight="bold" fill="rgb(255, 255, 255)">{name}</text>"#,
         x = x,
         y = y,
         unit = UNIT,
@@ -344,8 +344,8 @@ fn render_tx(tx: &TxDef, params: &Vec<String>, x: i32, y: i32) -> String {
     for (i, param_name) in params.iter().enumerate() {
         write!(
             tx_box,
-            r#"<text x="50%" y="{y}" text-anchor="middle" dominant-baseline="middle" font-size="8%" font-family="monospace" fill="white">{param}</text>"#,
-            y = (i as f64 * 1.5) + (UNIT / 4) as f64 + 2.0,
+            r#"<text x="50%" y="{y}" text-anchor="middle" dominant-baseline="middle" font-size="7%" font-family="monospace" fill="white">{param}</text>"#,
+            y = (i as f64 * 1.5) + (UNIT / 4) as f64 + 3.0,
             param = param_name
         )
         .unwrap();

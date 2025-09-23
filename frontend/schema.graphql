@@ -1,9 +1,4 @@
 """
-A scalar that can represent any JSON Object value.
-"""
-scalar JSONObject
-
-"""
 Information about pagination in a connection
 """
 type PageInfo {
@@ -88,10 +83,17 @@ type Query {
 
 type Tx {
 	name: String!
-	parameters: JSONObject!
+	description: String
+	parameters: [TxParam!]!
 	tir: String!
 	tirVersion: String!
 	svg: String
+}
+
+type TxParam {
+	name: String!
+	type: String!
+	description: String
 }
 
 """

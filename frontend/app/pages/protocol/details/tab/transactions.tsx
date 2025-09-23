@@ -68,12 +68,13 @@ const Transaction: React.FunctionComponent<TransactionProps> = props => {
 
   return (
     <div className="flex gap-9">
-      <div className="max-w-45">
+      <div className="w-45">
         <h3 className="text-lg font-semibold text-zinc-50">{props.tx.name}</h3>
-        <p className="mt-3.5 text-zinc-600">
-          Lorem ipsum dolor sit amet consectetur. Et tortor amet est cursus pellentesque nunc tincidunt adipiscing.
-          Placerat amet at urna imperdiet rutrum enim aliquet orci. Eget scelerisque tristique a integer egestas...
-        </p>
+        {!!props.tx.description && (
+          <p className="mt-3.5 text-zinc-600">
+            {props.tx.description}
+          </p>
+        )}
       </div>
 
       <div className="w-full border border-zinc-800 bg-zinc-950 rounded-md">
@@ -103,27 +104,28 @@ const Transaction: React.FunctionComponent<TransactionProps> = props => {
             <span className="flex-1 basis-1/4">Name</span>
             <span className="flex-1 basis-3/4">Description</span>
           </p>
-          {Object.keys(props.tx.parameters).map(key => (
-            <div key={key} className="border-b last:border-b-0 border-zinc-900 flex py-4 last:pb-0 gap-1">
+          {props.tx.parameters.map(param => (
+            <div key={param.name} className="border-b last:border-b-0 border-zinc-900 flex py-4 last:pb-0 gap-1">
               <div className="flex-1 basis-1/4">
                 <p className="text-zinc-50 text-base wrap-anywhere">
-                  {key} <span className="text-rose-400">*</span>
+                  {param.name} <span className="text-rose-400">*</span>
                 </p>
                 <p className="text-zinc-600 text-sm font-mono mt-2">
-                  {props.tx.parameters[key]}
+                  {param.type}
                 </p>
               </div>
               <div className="flex-1 basis-3/4 flex flex-col gap-3">
-                <p className="text-sm text-zinc-50">
-                  Lorem ipsum dolor sit amet consectetur. Nunc donec velit at lorem neque vulputate vel.
-                  Sit purus orci aliquet nullam.
-                </p>
+                {!!param.description && (
+                  <p className="text-sm text-zinc-50">
+                    {param.description}
+                  </p>
+                )}
                 {tryMode && (
                   <input
-                    type={props.tx.parameters[key] === 'Int' ? 'number' : 'text'}
+                    type={param.type === 'Int' ? 'number' : 'text'}
                     className="w-full rounded-lg py-2.5 px-4 bg-woodsmoke-950 border border-zinc-800 text-zinc-100 text-sm"
-                    value={parameters[key]}
-                    onChange={e => updateParameter(key, props.tx.parameters[key], e.target.value)}
+                    value={param.type}
+                    onChange={e => updateParameter(param.name, param.type, e.target.value)}
                   />
                 )}
               </div>
