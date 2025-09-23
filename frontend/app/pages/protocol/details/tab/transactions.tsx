@@ -21,6 +21,22 @@ interface Response {
   message: string;
 }
 
+function LoadingButton({ asyncOnClick }: { asyncOnClick: () => Promise<void>; }) {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const onClick = async () => {
+    setIsLoading(true);
+    await asyncOnClick();
+    setIsLoading(false);
+  };
+
+  return (
+    <Button type="button" color="zinc" size="s" onClick={onClick} loading={isLoading}>
+      {isLoading ? 'Executing...' : 'Execute'}
+    </Button>
+  );
+}
+
 const Transaction: React.FunctionComponent<TransactionProps> = props => {
   const [tryMode, setTryMode] = useState<boolean>(false);
   const [parameters, setParameters] = useState<Record<string, string | number>>({});
@@ -89,12 +105,19 @@ const Transaction: React.FunctionComponent<TransactionProps> = props => {
               )
               : (
                 <>
-                  <Button type="button" color="zinc" variant="outlined" size="s" onClick={() => setTryMode(false)}>
+                  <Button
+                    type="button"
+                    color="zinc"
+                    variant="outlined"
+                    size="s"
+                    onClick={() => {
+                      setTryMode(false);
+                      setResponse(null);
+                    }}
+                  >
                     Cancel
                   </Button>
-                  <Button type="button" color="zinc" size="s" onClick={handleExecute}>
-                    Execute
-                  </Button>
+                  <LoadingButton asyncOnClick={handleExecute} />
                 </>
               )}
           </div>
@@ -124,7 +147,7 @@ const Transaction: React.FunctionComponent<TransactionProps> = props => {
                   <input
                     type={param.type === 'Int' ? 'number' : 'text'}
                     className="w-full rounded-lg py-2.5 px-4 bg-woodsmoke-950 border border-zinc-800 text-zinc-100 text-sm"
-                    value={param.type}
+                    value={parameters[param.name]}
                     onChange={e => updateParameter(param.name, param.type, e.target.value)}
                   />
                 )}
