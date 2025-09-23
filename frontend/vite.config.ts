@@ -12,6 +12,7 @@ export default defineConfig(({ isSsrBuild }) => ({
         input: './server/app.ts',
       }
       : undefined,
+    target: 'es2022',
   },
   plugins: [
     tailwindcss(),

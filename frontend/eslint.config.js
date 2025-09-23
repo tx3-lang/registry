@@ -20,7 +20,7 @@ export default [
     files: ['**/*.{ts,tsx,js,jsx,cjs}'],
     ignores: ['build/**/*', 'app/entry.server.tsx', 'app/entry.client.tsx', 'app/spec/**/*', '@types/graphql.d.ts'],
     languageOptions: {
-      ecmaVersion: 2020,
+      ecmaVersion: 2022,
       parser: parserTs,
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
