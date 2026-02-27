@@ -87,8 +87,8 @@ importers:
         specifier: ^3.1.1
         version: 3.1.1(tailwind-merge@3.3.1)(tailwindcss@4.1.13)
       tx3-sdk:
-        specifier: ^0.6.0
-        version: 0.6.0
+        specifier: ^0.7.0
+        version: 0.7.0
     devDependencies:
       '@eslint/compat':
         specifier: ^1.3.2
@@ -2042,6 +2042,9 @@ packages:
   beautify@0.0.8:
     resolution: {integrity: sha512-1iF6Ey2qxDkm6bPgKcoXUmwFDpoRi5IgwefQDDQBRLxlZAAYwcULoQ2IdBArXZuSsuL7AT+KvZI9xZVLeUZPRg==}
     hasBin: true
+
+  bech32@2.0.0:
+    resolution: {integrity: sha512-LcknSilhIGatDAsY1ak2I8VtGaHNhgMSYVxFrGLXv+xLHytaKZKcaUJJUE7qmBr7h33o5YQwP55pMI0xmkpJwg==}
 
   bippy@0.3.14:
     resolution: {integrity: sha512-lg8i4YjVBcAsF8mKVaWjbgG/yo1fY9SUbGgilsnkOnLyU37Jj0XDLWTBeuZjFrrd6LNf1od8/tO/soIi2KUTrw==}
@@ -4485,8 +4488,8 @@ packages:
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
-  tx3-sdk@0.6.0:
-    resolution: {integrity: sha512-zsh+ynpplqENS3exR/6Ob2PhO5bTDP3ojId9gmkL0ON0oUHBQnj8r8N06H7DUwt3c4k3r83AtI3HvkSg2rSUBA==}
+  tx3-sdk@0.7.0:
+    resolution: {integrity: sha512-RO0Bk9uYduktDTfBhIP38ob5T0GUi0Zw8F8F7iOT1IF9gqYcJAWKXPMHS54muny4HG0F11AlQ6diybmKmC0sxA==}
 
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
@@ -6983,6 +6986,8 @@ snapshots:
       cssbeautify: 0.3.1
       html: 1.0.0
       js-beautify: 1.15.4
+
+  bech32@2.0.0: {}
 
   bippy@0.3.14(@types/react@19.2.7)(react@19.2.1):
     dependencies:
@@ -9847,7 +9852,9 @@ snapshots:
 
   tslib@2.8.1: {}
 
-  tx3-sdk@0.6.0: {}
+  tx3-sdk@0.7.0:
+    dependencies:
+      bech32: 2.0.0
 
   type-check@0.4.0:
     dependencies:
