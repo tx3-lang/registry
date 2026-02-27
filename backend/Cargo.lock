@@ -2828,6 +2828,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tx3-lang",
+ "tx3-tir",
  "urlencoding",
  "uuid",
 ]
