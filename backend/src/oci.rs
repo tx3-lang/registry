@@ -4,6 +4,7 @@ use serde_json::{Number, Value};
 
 const MARKDOWN_MEDIA_TYPE: &str = "text/markdown";
 const PROTOCOL_MEDIA_TYPE: &str = "application/tx3";
+const TII_MEDIA_TYPE: &str = "application/tii+json";
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -113,7 +114,7 @@ pub async fn get_oci_image(repo: &str, tag: &str) -> Result<ImageData, Box<dyn s
     let content = client.pull(
         &reference,
         &auth,
-        vec![MARKDOWN_MEDIA_TYPE, PROTOCOL_MEDIA_TYPE]
+        vec![MARKDOWN_MEDIA_TYPE, PROTOCOL_MEDIA_TYPE, TII_MEDIA_TYPE]
     ).await?;
 
     Ok(content)
@@ -134,6 +135,16 @@ pub fn get_protocol(image: &ImageData) -> Option<String> {
 
     if let Some(protocol) = protocol {
         return Some(String::from_utf8_lossy(&protocol.data).to_string());
+    }
+
+    return None;
+}
+
+pub fn get_tii(image: &ImageData) -> Option<String> {
+    let tii = image.layers.iter().find(|l| l.media_type == TII_MEDIA_TYPE);
+
+    if let Some(tii) = tii {
+        return Some(String::from_utf8_lossy(&tii.data).to_string());
     }
 
     return None;

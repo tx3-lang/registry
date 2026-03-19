@@ -1,3 +1,8 @@
+type EnvironmentParam {
+	name: String!
+	type: String!
+}
+
 """
 Information about pagination in a connection
 """
@@ -25,6 +30,23 @@ type PaginationInfo {
 	pageSize: Int!
 }
 
+type Party {
+	name: String!
+	description: String
+}
+
+type Profile {
+	name: String!
+	description: String
+	environment: String
+	parties: [ProfileParty!]!
+}
+
+type ProfileParty {
+	name: String!
+	address: String!
+}
+
 type Protocol {
 	id: ID!
 	name: String!
@@ -36,6 +58,9 @@ type Protocol {
 	source: String
 	description: String
 	transactions: [Tx!]!
+	parties: [Party!]!
+	profiles: [Profile!]!
+	environment: [EnvironmentParam!]!
 }
 
 type ProtocolConnection {

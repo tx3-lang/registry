@@ -88,6 +88,7 @@ export const DETAIL_QUERY = gql`
       source
       transactions {
         name
+        description
         parameters {
           name
           type
@@ -96,6 +97,15 @@ export const DETAIL_QUERY = gql`
         tir
         tirVersion
         svg
+      }
+      profiles {
+        name
+        description
+        environment
+        parties {
+          name
+          address
+        }
       }
     }
   }

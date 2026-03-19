@@ -2,7 +2,7 @@ use async_graphql::{connection::Edge, types::connection::Connection, Context, Er
 use urlencoding::encode;
 
 use crate::{oci, schema::pagination::AdditionalInfo};
-use super::{Protocol, ProtocolSort};
+use super::{Protocol, ProtocolSort, TiiFile};
 
 #[derive(Default)]
 pub struct ProtocolQuery;
@@ -80,6 +80,7 @@ impl ProtocolQuery {
                             published_date,
                             source,
                             readme: None,
+                            tii: None,
                         };
 
                         connection.edges.push(Edge::new(offset_usize + idx, protocol));
@@ -125,6 +126,8 @@ impl ProtocolQuery {
 
                     let readme = oci::get_readme(oci_image.as_ref().unwrap());
                     let source = oci::get_protocol(oci_image.as_ref().unwrap());
+                    let tii = oci::get_tii(oci_image.as_ref().unwrap())
+                        .and_then(|json| serde_json::from_str::<TiiFile>(&json).ok());
 
                     let published_date = if let Some(published_date) = summary.newest_image.last_updated {
                         chrono::DateTime::parse_from_rfc3339(&published_date)
@@ -142,6 +145,7 @@ impl ProtocolQuery {
                         published_date,
                         source,
                         readme,
+                        tii,
                     };
 
                     return Ok(Some(protocol));

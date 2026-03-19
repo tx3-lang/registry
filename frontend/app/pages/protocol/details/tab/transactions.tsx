@@ -4,9 +4,10 @@ import { TRPClient, type ProtoTxRequest, type ResolveResponse } from 'tx3-sdk/tr
 // Components
 import { Alert } from '~/components/ui/Alert';
 import { Button } from '~/components/ui/Button';
+import { Dropdown } from '~/components/ui/Dropdown';
 
 // Config
-import { TRP_PREVIEW } from '~/trp-config';
+import { getTrpForProfile } from '~/trp-config';
 
 interface Props {
   protocol: Protocol;
@@ -14,6 +15,7 @@ interface Props {
 
 interface TransactionProps {
   tx: Tx;
+  profiles: Profile[];
 }
 
 interface Response {
@@ -37,13 +39,60 @@ function LoadingButton({ asyncOnClick }: { asyncOnClick: () => Promise<void>; })
   );
 }
 
+function hasEnvironment(env: string | null | undefined): boolean {
+  if (!env) return false;
+  try { return Object.keys(JSON.parse(env)).length > 0; } catch { return false; }
+}
+
+function getDefaultProfile(profiles: Profile[]): string {
+  const withInfo = profiles.find(p => p.parties.length > 0 || hasEnvironment(p.environment));
+  if (withInfo) return withInfo.name;
+
+  const mainnet = profiles.find(p => p.name === 'mainnet');
+  if (mainnet) return mainnet.name;
+
+  return profiles.length > 0 ? profiles[0].name : '';
+}
+
 const Transaction: React.FunctionComponent<TransactionProps> = props => {
   const [tryMode, setTryMode] = useState<boolean>(false);
   const [parameters, setParameters] = useState<Record<string, string | number>>({});
   const [response, setResponse] = useState<Response | null>(null);
 
+  const hasProfiles = props.profiles.length > 0;
+  const [selectedProfileName, setSelectedProfileName] = useState<string>(getDefaultProfile(props.profiles));
+  const selectedProfile = props.profiles.find(p => p.name === selectedProfileName) ?? null;
+
+  const profileOptions = props.profiles.map(p => ({
+    label: p.name,
+    value: p.name,
+  }));
+
   const updateParameter = (key: string, type: string, value: string) => {
     setParameters({ ...parameters, [key]: type === 'Int' ? parseInt(value) : value });
+  };
+
+  const buildArgs = (): Record<string, string | number> => {
+    const profileArgs: Record<string, string> = {};
+
+    if (selectedProfile) {
+      for (const party of selectedProfile.parties) {
+        profileArgs[party.name] = party.address;
+      }
+
+      if (selectedProfile.environment) {
+        try {
+          const env = JSON.parse(selectedProfile.environment);
+          for (const [key, value] of Object.entries(env)) {
+            profileArgs[key] = String(value);
+          }
+        } catch {
+          // ignore parse errors
+        }
+      }
+    }
+
+    return { ...profileArgs, ...parameters };
   };
 
   const handleExecute = async () => {
@@ -51,9 +100,9 @@ const Transaction: React.FunctionComponent<TransactionProps> = props => {
       tir: {
         encoding: 'hex',
         version: props.tx.tirVersion,
-        bytecode: props.tx.tir,
+        content: props.tx.tir,
       },
-      args: parameters,
+      args: buildArgs(),
     };
 
     const result = await resolveTx(protoTx).catch(error => {
@@ -76,10 +125,32 @@ const Transaction: React.FunctionComponent<TransactionProps> = props => {
   };
 
   const resolveTx = async (tx: ProtoTxRequest): Promise<ResolveResponse> => {
-    // TODO: allow user to select which trp endpoint to use in the future
-    const client = new TRPClient(TRP_PREVIEW);
+    const client = new TRPClient(getTrpForProfile(selectedProfileName));
 
     return await client.resolve(tx);
+  };
+
+  const getProfileValue = (paramName: string): string | undefined => {
+    if (!selectedProfile) return undefined;
+
+    const partyMatch = selectedProfile.parties.find(p => p.name === paramName);
+    if (partyMatch) return partyMatch.address;
+
+    if (selectedProfile.environment) {
+      try {
+        const env = JSON.parse(selectedProfile.environment);
+        if (paramName in env) return String(env[paramName]);
+      } catch {
+        // ignore parse errors
+      }
+    }
+
+    return undefined;
+  };
+
+  const getParameterValue = (paramName: string): string | number | undefined => {
+    if (parameters[paramName] !== undefined) return parameters[paramName];
+    return getProfileValue(paramName);
   };
 
   return (
@@ -96,7 +167,7 @@ const Transaction: React.FunctionComponent<TransactionProps> = props => {
       <div className="w-full border border-zinc-800 bg-zinc-950 rounded-md">
         <div className="py-3 px-8 flex justify-between items-center border-b border-zinc-800">
           <h3 className="text-lg text-zinc-400">Parameters</h3>
-          <div className="flex gap-5">
+          <div className="flex gap-5 items-center">
             {!tryMode
               ? (
                 <Button type="button" variant="outlined" color="zinc" size="s" onClick={() => setTryMode(true)}>
@@ -105,6 +176,15 @@ const Transaction: React.FunctionComponent<TransactionProps> = props => {
               )
               : (
                 <>
+                  {hasProfiles && (
+                    <Dropdown
+                      label="Profile"
+                      showValue
+                      value={selectedProfileName}
+                      options={profileOptions}
+                      onOptionSelected={setSelectedProfileName}
+                    />
+                  )}
                   <Button
                     type="button"
                     color="zinc"
@@ -147,7 +227,7 @@ const Transaction: React.FunctionComponent<TransactionProps> = props => {
                   <input
                     type={param.type === 'Int' ? 'number' : 'text'}
                     className="w-full rounded-lg py-2.5 px-4 bg-woodsmoke-950 border border-zinc-800 text-zinc-100 text-sm"
-                    value={parameters[param.name]}
+                    value={getParameterValue(param.name) ?? ''}
                     onChange={e => updateParameter(param.name, param.type, e.target.value)}
                   />
                 )}
@@ -170,10 +250,12 @@ const Transaction: React.FunctionComponent<TransactionProps> = props => {
 };
 
 export function TabTransactions({ protocol }: Props) {
+  const profiles = protocol.profiles ?? [];
+
   return (
     <div className="container pt-8 pb-14 flex flex-col gap-8">
       {protocol.transactions.map(tx => (
-        <Transaction key={tx.name} tx={tx} />
+        <Transaction key={tx.name} tx={tx} profiles={profiles} />
       ))}
     </div>
   );
