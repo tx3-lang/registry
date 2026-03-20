@@ -14,6 +14,7 @@ import { Stack2Icon } from '~/components/icons/stack-2';
 import { CodeIcon } from '~/components/icons/code';
 import { ChartDots3Icon } from '~/components/icons/chart-dots-3';
 import { ProtocolIcon } from '~/components/icons/protocol';
+import { FileDescriptionIcon } from '~/components/icons/file-description';
 
 // Tabs
 import { TabReadme } from './tab/readme';
@@ -35,7 +36,7 @@ function getValidTab(tab?: string): Tab {
   return 'readme';
 }
 
-export function ProtocolDetails({ protocol }: { protocol: Protocol; }) {
+export function ProtocolDetails({ protocol, rpcDocsUrl }: { protocol: Protocol; rpcDocsUrl: string | null; }) {
   const [searchParams, setSearchParams] = useSearchParams({ activeTab: 'readme' });
   const activeTab: Tab = getValidTab(searchParams.get('activeTab')?.toLowerCase());
 
@@ -86,6 +87,15 @@ export function ProtocolDetails({ protocol }: { protocol: Protocol; }) {
               active={activeTab === 'deploy'}
               onClick={() => setSearchParams({ activeTab: 'deploy' })}
             />
+            {rpcDocsUrl && (
+              <a href={rpcDocsUrl} target="_blank" rel="noreferrer">
+                <TabName
+                  icon={<FileDescriptionIcon width="20" height="20" />}
+                  name="RPC Docs"
+                  active={false}
+                />
+              </a>
+            )}
           </div>
         </div>
 
