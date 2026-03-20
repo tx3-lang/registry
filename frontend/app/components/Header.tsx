@@ -31,6 +31,9 @@ export function Header({ className, appName, appLink, centerNode }: Props) {
         <nav className="flex items-center justify-end gap-8" style={{ gridArea: 'nav' }}>
           <NavLink to={import.meta.env.VITE_DOCS_URL} target="_blank" rel="noreferrer">Docs</NavLink>
           <NavLink to="/" className="text-primary-600">Registry</NavLink>
+          {import.meta.env.VITE_API_DOCS_URL && (
+            <NavLink to={import.meta.env.VITE_API_DOCS_URL} target="_blank" rel="noreferrer">RPC Docs</NavLink>
+          )}
           {/* <NavLink to="/support">Support</NavLink> */}
         </nav>
       </div>

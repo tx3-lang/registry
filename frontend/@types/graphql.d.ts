@@ -14,6 +14,11 @@ interface Scalars {
   Float: { input: number; output: number; }
 }
 
+interface EnvironmentParam {
+  name: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+}
+
 /** Information about pagination in a connection */
 interface PageInfo {
   /** When paginating forwards, the cursor to continue. */
@@ -31,10 +36,30 @@ interface PaginationInfo {
   totalNodes: Scalars['Int']['output'];
 }
 
+interface Party {
+  description: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+}
+
+interface Profile {
+  description: Maybe<Scalars['String']['output']>;
+  environment: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  parties: Array<ProfileParty>;
+}
+
+interface ProfileParty {
+  address: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+}
+
 interface Protocol {
   description: Maybe<Scalars['String']['output']>;
+  environment: Array<EnvironmentParam>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
+  parties: Array<Party>;
+  profiles: Array<Profile>;
   publishedDate: Scalars['Int']['output'];
   readme: Maybe<Scalars['String']['output']>;
   repositoryUrl: Maybe<Scalars['String']['output']>;
