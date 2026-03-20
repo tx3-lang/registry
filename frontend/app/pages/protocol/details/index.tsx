@@ -14,15 +14,16 @@ import { Stack2Icon } from '~/components/icons/stack-2';
 import { CodeIcon } from '~/components/icons/code';
 import { ChartDots3Icon } from '~/components/icons/chart-dots-3';
 import { ProtocolIcon } from '~/components/icons/protocol';
+import { FileDescriptionIcon } from '~/components/icons/file-description';
 
 // Tabs
 import { TabReadme } from './tab/readme';
-import { TabTransactions } from './tab/transactions';
+import { TabTryOut } from './tab/tryOut';
 import { TabTx3File } from './tab/tx3File';
-import { TabDiagrams } from './tab/diagrams';
+import { TabProtocol } from './tab/protocol';
 import { TabDeploy } from './tab/deploy';
 
-const validTabs = ['readme', 'transactions', 'tx3-file', 'diagrams', 'deploy'] as const;
+const validTabs = ['readme', 'protocol', 'tx3-file', 'try-out', 'deploy'] as const;
 type Tab = typeof validTabs[number];
 
 function getValidTab(tab?: string): Tab {
@@ -35,7 +36,7 @@ function getValidTab(tab?: string): Tab {
   return 'readme';
 }
 
-export function ProtocolDetails({ protocol }: { protocol: Protocol; }) {
+export function ProtocolDetails({ protocol, rpcDocsUrl }: { protocol: Protocol; rpcDocsUrl: string | null; }) {
   const [searchParams, setSearchParams] = useSearchParams({ activeTab: 'readme' });
   const activeTab: Tab = getValidTab(searchParams.get('activeTab')?.toLowerCase());
 
@@ -63,10 +64,10 @@ export function ProtocolDetails({ protocol }: { protocol: Protocol; }) {
               onClick={() => setSearchParams({ activeTab: 'readme' })}
             />
             <TabName
-              icon={<Stack2Icon width="20" height="20" />}
-              name="Transactions"
-              active={activeTab === 'transactions'}
-              onClick={() => setSearchParams({ activeTab: 'transactions' })}
+              icon={<ChartDots3Icon width="20" height="20" />}
+              name="Protocol"
+              active={activeTab === 'protocol'}
+              onClick={() => setSearchParams({ activeTab: 'protocol' })}
             />
             <TabName
               icon={<CodeIcon width="20" height="20" />}
@@ -75,10 +76,10 @@ export function ProtocolDetails({ protocol }: { protocol: Protocol; }) {
               onClick={() => setSearchParams({ activeTab: 'tx3-file' })}
             />
             <TabName
-              icon={<ChartDots3Icon width="20" height="20" />}
-              name="Diagrams"
-              active={activeTab === 'diagrams'}
-              onClick={() => setSearchParams({ activeTab: 'diagrams' })}
+              icon={<Stack2Icon width="20" height="20" />}
+              name="Try out"
+              active={activeTab === 'try-out'}
+              onClick={() => setSearchParams({ activeTab: 'try-out' })}
             />
             <TabName
               icon={<ProtocolIcon width="20" height="20" />}
@@ -86,6 +87,15 @@ export function ProtocolDetails({ protocol }: { protocol: Protocol; }) {
               active={activeTab === 'deploy'}
               onClick={() => setSearchParams({ activeTab: 'deploy' })}
             />
+            {rpcDocsUrl && (
+              <a href={rpcDocsUrl} target="_blank" rel="noreferrer">
+                <TabName
+                  icon={<FileDescriptionIcon width="20" height="20" />}
+                  name="RPC Docs"
+                  active={false}
+                />
+              </a>
+            )}
           </div>
         </div>
 
@@ -95,9 +105,9 @@ export function ProtocolDetails({ protocol }: { protocol: Protocol; }) {
         )}
         >
           {activeTab === 'readme' && <TabReadme protocol={protocol} />}
-          {activeTab === 'transactions' && <TabTransactions protocol={protocol} />}
+          {activeTab === 'protocol' && <TabProtocol protocol={protocol} />}
           {activeTab === 'tx3-file' && <TabTx3File protocol={protocol} />}
-          {activeTab === 'diagrams' && <TabDiagrams protocol={protocol} />}
+          {activeTab === 'try-out' && <TabTryOut protocol={protocol} />}
           {activeTab === 'deploy' && <TabDeploy protocol={protocol} />}
         </div>
 

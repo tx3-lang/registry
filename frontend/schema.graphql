@@ -1,5 +1,6 @@
 type EnvironmentParam {
 	name: String!
+	description: String
 	type: String!
 }
 
@@ -110,9 +111,23 @@ type Tx {
 	name: String!
 	description: String
 	parameters: [TxParam!]!
+	inputs: [TxInput!]!
+	outputs: [TxOutput!]!
 	tir: String!
 	tirVersion: String!
 	svg: String
+}
+
+type TxInput {
+	name: String!
+	party: String
+	hasRedeemer: Boolean!
+}
+
+type TxOutput {
+	party: String
+	hasDatum: Boolean!
+	optional: Boolean!
 }
 
 type TxParam {
