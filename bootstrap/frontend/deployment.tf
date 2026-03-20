@@ -30,6 +30,11 @@ resource "kubernetes_deployment" "this" {
             value = "http://telchar-backend.${var.namespace}.svc.cluster.local:8000"
           }
 
+          env {
+            name = "RPC_DOCS_BASE_URL"
+            value = "https://rpc.tx3.land"
+          }
+
           resources {
             limits   = var.resources.limits
             requests = var.resources.requests
