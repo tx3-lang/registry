@@ -94,9 +94,28 @@ export const DETAIL_QUERY = gql`
           type
           description
         }
+        inputs {
+          name
+          party
+          hasRedeemer
+        }
+        outputs {
+          party
+          hasDatum
+          optional
+        }
         tir
         tirVersion
         svg
+      }
+      parties {
+        name
+        description
+      }
+      environment {
+        name
+        description
+        type
       }
       profiles {
         name

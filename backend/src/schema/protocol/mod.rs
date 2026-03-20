@@ -73,6 +73,7 @@ pub struct Party {
 #[derive(SimpleObject, Clone)]
 pub struct EnvironmentParam {
     name: String,
+    description: Option<String>,
     r#type: String,
 }
 
@@ -98,11 +99,27 @@ pub struct TxParam {
 }
 
 #[derive(SimpleObject, Clone)]
+pub struct TxInput {
+    name: String,
+    party: Option<String>,
+    has_redeemer: bool,
+}
+
+#[derive(SimpleObject, Clone)]
+pub struct TxOutput {
+    party: Option<String>,
+    has_datum: bool,
+    optional: bool,
+}
+
+#[derive(SimpleObject, Clone)]
 #[graphql(complex)]
 pub struct Tx {
     name: String,
     description: Option<String>,
     parameters: Vec<TxParam>,
+    inputs: Vec<TxInput>,
+    outputs: Vec<TxOutput>,
     tir: String,
     tir_version: String,
 
@@ -171,11 +188,18 @@ impl Protocol {
         props.iter().map(|(name, schema)| {
             let r#type = schema.get("type")
                 .and_then(|t| t.as_str())
-                .unwrap_or("unknown")
-                .to_string();
+                .map(String::from)
+                .or_else(|| {
+                    schema.get("$ref")
+                        .and_then(|r| r.as_str())
+                        .and_then(|r| r.rsplit_once('#'))
+                        .map(|(_, fragment)| fragment.to_string())
+                })
+                .unwrap_or_else(|| "unknown".to_string());
 
             EnvironmentParam {
                 name: name.clone(),
+                description: None,
                 r#type,
             }
         }).collect()
@@ -210,11 +234,15 @@ impl Protocol {
     fn transactions_from_tii(&self, tii_file: &TiiFile) -> Vec<Tx> {
         tii_file.transactions.iter().map(|(name, tx)| {
             let parameters = Self::extract_params_from_tir(&tx.tir);
+            let inputs = Self::extract_inputs_from_tir(&tx.tir);
+            let outputs = Self::extract_outputs_from_tir(&tx.tir);
 
             Tx {
                 name: name.clone(),
                 description: tx.description.clone(),
                 parameters,
+                inputs,
+                outputs,
                 tir: tx.tir.content.clone(),
                 tir_version: tx.tir.version.clone(),
                 protocol_source: self.source.clone(),
@@ -222,21 +250,14 @@ impl Protocol {
         }).collect()
     }
 
+    fn decode_tir(tir: &TiiTirEnvelope) -> Option<tx3_tir::encoding::AnyTir> {
+        let bytes = hex::decode(&tir.content).ok()?;
+        let version = tx3_tir::encoding::TirVersion::try_from(tir.version.as_str()).ok()?;
+        tx3_tir::encoding::from_bytes(&bytes, version).ok()
+    }
+
     fn extract_params_from_tir(tir: &TiiTirEnvelope) -> Vec<TxParam> {
-        let bytes = match hex::decode(&tir.content) {
-            Ok(b) => b,
-            Err(_) => return vec![],
-        };
-
-        let version = match tx3_tir::encoding::TirVersion::try_from(tir.version.as_str()) {
-            Ok(v) => v,
-            Err(_) => return vec![],
-        };
-
-        let any_tir = match tx3_tir::encoding::from_bytes(&bytes, version) {
-            Ok(t) => t,
-            Err(_) => return vec![],
-        };
+        let Some(any_tir) = Self::decode_tir(tir) else { return vec![] };
 
         let mut parameters: Vec<TxParam> = any_tir
             .params()
@@ -252,6 +273,70 @@ impl Protocol {
         parameters
     }
 
+    fn extract_inputs_from_tir(tir: &TiiTirEnvelope) -> Vec<TxInput> {
+        let Some(tx3_tir::encoding::AnyTir::V1Beta0(tx)) = Self::decode_tir(tir) else { return vec![] };
+
+        tx.inputs.iter().map(|input| {
+            let party = Self::extract_party_from_expr(&input.utxos);
+            let has_redeemer = !input.redeemer.is_none();
+
+            TxInput {
+                name: input.name.clone(),
+                party,
+                has_redeemer,
+            }
+        }).collect()
+    }
+
+    fn extract_outputs_from_tir(tir: &TiiTirEnvelope) -> Vec<TxOutput> {
+        let Some(tx3_tir::encoding::AnyTir::V1Beta0(tx)) = Self::decode_tir(tir) else { return vec![] };
+
+        tx.outputs.iter().map(|output| {
+            let party = Self::extract_party_from_expr(&output.address);
+            let has_datum = !output.datum.is_none();
+
+            TxOutput {
+                party,
+                has_datum,
+                optional: output.optional,
+            }
+        }).collect()
+    }
+
+    /// Walk an Expression tree to find the first party name reference.
+    /// Party names appear as EvalParam(ExpectValue(name, Address)) or
+    /// inside EvalParam(ExpectInput(_, InputQuery { address: ... })).
+    fn extract_party_from_expr(expr: &tx3_tir::model::v1beta0::Expression) -> Option<String> {
+        use tx3_tir::model::v1beta0::{Expression, Param};
+
+        match expr {
+            Expression::EvalParam(param) => match param.as_ref() {
+                Param::ExpectValue(name, _) => Some(name.clone()),
+                Param::ExpectInput(_, query) => Self::extract_party_from_expr(&query.address),
+                Param::Set(inner) => Self::extract_party_from_expr(inner),
+                _ => None,
+            },
+            Expression::EvalBuiltIn(op) => {
+                use tx3_tir::model::v1beta0::BuiltInOp;
+                match op.as_ref() {
+                    BuiltInOp::NoOp(e) | BuiltInOp::Negate(e) => Self::extract_party_from_expr(e),
+                    BuiltInOp::Add(a, b) | BuiltInOp::Sub(a, b) | BuiltInOp::Concat(a, b) | BuiltInOp::Property(a, b) => {
+                        Self::extract_party_from_expr(a).or_else(|| Self::extract_party_from_expr(b))
+                    },
+                }
+            },
+            Expression::EvalCoerce(coerce) => {
+                use tx3_tir::model::v1beta0::Coerce;
+                match coerce.as_ref() {
+                    Coerce::NoOp(e) | Coerce::IntoAssets(e) | Coerce::IntoDatum(e) | Coerce::IntoScript(e) => {
+                        Self::extract_party_from_expr(e)
+                    },
+                }
+            },
+            _ => None,
+        }
+    }
+
     fn transactions_from_source(&self) -> Vec<Tx> {
         let protocol = match self.parse_protocol() {
             Some(p) => p,
@@ -263,12 +348,21 @@ impl Protocol {
             let tx_tir = tx3_lang::lowering::lower(&protocol, &tx.name.value).unwrap();
             let (tx_bytes, version) = tx3_tir::encoding::to_bytes(&tx_tir);
 
+            let tir_envelope = TiiTirEnvelope {
+                content: hex::encode(&tx_bytes),
+                version: version.to_string(),
+            };
+            let inputs = Self::extract_inputs_from_tir(&tir_envelope);
+            let outputs = Self::extract_outputs_from_tir(&tir_envelope);
+
             Tx {
                 name: tx.name.value.clone(),
                 description: None,
                 parameters,
-                tir: hex::encode(tx_bytes),
-                tir_version: version.to_string(),
+                inputs,
+                outputs,
+                tir: tir_envelope.content,
+                tir_version: tir_envelope.version,
                 protocol_source: self.source.clone(),
             }
         }).collect()

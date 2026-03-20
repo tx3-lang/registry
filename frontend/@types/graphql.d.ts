@@ -15,6 +15,7 @@ interface Scalars {
 }
 
 interface EnvironmentParam {
+  description: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   type: Scalars['String']['output'];
 }
@@ -115,11 +116,25 @@ interface QueryProtocolsArgs {
 
 interface Tx {
   description: Maybe<Scalars['String']['output']>;
+  inputs: Array<TxInput>;
   name: Scalars['String']['output'];
+  outputs: Array<TxOutput>;
   parameters: Array<TxParam>;
   svg: Maybe<Scalars['String']['output']>;
   tir: Scalars['String']['output'];
   tirVersion: Scalars['String']['output'];
+}
+
+interface TxInput {
+  hasRedeemer: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  party: Maybe<Scalars['String']['output']>;
+}
+
+interface TxOutput {
+  hasDatum: Scalars['Boolean']['output'];
+  optional: Scalars['Boolean']['output'];
+  party: Maybe<Scalars['String']['output']>;
 }
 
 interface TxParam {
