@@ -2,7 +2,7 @@ interface Props {
   protocol: Protocol;
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
+function SectionTitle({ children }: { children: React.ReactNode; }) {
   return (
     <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-4">
       {children}
@@ -10,7 +10,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-function PartiesSection({ parties }: { parties: Party[] }) {
+function PartiesSection({ parties }: { parties: Party[]; }) {
   if (parties.length === 0) return null;
 
   return (
@@ -40,7 +40,7 @@ function PartiesSection({ parties }: { parties: Party[] }) {
   );
 }
 
-function EnvironmentSection({ environment }: { environment: EnvironmentParam[] }) {
+function EnvironmentSection({ environment }: { environment: EnvironmentParam[]; }) {
   if (environment.length === 0) return null;
 
   return (
@@ -72,7 +72,7 @@ function EnvironmentSection({ environment }: { environment: EnvironmentParam[] }
   );
 }
 
-function ProfilesSection({ profiles }: { profiles: Profile[] }) {
+function ProfilesSection({ profiles }: { profiles: Profile[]; }) {
   if (profiles.length === 0) return null;
 
   return (
@@ -131,9 +131,9 @@ function ProfilesSection({ profiles }: { profiles: Profile[] }) {
   );
 }
 
-function TransactionDetail({ tx }: { tx: Tx }) {
-  const inputs = (tx as any).inputs as { name: string; party: string | null; hasRedeemer: boolean }[] | undefined;
-  const outputs = (tx as any).outputs as { party: string | null; hasDatum: boolean; optional: boolean }[] | undefined;
+function TransactionDetail({ tx }: { tx: Tx; }) {
+  const inputs = (tx as any).inputs as { name: string; party: string | null; hasRedeemer: boolean; }[] | undefined;
+  const outputs = (tx as any).outputs as { party: string | null; hasDatum: boolean; optional: boolean; }[] | undefined;
 
   return (
     <div className="bg-zinc-950 border border-zinc-800 rounded-md overflow-hidden">
@@ -188,8 +188,7 @@ function TransactionDetail({ tx }: { tx: Tx }) {
                   <span className="w-28 text-right">
                     {input.hasRedeemer
                       ? <span className="text-amber-400 text-xs font-medium">script</span>
-                      : <span className="text-zinc-600 text-xs">wallet</span>
-                    }
+                      : <span className="text-zinc-600 text-xs">wallet</span>}
                   </span>
                 </div>
               ))}
@@ -212,14 +211,12 @@ function TransactionDetail({ tx }: { tx: Tx }) {
                   <span className="flex-1 basis-1/3">
                     {output.hasDatum
                       ? <span className="text-emerald-400 text-xs font-medium">yes</span>
-                      : <span className="text-zinc-600 text-xs">no</span>
-                    }
+                      : <span className="text-zinc-600 text-xs">no</span>}
                   </span>
                   <span className="w-28 text-right">
                     {output.optional
                       ? <span className="text-amber-400 text-xs font-medium">yes</span>
-                      : <span className="text-zinc-600 text-xs">no</span>
-                    }
+                      : <span className="text-zinc-600 text-xs">no</span>}
                   </span>
                 </div>
               ))}
@@ -231,7 +228,7 @@ function TransactionDetail({ tx }: { tx: Tx }) {
   );
 }
 
-function TransactionsSection({ transactions }: { transactions: Tx[] }) {
+function TransactionsSection({ transactions }: { transactions: Tx[]; }) {
   if (transactions.length === 0) return null;
 
   return (

@@ -17,7 +17,7 @@ export function meta({ params }: Route.MetaArgs) {
 
 const RPC_DOCS_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
-let rpcDocsCache: { protocols: string[]; fetchedAt: number } | null = null;
+let rpcDocsCache: { protocols: string[]; fetchedAt: number; } | null = null;
 
 async function getRpcProtocols(): Promise<string[]> {
   const now = Date.now();
@@ -33,7 +33,7 @@ async function getRpcProtocols(): Promise<string[]> {
     const res = await fetch(baseUrl);
     if (!res.ok) return [];
 
-    const data: { protocols: string[] } = await res.json();
+    const data: { protocols: string[]; } = await res.json();
     rpcDocsCache = { protocols: data.protocols ?? [], fetchedAt: now };
     return rpcDocsCache.protocols;
   } catch {

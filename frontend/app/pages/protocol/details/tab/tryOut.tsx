@@ -41,7 +41,11 @@ function LoadingButton({ asyncOnClick }: { asyncOnClick: () => Promise<void>; })
 
 function hasEnvironment(env: string | null | undefined): boolean {
   if (!env) return false;
-  try { return Object.keys(JSON.parse(env)).length > 0; } catch { return false; }
+  try {
+    return Object.keys(JSON.parse(env)).length > 0;
+  } catch {
+    return false;
+  }
 }
 
 function getDefaultProfile(profiles: Profile[]): string {

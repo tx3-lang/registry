@@ -13,17 +13,17 @@ import { InfoCircleIcon } from '~/components/icons/info-circle';
 import { Stack2Icon } from '~/components/icons/stack-2';
 import { CodeIcon } from '~/components/icons/code';
 import { ChartDots3Icon } from '~/components/icons/chart-dots-3';
-import { ProtocolIcon } from '~/components/icons/protocol';
 import { FileDescriptionIcon } from '~/components/icons/file-description';
+import { FileCode } from '~/components/icons/file-code';
 
 // Tabs
 import { TabReadme } from './tab/readme';
 import { TabTryOut } from './tab/tryOut';
 import { TabTx3File } from './tab/tx3File';
 import { TabProtocol } from './tab/protocol';
-import { TabDeploy } from './tab/deploy';
+import { TabSDKs } from './tab/sdks';
 
-const validTabs = ['readme', 'protocol', 'tx3-file', 'try-out', 'deploy'] as const;
+const validTabs = ['readme', 'protocol', 'tx3-file', 'try-out', 'sdks'] as const;
 type Tab = typeof validTabs[number];
 
 function getValidTab(tab?: string): Tab {
@@ -82,10 +82,10 @@ export function ProtocolDetails({ protocol, rpcDocsUrl }: { protocol: Protocol; 
               onClick={() => setSearchParams({ activeTab: 'try-out' })}
             />
             <TabName
-              icon={<ProtocolIcon width="20" height="20" />}
-              name="Deploy"
-              active={activeTab === 'deploy'}
-              onClick={() => setSearchParams({ activeTab: 'deploy' })}
+              icon={<FileCode width="20" height="20" />}
+              name="SDKs"
+              active={activeTab === 'sdks'}
+              onClick={() => setSearchParams({ activeTab: 'sdks' })}
             />
             {rpcDocsUrl && (
               <a href={rpcDocsUrl} target="_blank" rel="noreferrer">
@@ -108,7 +108,7 @@ export function ProtocolDetails({ protocol, rpcDocsUrl }: { protocol: Protocol; 
           {activeTab === 'protocol' && <TabProtocol protocol={protocol} />}
           {activeTab === 'tx3-file' && <TabTx3File protocol={protocol} />}
           {activeTab === 'try-out' && <TabTryOut protocol={protocol} />}
-          {activeTab === 'deploy' && <TabDeploy protocol={protocol} />}
+          {activeTab === 'sdks' && <TabSDKs protocol={protocol} />}
         </div>
 
         <div className="container py-4">
