@@ -9,11 +9,15 @@ interface Props {
   label?: string;
   value: string;
   showValue?: boolean;
+  // When true (default), Headless UI scroll-locks the page and `inert`s the
+  // rest of the DOM while the menu is open — matching dialog-style behavior.
+  // Set to false for a standard popover that leaves the background scrollable.
+  modal?: boolean;
   options: { label: string; value: string; }[];
   onOptionSelected?: (value: string) => void;
 }
 
-export function Dropdown({ label, value, showValue, options, onOptionSelected }: Props) {
+export function Dropdown({ label, value, showValue, modal = true, options, onOptionSelected }: Props) {
   const [activeOption, setActiveOption] = useState(options.find(option => option.value === value));
 
   useEffect(() => {
@@ -35,7 +39,12 @@ export function Dropdown({ label, value, showValue, options, onOptionSelected }:
         )}
         <ChevronDownIcon width="18" height="18" />
       </MenuButton>
-      <MenuItems anchor="bottom end" className="bg-woodsmoke-950 border border-zinc-900 rounded-lg p-4 z-10 shadow-[0px_0px_12.3px_0px_rgba(250,250,250,0.06)] flex flex-col gap-2 text-zinc-300 min-w-64 mt-1 outline-0 custom-scrollbar">
+      <MenuItems
+        transition
+        modal={modal}
+        anchor="bottom end"
+        className="bg-woodsmoke-950 border border-zinc-900 rounded-lg p-4 z-10 shadow-[0px_0px_12.3px_0px_rgba(250,250,250,0.06)] flex flex-col gap-2 text-zinc-300 min-w-64 mt-1 outline-0 custom-scrollbar"
+      >
         {options.map(option => (
           <MenuItem key={option.value}>
             <button

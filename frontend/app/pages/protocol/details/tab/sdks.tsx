@@ -1,15 +1,21 @@
-import { useMemo, useState } from 'react';
-import Markdown, { type Components } from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 
 import { CodeBlock } from '~/components/ui/CodeBlock';
-import type { SupportedLanguages } from '~/utils/shiki';
+import { Dropdown } from '~/components/ui/Dropdown';
+import { ChevronRightIcon } from '~/components/icons/chevron-right';
+import { TRP_ENDPOINTS } from '~/trp-config';
+import { generateQuickStart, pickDefaultProfile, type QuickStartSnippet } from './sdks/quick-start';
 
-import typescriptReadme from './sdks/typescript-readme.md?raw';
-import rustReadme from './sdks/rust-readme.md?raw';
-import goReadme from './sdks/go-readme.md?raw';
-import pythonReadme from './sdks/python-readme.md?raw';
+const trpOptions = Object.keys(TRP_ENDPOINTS).map(key => ({
+  label: key,
+  value: key,
+}));
+
+function pickDefaultTrpName(profileName: string | null): string {
+  if (profileName && profileName in TRP_ENDPOINTS) return profileName;
+  return 'preview' in TRP_ENDPOINTS ? 'preview' : Object.keys(TRP_ENDPOINTS)[0];
+}
 
 type SDKKey = 'typescript' | 'rust' | 'go' | 'python';
 
@@ -18,7 +24,7 @@ interface SDKDef {
   name: string;
   title: string;
   icon: React.ReactNode;
-  readme: string;
+  installCommand: string;
 }
 
 const sdks: SDKDef[] = [
@@ -27,109 +33,36 @@ const sdks: SDKDef[] = [
     name: 'TypeScript',
     title: 'TypeScript SDK',
     icon: <img src="/images/sdks/typescript.png" className="w-8 h-8" />,
-    readme: typescriptReadme,
+    installCommand: 'npm install tx3-sdk',
   },
   {
     key: 'rust',
     name: 'Rust',
     title: 'Rust SDK',
     icon: <img src="/images/sdks/rust.png" className="w-8 h-8" />,
-    readme: rustReadme,
+    installCommand: 'cargo add tx3-sdk serde_json',
   },
   {
     key: 'go',
     name: 'Go',
     title: 'Go SDK',
     icon: <img src="/images/sdks/go.png" className="w-8 h-8" />,
-    readme: goReadme,
+    installCommand: 'go get github.com/tx3-lang/go-sdk/sdk',
   },
   {
     key: 'python',
     name: 'Python',
     title: 'Python SDK',
     icon: <img src="/images/sdks/python.png" className="w-8 h-8" />,
-    readme: pythonReadme,
+    installCommand: 'pip install tx3-sdk',
   },
 ];
 
-// Maps fence aliases (```ts, ```sh, ...) to the set of languages registered in
-// `~/utils/shiki.ts`. Unrecognized aliases fall back to an unhighlighted block.
-const LANG_ALIASES: Record<string, SupportedLanguages> = {
-  tx3: 'tx3',
-  ts: 'typescript',
-  typescript: 'typescript',
-  js: 'typescript',
-  javascript: 'typescript',
-  py: 'python',
-  python: 'python',
-  rs: 'rust',
-  rust: 'rust',
-  go: 'go',
-  golang: 'go',
-  bash: 'bash',
-  sh: 'bash',
-  shell: 'bash',
-  zsh: 'bash',
-  toml: 'toml',
-};
+const codeBlockClasses = 'bg-zinc-950 border border-zinc-800 rounded-md px-5 py-3 text-sm overflow-x-auto';
 
-function resolveLang(raw: string | undefined): SupportedLanguages | null {
-  if (!raw) return null;
-  return LANG_ALIASES[raw.toLowerCase()] ?? null;
-}
-
-const markdownComponents: Components = {
-  h1: 'h2',
-  h2: 'h3',
-  h3: 'h4',
-  h4: 'h5',
-  // The default `pre` wrapper is dropped so that fenced blocks can be rendered
-  // through `CodeBlock` (which produces its own `<pre>` via Shiki).
-  pre: ({ children }) => <>{children}</>,
-  code: ({ className, children, ...rest }) => {
-    const raw = /language-([\w-]+)/.exec(className ?? '')?.[1];
-    const text = String(children).replace(/\n$/, '');
-    const lang = resolveLang(raw);
-
-    if (lang) {
-      return <CodeBlock code={text} lang={lang} />;
-    }
-
-    if (raw) {
-      return <pre><code className={className} {...rest}>{text}</code></pre>;
-    }
-
-    return <code className={className} {...rest}>{children}</code>;
-  },
-};
-
-// Splits a SDK README into the content before the Quick start section, the
-// Quick start section itself (heading included), and everything after it.
-// The Quick start section will be replaced by a protocol-aware snippet, so
-// this keeps the two concerns decoupled.
-function splitAtQuickStart(md: string): { before: string; quickStart: string; after: string; } {
-  const lines = md.split('\n');
-  const startIdx = lines.findIndex(line => /^##\s+Quick start\b/i.test(line));
-  if (startIdx === -1) return { before: md, quickStart: '', after: '' };
-
-  let endIdx = lines.length;
-  for (let i = startIdx + 1; i < lines.length; i++) {
-    if (/^##\s+/.test(lines[i])) {
-      endIdx = i;
-      break;
-    }
-  }
-
-  return {
-    before: lines.slice(0, startIdx).join('\n').trimEnd(),
-    quickStart: lines.slice(startIdx, endIdx).join('\n').trim(),
-    after: lines.slice(endIdx).join('\n').trimStart(),
-  };
-}
-
-function SidebarLabel({ children }: { children: React.ReactNode; }) {
+function SidebarLabel({ children, className }: { children: React.ReactNode; className?: string; }) {
   return (
-    <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider px-3 mb-2">
+    <p className={clsx('text-xs font-medium text-zinc-500 uppercase tracking-wider px-3 mb-2', className)}>
       {children}
     </p>
   );
@@ -163,20 +96,162 @@ function SdkButton({ sdk, active, onClick }: SdkButtonProps) {
   );
 }
 
-interface QuickStartProps {
-  sdk: SDKDef;
-  protocol: Protocol;
-  fallbackMarkdown: string;
+interface TxTocButtonProps {
+  name: string;
+  active: boolean;
+  onClick: () => void;
 }
 
-// TODO: replace with a protocol-aware snippet generated from `protocol`
-// (parties, profiles, first transaction, args). For now we render the static
-// Quick start shipped in each SDK README so the layout stays stable.
-function QuickStartSection({ fallbackMarkdown }: QuickStartProps) {
+function TxTocButton({ name, active, onClick }: TxTocButtonProps) {
   return (
-    <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-      {fallbackMarkdown}
-    </Markdown>
+    <button
+      type="button"
+      onClick={onClick}
+      data-active={active}
+      className={clsx(
+        'text-left text-xs font-mono px-3 py-1.5 rounded transition-colors cursor-pointer truncate',
+        active
+          ? 'text-blue-400 bg-zinc-900'
+          : 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900/40',
+      )}
+    >
+      {name}
+    </button>
+  );
+}
+
+function SectionHeading({ children }: { children: React.ReactNode; }) {
+  return (
+    <h3 className="text-lg font-semibold text-zinc-50 mb-4 pb-2 border-b border-zinc-800">
+      {children}
+    </h3>
+  );
+}
+
+function InlineCode({ children }: { children: React.ReactNode; }) {
+  return (
+    <code className="text-zinc-200 bg-zinc-900 px-1.5 py-0.5 rounded text-[0.9em]">
+      {children}
+    </code>
+  );
+}
+
+interface InstallSectionProps {
+  sdk: SDKDef;
+  protocol: Protocol;
+}
+
+function InstallSection({ sdk, protocol }: InstallSectionProps) {
+  const trixCmd = `trix add ${protocol.scope}/${protocol.name}`;
+  const tiiPath = `./.tx3/tii/${protocol.scope}/${protocol.name}.tii`;
+  return (
+    <section>
+      <SectionHeading>Install</SectionHeading>
+
+      <p className="text-zinc-400 text-sm mb-3">Install the SDK:</p>
+      <CodeBlock lang="bash" code={sdk.installCommand} className={codeBlockClasses} />
+
+      <p className="text-zinc-400 text-sm mt-6 mb-3">
+        Then download this protocol's compiled <InlineCode>.tii</InlineCode> file with{' '}
+        <InlineCode>trix</InlineCode>. It fetches the artifact into{' '}
+        <InlineCode>{tiiPath}</InlineCode> so your code can load it via{' '}
+        <InlineCode>Protocol.fromFile</InlineCode>.
+      </p>
+      <CodeBlock lang="bash" code={trixCmd} className={codeBlockClasses} />
+    </section>
+  );
+}
+
+interface QuickStartSectionProps {
+  snippet: QuickStartSnippet;
+  profiles: Profile[];
+  selectedProfileName: string;
+  onSelectProfile: (name: string) => void;
+  selectedTrpName: string;
+  onSelectTrp: (name: string) => void;
+  openTxs: Set<string>;
+  onToggleTx: (name: string, open: boolean) => void;
+  registerTxRef: (name: string, el: HTMLDetailsElement | null) => void;
+}
+
+function QuickStartSection({
+  snippet,
+  profiles,
+  selectedProfileName,
+  onSelectProfile,
+  selectedTrpName,
+  onSelectTrp,
+  openTxs,
+  onToggleTx,
+  registerTxRef,
+}: QuickStartSectionProps) {
+  const profileOptions = profiles.map(p => ({ label: p.name, value: p.name }));
+
+  return (
+    <section>
+      <div className="flex items-center justify-between gap-4 mb-4 pb-2 border-b border-zinc-800">
+        <h3 className="text-lg font-semibold text-zinc-50">Quick start</h3>
+        <div className="flex items-center gap-2">
+          {profileOptions.length > 0 && (
+            <Dropdown
+              label="Profile"
+              showValue
+              modal={false}
+              value={selectedProfileName}
+              options={profileOptions}
+              onOptionSelected={onSelectProfile}
+            />
+          )}
+          <Dropdown
+            label="TRP"
+            showValue
+            modal={false}
+            value={selectedTrpName}
+            options={trpOptions}
+            onOptionSelected={onSelectTrp}
+          />
+        </div>
+      </div>
+      <CodeBlock code={snippet.setup} lang={snippet.lang} className={codeBlockClasses} />
+
+      {snippet.transactions.length > 0 && (
+        <>
+          <h4 className="text-sm font-semibold text-zinc-200 mt-6 mb-3">
+            Transactions
+          </h4>
+          <div className="flex flex-col gap-2">
+            {snippet.transactions.map(tx => (
+              <details
+                key={tx.name}
+                ref={el => registerTxRef(tx.name, el)}
+                open={openTxs.has(tx.name)}
+                onToggle={e => onToggleTx(tx.name, (e.target as HTMLDetailsElement).open)}
+                className="group border border-zinc-800 rounded-md bg-zinc-950 overflow-hidden scroll-mt-6"
+              >
+                <summary className="cursor-pointer px-4 py-3 text-sm flex items-center gap-3 list-none [&::-webkit-details-marker]:hidden hover:bg-zinc-900/40 transition-colors">
+                  <ChevronRightIcon
+                    width="14"
+                    height="14"
+                    className="text-zinc-500 shrink-0 transition-transform group-open:rotate-90"
+                  />
+                  <code className="text-blue-400 font-mono">{tx.name}</code>
+                  {tx.description && (
+                    <span className="text-zinc-500 text-xs truncate">— {tx.description}</span>
+                  )}
+                </summary>
+                <div className="border-t border-zinc-800">
+                  <CodeBlock
+                    code={tx.code}
+                    lang={snippet.lang}
+                    className="bg-zinc-950 px-5 py-3 text-sm overflow-x-auto"
+                  />
+                </div>
+              </details>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
   );
 }
 
@@ -185,23 +260,54 @@ interface Props {
 }
 
 export function TabSDKs({ protocol }: Props) {
+  const profiles = protocol.profiles ?? [];
+
+  const defaultProfile = useMemo(() => pickDefaultProfile(profiles), [profiles]);
+
   const [selectedKey, setSelectedKey] = useState<SDKKey>('typescript');
+  const [selectedProfileName, setSelectedProfileName] = useState<string>(defaultProfile?.name ?? '');
+  const [selectedTrpName, setSelectedTrpName] = useState<string>(() => pickDefaultTrpName(defaultProfile?.name ?? null));
+  const [openTxs, setOpenTxs] = useState<Set<string>>(new Set());
+  const txRefs = useRef<Map<string, HTMLDetailsElement>>(new Map());
+
   const selected = sdks.find(s => s.key === selectedKey)!;
+  const selectedProfile = profiles.find(p => p.name === selectedProfileName) ?? null;
+  const selectedTrp = TRP_ENDPOINTS[selectedTrpName] ?? TRP_ENDPOINTS[Object.keys(TRP_ENDPOINTS)[0]];
 
-  const { before, quickStart, after } = useMemo(
-    () => splitAtQuickStart(selected.readme),
-    [selected.readme],
+  const snippet = useMemo(
+    () => generateQuickStart(selected.key, protocol, { profile: selectedProfile, trp: selectedTrp }),
+    [selected.key, protocol, selectedProfile, selectedTrp],
   );
 
-  const markdownClasses = clsx(
-    'w-full max-w-none prose prose-sm prose-tx3',
-    'prose-headings:border-b prose-headings:border-zinc-800 prose-headings:pb-1.5',
-    'prose-pre:whitespace-pre-wrap prose-pre:break-words',
-  );
+  const registerTxRef = useCallback((name: string, el: HTMLDetailsElement | null) => {
+    if (el) txRefs.current.set(name, el);
+    else txRefs.current.delete(name);
+  }, []);
+
+  const handleToggleTx = useCallback((name: string, open: boolean) => {
+    setOpenTxs(prev => {
+      if (prev.has(name) === open) return prev;
+      const next = new Set(prev);
+      if (open) next.add(name);
+      else next.delete(name);
+      return next;
+    });
+  }, []);
+
+  const focusTx = useCallback((name: string) => {
+    setOpenTxs(prev => {
+      if (prev.has(name)) return prev;
+      const next = new Set(prev);
+      next.add(name);
+      return next;
+    });
+    const el = txRefs.current.get(name);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
 
   return (
-    <div className="container flex-1 flex gap-10 py-8">
-      <aside className="w-56 shrink-0">
+    <div className="container flex-1 flex gap-10 py-8 items-start">
+      <aside className="w-56 shrink-0 sticky top-6 self-start max-h-[calc(100vh-3rem)] overflow-y-auto custom-scrollbar">
         <SidebarLabel>SDKs</SidebarLabel>
         <div className="flex flex-col gap-1">
           {sdks.map(sdk => (
@@ -213,26 +319,38 @@ export function TabSDKs({ protocol }: Props) {
             />
           ))}
         </div>
+
+        {snippet.transactions.length > 0 && (
+          <>
+            <SidebarLabel className="mt-6">Transactions</SidebarLabel>
+            <div className="flex flex-col gap-0.5">
+              {snippet.transactions.map(tx => (
+                <TxTocButton
+                  key={tx.name}
+                  name={tx.name}
+                  active={openTxs.has(tx.name)}
+                  onClick={() => focusTx(tx.name)}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </aside>
 
-      <section className="flex-1 min-w-0">
-        <h2 className="text-2xl font-semibold text-zinc-50 mb-6">{selected.title}</h2>
-
-        <div className={markdownClasses}>
-          {before && (
-            <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-              {before}
-            </Markdown>
-          )}
-
-          <QuickStartSection sdk={selected} protocol={protocol} fallbackMarkdown={quickStart} />
-
-          {after && (
-            <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-              {after}
-            </Markdown>
-          )}
-        </div>
+      <section className="flex-1 min-w-0 flex flex-col gap-10">
+        <h2 className="text-2xl font-semibold text-zinc-50">{selected.title}</h2>
+        <InstallSection sdk={selected} protocol={protocol} />
+        <QuickStartSection
+          snippet={snippet}
+          profiles={profiles}
+          selectedProfileName={selectedProfileName}
+          onSelectProfile={setSelectedProfileName}
+          selectedTrpName={selectedTrpName}
+          onSelectTrp={setSelectedTrpName}
+          openTxs={openTxs}
+          onToggleTx={handleToggleTx}
+          registerTxRef={registerTxRef}
+        />
       </section>
     </div>
   );
