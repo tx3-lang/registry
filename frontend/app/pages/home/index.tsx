@@ -12,7 +12,7 @@ export function Home({ protocols }: { protocols: ProtocolConnection; }) {
 
   return (
     <>
-      <Header appName="Registry" />
+      <Header />
       <main className="my-14">
         <Hero onSearch={setSearch} />
         <Catalogue

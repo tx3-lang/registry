@@ -3,15 +3,19 @@ import { useMemo } from 'react';
 
 // Utils
 import { highlighter, type SupportedLanguages } from '~/utils/shiki';
+import { CopyButton } from './CopyButton';
 
 interface CodeBlockProps {
   className?: string;
   code: string;
   // To include new languages, update `utils/shiki.ts`
   lang?: SupportedLanguages;
+  // When true (default), shows a copy-to-clipboard button anchored to the
+  // top-right corner of the block.
+  copyable?: boolean;
 }
 
-export function CodeBlock({ className, code, lang = 'tx3' }: CodeBlockProps) {
+export function CodeBlock({ className, code, lang = 'tx3', copyable = true }: CodeBlockProps) {
   const htmlCode = useMemo(() => highlighter.codeToHtml(code, {
     lang,
     theme: 'aurora-x',
@@ -25,9 +29,17 @@ export function CodeBlock({ className, code, lang = 'tx3' }: CodeBlockProps) {
   }), [className, code, lang]);
 
   return (
-    <div
-      // biome-ignore lint/security/noDangerouslySetInnerHtml: Needed
-      dangerouslySetInnerHTML={{ __html: htmlCode }}
-    />
+    <div className="group relative">
+      <div
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: Needed
+        dangerouslySetInnerHTML={{ __html: htmlCode }}
+      />
+      {copyable && (
+        <CopyButton
+          text={code}
+          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-150"
+        />
+      )}
+    </div>
   );
 }

@@ -306,8 +306,8 @@ export function TabSDKs({ protocol }: Props) {
   }, []);
 
   return (
-    <div className="container flex-1 flex gap-10 py-8 items-start">
-      <aside className="w-56 shrink-0 sticky top-6 self-start max-h-[calc(100vh-3rem)] overflow-y-auto custom-scrollbar">
+    <div className="container flex-1 flex py-8 items-start">
+      <aside className="w-56 shrink-0 sticky top-6 self-start max-h-[calc(100vh-3rem)] pr-10 overflow-y-auto custom-scrollbar">
         <SidebarLabel>SDKs</SidebarLabel>
         <div className="flex flex-col gap-1">
           {sdks.map(sdk => (
@@ -337,7 +337,7 @@ export function TabSDKs({ protocol }: Props) {
         )}
       </aside>
 
-      <section className="flex-1 min-w-0 flex flex-col gap-10">
+      <section className="flex-1 min-w-0 flex flex-col gap-10 pl-10 border-l border-zinc-800">
         <h2 className="text-2xl font-semibold text-zinc-50">{selected.title}</h2>
         <InstallSection sdk={selected} protocol={protocol} />
         <QuickStartSection
