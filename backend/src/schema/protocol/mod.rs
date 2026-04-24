@@ -277,7 +277,7 @@ impl Protocol {
         let Some(tx3_tir::encoding::AnyTir::V1Beta0(tx)) = Self::decode_tir(tir) else { return vec![] };
 
         tx.inputs.iter().map(|input| {
-            let party = Self::extract_party_from_expr(&input.utxos);
+            let party = ast_to_svg::extract_party_from_expr(&input.utxos);
             let has_redeemer = !input.redeemer.is_none();
 
             TxInput {
@@ -292,7 +292,7 @@ impl Protocol {
         let Some(tx3_tir::encoding::AnyTir::V1Beta0(tx)) = Self::decode_tir(tir) else { return vec![] };
 
         tx.outputs.iter().map(|output| {
-            let party = Self::extract_party_from_expr(&output.address);
+            let party = ast_to_svg::extract_party_from_expr(&output.address);
             let has_datum = !output.datum.is_none();
 
             TxOutput {
@@ -301,40 +301,6 @@ impl Protocol {
                 optional: output.optional,
             }
         }).collect()
-    }
-
-    /// Walk an Expression tree to find the first party name reference.
-    /// Party names appear as EvalParam(ExpectValue(name, Address)) or
-    /// inside EvalParam(ExpectInput(_, InputQuery { address: ... })).
-    fn extract_party_from_expr(expr: &tx3_tir::model::v1beta0::Expression) -> Option<String> {
-        use tx3_tir::model::v1beta0::{Expression, Param};
-
-        match expr {
-            Expression::EvalParam(param) => match param.as_ref() {
-                Param::ExpectValue(name, _) => Some(name.clone()),
-                Param::ExpectInput(_, query) => Self::extract_party_from_expr(&query.address),
-                Param::Set(inner) => Self::extract_party_from_expr(inner),
-                _ => None,
-            },
-            Expression::EvalBuiltIn(op) => {
-                use tx3_tir::model::v1beta0::BuiltInOp;
-                match op.as_ref() {
-                    BuiltInOp::NoOp(e) | BuiltInOp::Negate(e) => Self::extract_party_from_expr(e),
-                    BuiltInOp::Add(a, b) | BuiltInOp::Sub(a, b) | BuiltInOp::Concat(a, b) | BuiltInOp::Property(a, b) => {
-                        Self::extract_party_from_expr(a).or_else(|| Self::extract_party_from_expr(b))
-                    },
-                }
-            },
-            Expression::EvalCoerce(coerce) => {
-                use tx3_tir::model::v1beta0::Coerce;
-                match coerce.as_ref() {
-                    Coerce::NoOp(e) | Coerce::IntoAssets(e) | Coerce::IntoDatum(e) | Coerce::IntoScript(e) => {
-                        Self::extract_party_from_expr(e)
-                    },
-                }
-            },
-            _ => None,
-        }
     }
 
     fn transactions_from_source(&self) -> Vec<Tx> {
@@ -372,13 +338,20 @@ impl Protocol {
 #[ComplexObject]
 impl Tx {
     async fn svg(&self) -> Option<String> {
-        if let Some(source) = &self.protocol_source {
-            let ast = tx3_lang::parsing::parse_string(source).unwrap();
-            let tx_def = ast.txs.iter().find(|t| t.name.value == self.name)?;
-            Some(ast_to_svg::tx_to_svg(&ast, tx_def, self.parameters.iter().map(|p| p.name.clone()).collect()))
-        } else {
-            None
+        let param_names: Vec<String> = self.parameters.iter().map(|p| p.name.clone()).collect();
+
+        let tir_envelope = TiiTirEnvelope {
+            content: self.tir.clone(),
+            version: self.tir_version.clone(),
+        };
+        if let Some(tx3_tir::encoding::AnyTir::V1Beta0(tx)) = Protocol::decode_tir(&tir_envelope) {
+            return Some(ast_to_svg::tir_to_svg(&self.name, &tx, param_names));
         }
+
+        let source = self.protocol_source.as_ref()?;
+        let ast = tx3_lang::parsing::parse_string(source).ok()?;
+        let tx_def = ast.txs.iter().find(|t| t.name.value == self.name)?;
+        Some(ast_to_svg::tx_to_svg(&ast, tx_def, param_names))
     }
 }
 

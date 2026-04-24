@@ -4,6 +4,7 @@ use tx3_lang::ast::InputBlockField;
 use tx3_lang::ast::OutputBlockField;
 use tx3_lang::ast::Program;
 use tx3_lang::ast::TxDef;
+use tx3_tir::model::v1beta0 as tir;
 
 const UNIT: i32 = 16;
 const CANVA_WIDTH: i32 = UNIT * 10;
@@ -167,6 +168,99 @@ fn get_outputs(tx: &TxDef) -> Vec<Parameter> {
         .collect()
 }
 
+fn get_input_parties_from_tir(tx: &tir::Tx) -> Vec<Party> {
+    let mut names = std::collections::HashSet::new();
+
+    for input in &tx.inputs {
+        if let Some(name) = extract_party_from_expr(&input.utxos) {
+            names.insert(name);
+        }
+    }
+
+    let mut parties: Vec<Party> = names
+        .into_iter()
+        .map(|name| Party {
+            name,
+            party_type: PartyType::Party,
+        })
+        .collect();
+
+    parties.sort_by_key(|p| p.name.clone());
+    parties
+}
+
+fn get_output_parties_from_tir(tx: &tir::Tx) -> Vec<Party> {
+    let mut names = std::collections::HashSet::new();
+
+    for output in &tx.outputs {
+        if let Some(name) = extract_party_from_expr(&output.address) {
+            names.insert(name);
+        }
+    }
+
+    let mut parties: Vec<Party> = names
+        .into_iter()
+        .map(|name| Party {
+            name,
+            party_type: PartyType::Party,
+        })
+        .collect();
+
+    parties.sort_by_key(|p| p.name.clone());
+    parties
+}
+
+fn get_inputs_from_tir(tx: &tir::Tx) -> Vec<Parameter> {
+    tx.inputs
+        .iter()
+        .map(|input| Parameter {
+            name: input.name.clone(),
+            party: extract_party_from_expr(&input.utxos),
+        })
+        .collect()
+}
+
+fn get_outputs_from_tir(tx: &tir::Tx) -> Vec<Parameter> {
+    tx.outputs
+        .iter()
+        .enumerate()
+        .map(|(i, output)| Parameter {
+            name: format!("output {}", i + 1),
+            party: extract_party_from_expr(&output.address),
+        })
+        .collect()
+}
+
+/// Walk an Expression tree to find the first party name reference.
+/// Party names appear as EvalParam(ExpectValue(name, Address)) or
+/// inside EvalParam(ExpectInput(_, InputQuery { address: ... })).
+pub(crate) fn extract_party_from_expr(expr: &tir::Expression) -> Option<String> {
+    match expr {
+        tir::Expression::EvalParam(param) => match param.as_ref() {
+            tir::Param::ExpectValue(name, _) => Some(name.clone()),
+            tir::Param::ExpectInput(_, query) => extract_party_from_expr(&query.address),
+            tir::Param::Set(inner) => extract_party_from_expr(inner),
+            _ => None,
+        },
+        tir::Expression::EvalBuiltIn(op) => match op.as_ref() {
+            tir::BuiltInOp::NoOp(e) | tir::BuiltInOp::Negate(e) => extract_party_from_expr(e),
+            tir::BuiltInOp::Add(a, b)
+            | tir::BuiltInOp::Sub(a, b)
+            | tir::BuiltInOp::Concat(a, b)
+            | tir::BuiltInOp::Property(a, b) => {
+                extract_party_from_expr(a).or_else(|| extract_party_from_expr(b))
+            }
+        },
+        tir::Expression::EvalCoerce(coerce) => match coerce.as_ref() {
+            tir::Coerce::NoOp(e)
+            | tir::Coerce::IntoAssets(e)
+            | tir::Coerce::IntoDatum(e)
+            | tir::Coerce::IntoScript(e) => extract_party_from_expr(e),
+        },
+        _ => None,
+    }
+}
+
 fn sort_parties_by_connections(parties: &[Party], parameters: &[Parameter]) -> Vec<usize> {
     let mut party_indices: Vec<usize> = (0..parties.len()).collect();
     
@@ -325,7 +419,7 @@ fn render_parameter(param: &Parameter, x: i32, y: i32, is_input: bool) -> String
     )
 }
 
-fn render_tx(tx: &TxDef, params: &Vec<String>, x: i32, y: i32) -> String {
+fn render_tx(name: &str, params: &Vec<String>, x: i32, y: i32) -> String {
     let mut tx_box = format!(
         r#"<g transform="translate(-{unit})">
         <svg x="{x}" y="{y}" width="{width}" height="{height}" viewBox="0 0 {unit} {double_unit}">
@@ -338,7 +432,7 @@ fn render_tx(tx: &TxDef, params: &Vec<String>, x: i32, y: i32) -> String {
         width = UNIT * 2,
         height = UNIT * 4,
         corner = UNIT as f64 / 10.0,
-        name = tx.name.value
+        name = name
     );
 
     for (i, param_name) in params.iter().enumerate() {
@@ -364,14 +458,34 @@ pub fn tx_to_svg(ast: &Program, tx: &TxDef, params: Vec<String>) -> String {
     let inputs = get_inputs(tx);
     let outputs = get_outputs(tx);
 
+    build_svg(&tx.name.value, &params, input_parties, output_parties, inputs, outputs)
+}
+
+pub fn tir_to_svg(name: &str, tx: &tir::Tx, params: Vec<String>) -> String {
+    let input_parties = get_input_parties_from_tir(tx);
+    let output_parties = get_output_parties_from_tir(tx);
+    let inputs = get_inputs_from_tir(tx);
+    let outputs = get_outputs_from_tir(tx);
+
+    build_svg(name, &params, input_parties, output_parties, inputs, outputs)
+}
+
+fn build_svg(
+    name: &str,
+    params: &Vec<String>,
+    input_parties: Vec<Party>,
+    output_parties: Vec<Party>,
+    inputs: Vec<Parameter>,
+    outputs: Vec<Parameter>,
+) -> String {
     // Ordenar para minimizar cruces
     let input_party_order = sort_parties_by_connections(&input_parties, &inputs);
     let output_party_order = sort_parties_by_connections(&output_parties, &outputs);
-    
+
     // Ahora ordenar parámetros basándose en el orden optimizado de parties
     let ordered_input_parties: Vec<Party> = input_party_order.iter().map(|&i| input_parties[i].clone()).collect();
     let ordered_output_parties: Vec<Party> = output_party_order.iter().map(|&i| output_parties[i].clone()).collect();
-    
+
     let input_param_order = sort_parameters_by_connections(&inputs, &ordered_input_parties);
     let output_param_order = sort_parameters_by_connections(&outputs, &ordered_output_parties);
 
@@ -385,7 +499,7 @@ pub fn tx_to_svg(ast: &Program, tx: &TxDef, params: Vec<String>) -> String {
     ).unwrap();
 
     // Render transaction box in the center
-    write!(svg, "{}", render_tx(tx, &params, CANVA_WIDTH / 2, 0)).unwrap();
+    write!(svg, "{}", render_tx(name, params, CANVA_WIDTH / 2, 0)).unwrap();
 
     // Render input parties on the left (usando el orden optimizado)
     for (render_pos, &party_idx) in input_party_order.iter().enumerate() {
