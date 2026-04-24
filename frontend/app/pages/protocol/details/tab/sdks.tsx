@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react';
-import Markdown from 'react-markdown';
+import Markdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import clsx from 'clsx';
+
+import { CodeBlock } from '~/components/ui/CodeBlock';
+import type { SupportedLanguages } from '~/utils/shiki';
 
 import typescriptReadme from './sdks/typescript-readme.md?raw';
 import rustReadme from './sdks/rust-readme.md?raw';
@@ -49,12 +52,56 @@ const sdks: SDKDef[] = [
   },
 ];
 
-const markdownComponents = {
+// Maps fence aliases (```ts, ```sh, ...) to the set of languages registered in
+// `~/utils/shiki.ts`. Unrecognized aliases fall back to an unhighlighted block.
+const LANG_ALIASES: Record<string, SupportedLanguages> = {
+  tx3: 'tx3',
+  ts: 'typescript',
+  typescript: 'typescript',
+  js: 'typescript',
+  javascript: 'typescript',
+  py: 'python',
+  python: 'python',
+  rs: 'rust',
+  rust: 'rust',
+  go: 'go',
+  golang: 'go',
+  bash: 'bash',
+  sh: 'bash',
+  shell: 'bash',
+  zsh: 'bash',
+  toml: 'toml',
+};
+
+function resolveLang(raw: string | undefined): SupportedLanguages | null {
+  if (!raw) return null;
+  return LANG_ALIASES[raw.toLowerCase()] ?? null;
+}
+
+const markdownComponents: Components = {
   h1: 'h2',
   h2: 'h3',
   h3: 'h4',
   h4: 'h5',
-} as const;
+  // The default `pre` wrapper is dropped so that fenced blocks can be rendered
+  // through `CodeBlock` (which produces its own `<pre>` via Shiki).
+  pre: ({ children }) => <>{children}</>,
+  code: ({ className, children, ...rest }) => {
+    const raw = /language-([\w-]+)/.exec(className ?? '')?.[1];
+    const text = String(children).replace(/\n$/, '');
+    const lang = resolveLang(raw);
+
+    if (lang) {
+      return <CodeBlock code={text} lang={lang} />;
+    }
+
+    if (raw) {
+      return <pre><code className={className} {...rest}>{text}</code></pre>;
+    }
+
+    return <code className={className} {...rest}>{children}</code>;
+  },
+};
 
 // Splits a SDK README into the content before the Quick start section, the
 // Quick start section itself (heading included), and everything after it.

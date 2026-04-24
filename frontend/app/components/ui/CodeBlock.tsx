@@ -2,13 +2,13 @@ import clsx from 'clsx';
 import { useMemo } from 'react';
 
 // Utils
-import { highlighter } from '~/utils/shiki';
+import { highlighter, type SupportedLanguages } from '~/utils/shiki';
 
 interface CodeBlockProps {
   className?: string;
   code: string;
   // To include new languages, update `utils/shiki.ts`
-  lang?: 'tx3';
+  lang?: SupportedLanguages;
 }
 
 export function CodeBlock({ className, code, lang = 'tx3' }: CodeBlockProps) {
