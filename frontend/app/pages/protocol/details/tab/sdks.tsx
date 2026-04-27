@@ -1,20 +1,26 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 
+// Components
 import { CodeBlock } from '~/components/ui/CodeBlock';
 import { Dropdown } from '~/components/ui/Dropdown';
 import { ChevronRightIcon } from '~/components/icons/chevron-right';
-import { TRP_ENDPOINTS } from '~/trp-config';
+
+// Config
+import { getTrpForProfile, TRP_ENDPOINTS } from '~/trp-config';
+
+// Internal
 import { generateQuickStart, pickDefaultProfile, type QuickStartSnippet } from './sdks/quick-start';
 
-const trpOptions = Object.keys(TRP_ENDPOINTS).map(key => ({
-  label: key,
-  value: key,
-}));
+type TrpKind = 'local' | 'demeter';
 
-function pickDefaultTrpName(profileName: string | null): string {
-  if (profileName && profileName in TRP_ENDPOINTS) return profileName;
-  return 'preview' in TRP_ENDPOINTS ? 'preview' : Object.keys(TRP_ENDPOINTS)[0];
+const trpOptions: { label: string; value: TrpKind; }[] = [
+  { label: 'Local', value: 'local' },
+  { label: 'Demeter', value: 'demeter' },
+];
+
+function pickDefaultTrpKind(profileName: string | null): TrpKind {
+  return profileName === 'local' ? 'local' : 'demeter';
 }
 
 type SDKKey = 'typescript' | 'rust' | 'go' | 'python';
@@ -142,7 +148,7 @@ interface InstallSectionProps {
 }
 
 function InstallSection({ sdk, protocol }: InstallSectionProps) {
-  const trixCmd = `trix add ${protocol.scope}/${protocol.name}`;
+  const trixCmd = `trix add ${protocol.scope}/${protocol.name}@${protocol.version}`;
   const tiiPath = `./.tx3/tii/${protocol.scope}/${protocol.name}.tii`;
   return (
     <section>
@@ -167,8 +173,9 @@ interface QuickStartSectionProps {
   profiles: Profile[];
   selectedProfileName: string;
   onSelectProfile: (name: string) => void;
-  selectedTrpName: string;
-  onSelectTrp: (name: string) => void;
+  selectedTrpKind: TrpKind;
+  onSelectTrpKind: (kind: TrpKind) => void;
+  trpLocked: boolean;
   openTxs: Set<string>;
   onToggleTx: (name: string, open: boolean) => void;
   registerTxRef: (name: string, el: HTMLDetailsElement | null) => void;
@@ -179,8 +186,9 @@ function QuickStartSection({
   profiles,
   selectedProfileName,
   onSelectProfile,
-  selectedTrpName,
-  onSelectTrp,
+  selectedTrpKind,
+  onSelectTrpKind,
+  trpLocked,
   openTxs,
   onToggleTx,
   registerTxRef,
@@ -206,9 +214,10 @@ function QuickStartSection({
             label="TRP"
             showValue
             modal={false}
-            value={selectedTrpName}
+            disabled={trpLocked}
+            value={selectedTrpKind}
             options={trpOptions}
-            onOptionSelected={onSelectTrp}
+            onOptionSelected={value => onSelectTrpKind(value as TrpKind)}
           />
         </div>
       </div>
@@ -266,13 +275,15 @@ export function TabSDKs({ protocol }: Props) {
 
   const [selectedKey, setSelectedKey] = useState<SDKKey>('typescript');
   const [selectedProfileName, setSelectedProfileName] = useState<string>(defaultProfile?.name ?? '');
-  const [selectedTrpName, setSelectedTrpName] = useState<string>(() => pickDefaultTrpName(defaultProfile?.name ?? null));
+  const [trpKindPref, setTrpKindPref] = useState<TrpKind>(() => pickDefaultTrpKind(defaultProfile?.name ?? null));
   const [openTxs, setOpenTxs] = useState<Set<string>>(new Set());
   const txRefs = useRef<Map<string, HTMLDetailsElement>>(new Map());
 
   const selected = sdks.find(s => s.key === selectedKey)!;
   const selectedProfile = profiles.find(p => p.name === selectedProfileName) ?? null;
-  const selectedTrp = TRP_ENDPOINTS[selectedTrpName] ?? TRP_ENDPOINTS[Object.keys(TRP_ENDPOINTS)[0]];
+  const trpLocked = selectedProfileName === 'local';
+  const selectedTrpKind: TrpKind = trpLocked ? 'local' : trpKindPref;
+  const selectedTrp = selectedTrpKind === 'local' ? TRP_ENDPOINTS.local : getTrpForProfile(selectedProfileName);
 
   const snippet = useMemo(
     () => generateQuickStart(selected.key, protocol, { profile: selectedProfile, trp: selectedTrp }),
@@ -345,8 +356,9 @@ export function TabSDKs({ protocol }: Props) {
           profiles={profiles}
           selectedProfileName={selectedProfileName}
           onSelectProfile={setSelectedProfileName}
-          selectedTrpName={selectedTrpName}
-          onSelectTrp={setSelectedTrpName}
+          selectedTrpKind={selectedTrpKind}
+          onSelectTrpKind={setTrpKindPref}
+          trpLocked={trpLocked}
           openTxs={openTxs}
           onToggleTx={handleToggleTx}
           registerTxRef={registerTxRef}

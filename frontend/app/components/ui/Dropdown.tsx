@@ -9,6 +9,7 @@ interface Props {
   label?: string;
   value: string;
   showValue?: boolean;
+  disabled?: boolean;
   // When true (default), Headless UI scroll-locks the page and `inert`s the
   // rest of the DOM while the menu is open — matching dialog-style behavior.
   // Set to false for a standard popover that leaves the background scrollable.
@@ -17,7 +18,7 @@ interface Props {
   onOptionSelected?: (value: string) => void;
 }
 
-export function Dropdown({ label, value, showValue, modal = true, options, onOptionSelected }: Props) {
+export function Dropdown({ label, value, showValue, disabled, modal = true, options, onOptionSelected }: Props) {
   const [activeOption, setActiveOption] = useState(options.find(option => option.value === value));
 
   useEffect(() => {
@@ -30,7 +31,13 @@ export function Dropdown({ label, value, showValue, modal = true, options, onOpt
 
   return (
     <Menu as="div">
-      <MenuButton className="flex flex-row gap-3 py-2.5 px-4 rounded-lg items-center text-sm border text-zinc-500 border-zinc-800 cursor-pointer">
+      <MenuButton
+        disabled={disabled}
+        className={clsx(
+          'flex flex-row gap-3 py-2.5 px-4 rounded-lg items-center text-sm border text-zinc-500 border-zinc-800',
+          disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
+        )}
+      >
         {!!label && (
           <span>{label}</span>
         )}
