@@ -15,15 +15,18 @@ import { CodeIcon } from '~/components/icons/code';
 import { ChartDots3Icon } from '~/components/icons/chart-dots-3';
 import { FileDescriptionIcon } from '~/components/icons/file-description';
 import { FileCode } from '~/components/icons/file-code';
+import { GraphIcon } from '~/components/icons/graph';
 
 // Tabs
+import type { MatchRow } from '~/lib/tracker/queries';
 import { TabReadme } from './tab/readme';
 import { TabTryOut } from './tab/tryOut';
 import { TabTx3File } from './tab/tx3File';
 import { TabProtocol } from './tab/protocol';
 import { TabSDKs } from './tab/sdks';
+import { TabActivity } from './tab/activity';
 
-const validTabs = ['readme', 'protocol', 'tx3-file', 'try-out', 'sdks'] as const;
+const validTabs = ['readme', 'protocol', 'tx3-file', 'try-out', 'sdks', 'activity'] as const;
 type Tab = typeof validTabs[number];
 
 function getValidTab(tab?: string): Tab {
@@ -36,7 +39,13 @@ function getValidTab(tab?: string): Tab {
   return 'readme';
 }
 
-export function ProtocolDetails({ protocol, rpcDocsUrl }: { protocol: Protocol; rpcDocsUrl: string | null; }) {
+interface ProtocolDetailsProps {
+  protocol: Protocol;
+  rpcDocsUrl: string | null;
+  matches: MatchRow[];
+}
+
+export function ProtocolDetails({ protocol, rpcDocsUrl, matches }: ProtocolDetailsProps) {
   const [searchParams, setSearchParams] = useSearchParams({ activeTab: 'readme' });
   const activeTab: Tab = getValidTab(searchParams.get('activeTab')?.toLowerCase());
 
@@ -87,6 +96,12 @@ export function ProtocolDetails({ protocol, rpcDocsUrl }: { protocol: Protocol; 
               active={activeTab === 'sdks'}
               onClick={() => setSearchParams({ activeTab: 'sdks' })}
             />
+            <TabName
+              icon={<GraphIcon width="20" height="20" />}
+              name="Activity"
+              active={activeTab === 'activity'}
+              onClick={() => setSearchParams({ activeTab: 'activity' })}
+            />
             {rpcDocsUrl && (
               <a href={rpcDocsUrl} target="_blank" rel="noreferrer">
                 <TabName
@@ -109,6 +124,7 @@ export function ProtocolDetails({ protocol, rpcDocsUrl }: { protocol: Protocol; 
           {activeTab === 'tx3-file' && <TabTx3File protocol={protocol} />}
           {activeTab === 'try-out' && <TabTryOut protocol={protocol} />}
           {activeTab === 'sdks' && <TabSDKs protocol={protocol} />}
+          {activeTab === 'activity' && <TabActivity protocol={protocol} matches={matches} />}
         </div>
 
         <div className="container py-4">

@@ -2,6 +2,8 @@ import { redirect, type ShouldRevalidateFunctionArgs } from 'react-router';
 import { DETAIL_QUERY, detailQueryKeyGenerator } from '~/gql/protocols.query';
 import { requestGraphQL } from '~/gql/gql.server';
 import { ProtocolDetails as Page } from '~/pages/protocol/details';
+import { createTrackerDb } from '~/lib/tracker/db';
+import { listMatchesForProtocol, type MatchRow } from '~/lib/tracker/queries';
 import type { Route } from './+types/protocol.$scope.$name';
 
 export function meta({ params }: Route.MetaArgs) {
@@ -51,10 +53,33 @@ async function checkRpcDocs(protocolName: string): Promise<string | null> {
   return `${baseUrl}/${protocolName}/docs`;
 }
 
+/**
+ * Fetch recent matches for the protocol from tracker.db.
+ *
+ * Resilient: if tracker.db is missing, unreadable, or empty for this
+ * protocol, returns []. The Activity tab renders an empty-state in that
+ * case instead of erroring the whole page.
+ */
+async function safeListMatches(protocolName: string): Promise<MatchRow[]> {
+  try {
+    const db = createTrackerDb();
+    try {
+      return await listMatchesForProtocol(db, protocolName, 50);
+    } finally {
+      await db.destroy();
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    // eslint-disable-next-line no-console -- ops signal when tracker.db is missing/unreachable
+    console.warn(`[activity] tracker.db unavailable for protocol=${protocolName}: ${msg}`);
+    return [];
+  }
+}
+
 export async function loader({ context, params }: Route.LoaderArgs) {
   const id = `${params.name}/${params.scope}`;
 
-  const [result, rpcDocsUrl] = await Promise.all([
+  const [result, rpcDocsUrl, matches] = await Promise.all([
     context.queryClient.fetchQuery({
       queryKey: detailQueryKeyGenerator(id),
       queryFn: requestGraphQL<{ protocol: Query['protocol']; }, QueryProtocolArgs>(
@@ -63,18 +88,23 @@ export async function loader({ context, params }: Route.LoaderArgs) {
       ),
     }),
     checkRpcDocs(params.name),
+    safeListMatches(params.name),
   ]);
 
   if (!result.protocol) {
     throw redirect('/');
   }
 
-  return { ...result, rpcDocsUrl };
+  return { ...result, rpcDocsUrl, matches };
 }
 
 export default function DAppDetails({ loaderData }: Route.ComponentProps) {
   return (
-    <Page protocol={loaderData.protocol!} rpcDocsUrl={loaderData.rpcDocsUrl} />
+    <Page
+      protocol={loaderData.protocol!}
+      rpcDocsUrl={loaderData.rpcDocsUrl}
+      matches={loaderData.matches}
+    />
   );
 }
 
