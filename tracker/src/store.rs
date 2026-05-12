@@ -66,6 +66,12 @@ impl Store {
 
         Ok(row.and_then(|r| {
             let slot: i64 = r.get(0);
+            // A negative slot indicates a corrupt or hostile row; treat it as
+            // absent so the daemon starts from genesis rather than wrapping to
+            // a phantom u64 intersect.
+            if slot < 0 {
+                return None;
+            }
             let hash_bytes: Vec<u8> = r.get(1);
             let hash: [u8; 32] = hash_bytes.try_into().ok()?;
             Some(ChainPoint {
