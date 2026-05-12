@@ -28,7 +28,7 @@ awk -v key="${DMTR_API_KEY:-}" -v ep="${DMTR_ENDPOINT:-}" '
   { print }
 ' tracker.toml > "$CFG"
 
-# `cargo run` from the workspace root so the binary builds against the local
-# crates rather than crates.io — useful while iterating.
+# `cargo run` from the tracker crate root so the binary builds against the
+# local crate — useful while iterating.
 ROOT=$(git -C "$(pwd)" rev-parse --show-toplevel)
-exec cargo run --manifest-path "$ROOT/Cargo.toml" -p tracker --release -- "$CFG"
+exec cargo run --manifest-path "$ROOT/tracker/Cargo.toml" --release -- "$CFG"

@@ -2,7 +2,7 @@
 
 End-to-end smoke test for `tracker`. Replays a real historical burn from the
 **Orcfax** oracle policy on Cardano mainnet and watches the daemon capture
-it into SQLite — using utxorpc v1beta and a local server.
+it into Postgres — using utxorpc v1beta and a local server.
 
 ## What this demo proves
 
@@ -59,8 +59,8 @@ mainnet tip almost always has a recent example.
 - `run.sh` — runs `trix build -p mainnet` (regenerates the TII under
   `./.tx3/tii/`), sources `./.env` if present, splices `DMTR_API_KEY`
   and `DMTR_ENDPOINT` overrides into a temp copy of `tracker.toml`, and
-  execs `cargo run -p tracker --release` against it. With no `.env` it
-  uses the committed defaults (local server, no auth).
+  execs `cargo run --manifest-path …/tracker/Cargo.toml --release` against
+  it. With no `.env` it uses the committed defaults (local server, no auth).
 
 ## Running it
 
@@ -80,13 +80,14 @@ mainnet tip almost always has a recent example.
    summary.
 4. Inspect the resulting row:
    ```sh
-   sqlite3 tracker.db 'SELECT source_name, tx_name, hex(tx_hash), block_slot FROM matches'
-   sqlite3 tracker.db 'SELECT json_extract(lifted, "$.parties") FROM matches'
-   sqlite3 tracker.db 'SELECT json_extract(lifted, "$.burns") FROM matches'
+   # Connect with the credentials from your tracker.toml database_url.
+   psql "$DATABASE_URL" -c "SELECT source_name, tx_name, encode(tx_hash,'hex'), block_slot FROM matches"
+   psql "$DATABASE_URL" -c "SELECT lifted->'parties' FROM matches"
+   psql "$DATABASE_URL" -c "SELECT lifted->'burns'    FROM matches"
    ```
 5. Restart `./run.sh`. The daemon resumes from the cursor stored in
-   `tracker.db`; the `UNIQUE(tx_hash, source_name)` index makes the
-   re-application a no-op.
+   Postgres (the database referenced by `database_url` in `tracker.toml`);
+   the `UNIQUE(tx_hash, source_name)` index makes the re-application a no-op.
 
 ## Caveats
 

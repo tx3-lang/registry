@@ -5,3 +5,4 @@ target/
 .env
 .env.*
 !.env.example
+!**/.env.mainnet
