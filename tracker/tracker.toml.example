@@ -1,0 +1,26 @@
+# Tracker configuration example.
+# See docs/superpowers/specs/2026-05-11-tracker-daemon-design.md for an
+# overview of how the daemon uses each section.
+
+[upstream]
+endpoint = "https://preview.utxorpc-v0.demeter.run"
+# api_key  = "dmtr_..."     # uncomment if your endpoint requires auth
+intersect = "tip"            # or { slot = 12345, hash = "abcd..." }
+
+# Optional server-side filter that narrows the WatchTx stream. Leaving
+# [upstream.filter] empty (or removing it) streams every transaction;
+# configure at least one entry on a busy network.
+[upstream.filter]
+addresses = []
+# moves_policy_id = "abc123..."   # hex-encoded policy id (uncomment to enable)
+# mints_policy_id = "abc123..."
+
+[storage]
+# Use a real Postgres in prod. The DATABASE_URL env var, if set, overrides
+# this value at startup so the same TOML can be reused across environments.
+database_url = "postgres://tracker:tracker@localhost:5432/tracker"
+
+[[sources]]
+name      = "transfer-preprod"
+tii_path  = "./protocols/transfer.tii"
+profile   = "preprod"

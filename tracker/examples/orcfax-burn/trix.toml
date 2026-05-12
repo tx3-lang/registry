@@ -1,0 +1,7 @@
+[protocol]
+name = "orcfax-burn"
+version = "0.0.1"
+main = "main.tx3"
+
+[ledger]
+family = "cardano"
