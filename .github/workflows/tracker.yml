@@ -1,0 +1,42 @@
+name: tracker
+
+on:
+  push:
+    paths:
+      - 'tracker/**'
+      - '.github/workflows/tracker.yml'
+  pull_request:
+    paths:
+      - 'tracker/**'
+      - '.github/workflows/tracker.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: tracker
+          POSTGRES_PASSWORD: tracker
+          POSTGRES_DB: tracker
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tracker"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://tracker:tracker@localhost:5432/tracker
+    defaults:
+      run:
+        working-directory: tracker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tracker
+      - run: cargo build --all-targets
+      - run: cargo test --all-features
