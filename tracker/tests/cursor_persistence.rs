@@ -13,6 +13,7 @@ async fn cursor_survives_reopen(pool: PgPool) {
     let store = Store::from_pool(pool.clone());
     let cursor = sample_cursor();
 
+    // Empty rows: exercises the cursor-upsert path without inserting matches.
     store
         .apply_block(cursor, vec![])
         .await
