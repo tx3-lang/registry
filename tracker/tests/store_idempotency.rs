@@ -36,6 +36,6 @@ async fn reinserting_same_match_is_noop(pool: PgPool) {
         .await
         .expect("second apply_block failed");
 
-    assert_eq!(n1, 1);
-    assert_eq!(n2, 0); // UNIQUE constraint + ON CONFLICT DO NOTHING
+    assert_eq!(n1, 1, "first apply_block should insert exactly one row");
+    assert_eq!(n2, 0, "second apply_block must be a no-op: UNIQUE(tx_hash, source_name) + ON CONFLICT DO NOTHING");
 }
