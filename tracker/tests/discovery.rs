@@ -140,7 +140,7 @@ fn zot_page1_json() -> serde_json::Value {
     serde_json::json!({
         "data": {
             "RepoListWithNewestImage": {
-                "Page": { "TotalCount": 2, "ItemCount": 100 },
+                "Page": { "TotalCount": 2, "ItemCount": 100 }, // must match LIMIT in discovery.rs
                 "Results": [
                     {
                         "Name": "txpipe/orcfax-burn",
@@ -195,6 +195,7 @@ async fn mount_two_repo_catalog(server: &MockServer) {
         .respond_with(ResponseTemplate::new(200).set_body_json(zot_page1_json()))
         .up_to_n_times(1)
         .with_priority(1)
+        .expect(1)
         .mount(server)
         .await;
 
@@ -205,6 +206,7 @@ async fn mount_two_repo_catalog(server: &MockServer) {
         .respond_with(ResponseTemplate::new(200).set_body_json(zot_page2_json()))
         .up_to_n_times(1)
         .with_priority(2)
+        .expect(1)
         .mount(server)
         .await;
 
@@ -446,21 +448,6 @@ async fn fetch_catalog_errors_on_missing_tii_layer() {
             ResponseTemplate::new(200)
                 .insert_header("Docker-Content-Digest", config_digest.as_str())
                 .set_body_bytes(config_bytes),
-        )
-        .mount(&server)
-        .await;
-
-    // Stub the tx3 layer blob too (oci-client pulls it before we inspect)
-    let layer_bytes: &[u8] = b"fake tx3 blob";
-    let layer_digest = sha256_hex(layer_bytes);
-    Mock::given(method("GET"))
-        .and(path(format!(
-            "/v2/txpipe/orcfax-burn/blobs/{layer_digest}"
-        )))
-        .respond_with(
-            ResponseTemplate::new(200)
-                .insert_header("Docker-Content-Digest", layer_digest.as_str())
-                .set_body_bytes(layer_bytes),
         )
         .mount(&server)
         .await;
