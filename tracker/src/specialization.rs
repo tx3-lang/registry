@@ -22,10 +22,13 @@ use crate::error::{Error, Result};
 /// One discovered protocol, ready to be specialized.
 #[derive(Debug, Clone)]
 pub struct DiscoveredSource {
-    /// `scope/name:version` — also stored as `source_name` per match.
+    /// Full OCI reference string: `scope/name:version`. This is stored as `matches.source_name` in the database.
     pub source_name: String,
+    /// OCI repository scope (e.g. `"txpipe"`).
     pub scope: String,
+    /// Protocol name without scope (e.g. `"orcfax-burn"`).
     pub name: String,
+    /// OCI tag / protocol version (e.g. `"1.0.0"`).
     pub version: String,
     pub tii: TiiFile,
     pub profile_name: String,
