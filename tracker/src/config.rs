@@ -19,13 +19,13 @@ pub struct Config {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpstreamConfig {
     pub endpoint: String,
+    /// TII profile name applied to every discovered protocol (with optional
+    /// per-protocol overrides under [oci.profile_override]).
+    pub profile: String,
     #[serde(default)]
     pub api_key: Option<String>,
     #[serde(default)]
     pub intersect: Intersect,
-    /// TII profile name applied to every discovered protocol (with optional
-    /// per-protocol overrides under [oci.profile_override]).
-    pub profile: String,
     #[serde(default)]
     pub filter: UpstreamFilter,
 }
