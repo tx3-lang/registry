@@ -1,0 +1,30 @@
+{
+  "tii": { "version": "1.0.0" },
+  "protocol": {
+    "name": "orcfax-burn",
+    "version": "1.0.0",
+    "scope": "txpipe"
+  },
+  "transactions": {
+    "burn": {
+      "tir": {
+        "content": "a10081825820000000000000000000000000000000000000000000000000000000000000000000",
+        "encoding": "hex",
+        "version": "v1beta0"
+      },
+      "params": {
+        "type": "object",
+        "properties": {
+          "amount": { "type": "integer" }
+        },
+        "required": ["amount"]
+      }
+    }
+  },
+  "profiles": {
+    "mainnet": {
+      "environment": {},
+      "parties": {}
+    }
+  }
+}
