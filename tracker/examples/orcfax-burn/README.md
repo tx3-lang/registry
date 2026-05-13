@@ -4,6 +4,19 @@ End-to-end smoke test for `tracker`. Replays a real historical burn from the
 **Orcfax** oracle policy on Cardano mainnet and watches the daemon capture
 it into Postgres — using utxorpc v1beta and a local server.
 
+## Prerequisites
+
+- **Zot OCI registry** running on `localhost:3000`. Start one with:
+  ```sh
+  # ARM (Apple Silicon / aarch64):
+  docker compose -f registry/zot/docker-compose.arm.yml up -d
+  # x86-64:
+  docker compose -f registry/zot/docker-compose.amd.yml up -d
+  ```
+- **`trix`** on `$PATH` (built with the `unstable` feature — `trix publish` requires it).
+- **Postgres** reachable at the URL in `tracker.toml` (`postgres://tracker:tracker@localhost:5432/tracker` by default). The tracker schema must already be applied.
+- **utxorpc v1beta server** on `localhost:50051` serving Cardano mainnet history back to at least slot `186188536`.
+
 ## What this demo proves
 
 A protocol described in `tx3` compiles to a TII; the tracker fingerprints
@@ -44,7 +57,9 @@ mainnet tip almost always has a recent example.
   `tracker` matcher only checks addresses + mint/burn policies, so the
   absence of redeemer/witness blocks in this `.tx3` does not block the
   match against the on-chain Plutus burn.
-- `trix.toml` — `trix init`-shaped manifest.
+- `trix.toml` — `trix init`-shaped manifest. Carries a `[registry]` block
+  pointing at `http://localhost:3000` (the local Zot) so `trix publish`
+  knows where to push.
 - `.env.mainnet` — committed env file for the `mainnet` profile. `trix`
   reads it at build time and maps each `<NAME>=…` line to
   `profiles.mainnet.parties.<name>` in the produced TII (lowercased), so
@@ -54,23 +69,32 @@ mainnet tip almost always has a recent example.
 - `tracker.toml` — daemon config: endpoint defaults to
   `http://localhost:50051`, pinned `intersect` at the parent block of the
   target tx (slot `186188536`, hash `26993814…98ae6`),
-  `mints_policy_id` pre-filter on the Orcfax policy, one `[[sources]]`
-  pointing at the build-time TII output `./.tx3/tii/main.tii`.
+  `mints_policy_id` pre-filter on the Orcfax policy, and an `[oci]` block
+  pointing at the local Zot (`http://localhost:3000`) with
+  `include_names = ["txpipe/orcfax-burn"]`. The tracker discovers the
+  protocol by pulling it from Zot — there are no hard-coded `[[sources]]`.
 - `run.sh` — runs `trix build -p mainnet` (regenerates the TII under
-  `./.tx3/tii/`), sources `./.env` if present, splices `DMTR_API_KEY`
-  and `DMTR_ENDPOINT` overrides into a temp copy of `tracker.toml`, and
-  execs `cargo run --manifest-path …/tracker/Cargo.toml --release` against
-  it. With no `.env` it uses the committed defaults (local server, no auth).
+  `./.tx3/tii/`), then `trix publish` (pushes the compiled protocol to the
+  local Zot), sources `./.env` if present, splices `DMTR_API_KEY` and
+  `DMTR_ENDPOINT` overrides into a temp copy of `tracker.toml`, and execs
+  `cargo run --manifest-path …/tracker/Cargo.toml --release` against it.
+  With no `.env` it uses the committed defaults (local server, no auth).
 
 ## Running it
 
-1. Make sure your local utxorpc server is up on `localhost:50051` and is
+1. Start a local Zot registry (see Prerequisites above).
+2. Make sure your local utxorpc server is up on `localhost:50051` and is
    tracking Cardano mainnet far enough back to include slot `186188536`.
-2. Start the tracker:
+3. Run the script from the example directory:
    ```sh
    ./run.sh
    ```
-3. The daemon will log `subscribing to WatchTx` and start replaying from
+   `run.sh` will:
+   - Compile `main.tx3` for the mainnet profile (`trix build -p mainnet`).
+   - Push the compiled protocol to the local Zot (`trix publish`).
+   - Launch the tracker, which will discover `txpipe/orcfax-burn` from Zot
+     and begin replaying history.
+4. The daemon will log `subscribing to WatchTx` and start replaying from
    the parent block of the target. Within a couple of seconds (the
    `mints_policy_id` server-side filter keeps traffic minimal — only
    Orcfax-policy txs come over the wire, the rest arrive as `Idle` slot

@@ -11,6 +11,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 trix build -p mainnet >/dev/null
+trix publish
 
 if [[ -f .env ]]; then
     set -a
