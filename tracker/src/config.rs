@@ -1,15 +1,14 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Config {
     pub upstream: UpstreamConfig,
     pub storage: StorageConfig,
-    #[serde(default)]
-    pub sources: Vec<SourceConfig>,
+    pub oci: OciConfig,
 }
 
 /// Where the tracker pulls chain data from.
@@ -22,6 +21,9 @@ pub struct UpstreamConfig {
     pub endpoint: String,
     #[serde(default)]
     pub api_key: Option<String>,
+    /// TII profile name applied to every discovered protocol (with optional
+    /// per-protocol overrides under [oci.profile_override]).
+    pub profile: String,
     #[serde(default)]
     pub intersect: Intersect,
     #[serde(default)]
@@ -75,10 +77,34 @@ impl UpstreamFilter {
     }
 }
 
+/// OCI registry configuration for auto-discovering protocols and TIIs.
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct SourceConfig {
-    pub name: String,
-    pub tii_path: PathBuf,
+pub struct OciConfig {
+    pub registry_url: String,
+    /// Allow only repos whose scope matches at least one entry.
+    /// Empty means "allow all" (when `include_names` is also empty).
+    #[serde(default)]
+    pub include_scopes: Vec<String>,
+    /// Allow only repos whose exact "scope/name" matches at least one entry.
+    /// Empty means "allow all" (when `include_scopes` is also empty).
+    #[serde(default)]
+    pub include_names: Vec<String>,
+    /// Exclude repos whose scope matches at least one entry (applied after includes).
+    #[serde(default)]
+    pub exclude_scopes: Vec<String>,
+    /// Exclude repos whose exact "scope/name" matches at least one entry (applied after includes).
+    #[serde(default)]
+    pub exclude_names: Vec<String>,
+    /// Optional per-protocol profile overrides. Matched on exact "scope/name". First match wins.
+    #[serde(default)]
+    pub profile_override: Vec<ProfileOverride>,
+}
+
+/// Overrides the default `[upstream].profile` for a specific protocol.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ProfileOverride {
+    #[serde(rename = "match")]
+    pub match_: String,
     pub profile: String,
 }
 
@@ -88,10 +114,8 @@ pub fn load(path: impl AsRef<Path>) -> Result<Config> {
     if let Ok(url) = std::env::var("DATABASE_URL") {
         cfg.storage.database_url = url;
     }
-    if cfg.sources.is_empty() {
-        return Err(Error::Config(
-            "at least one [[sources]] entry is required".to_string(),
-        ));
+    if let Ok(url) = std::env::var("OCI_REGISTRY_URL") {
+        cfg.oci.registry_url = url;
     }
     Ok(cfg)
 }

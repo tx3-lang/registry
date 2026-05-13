@@ -4,6 +4,7 @@
 
 [upstream]
 endpoint = "http://localhost:50051"
+profile  = "mainnet"
 # Local utxorpc server speaking v1beta — no Demeter key needed. The runner
 # script (./run.sh) overrides this from `DMTR_ENDPOINT` if you want to
 # retarget at a hosted endpoint.
@@ -24,7 +25,6 @@ mints_policy_id = "193ee65211bb3b4e0ea5f751f415269355a650e2e3706f625cdf1a4b"
 [storage]
 database_url = "postgres://tracker:tracker@localhost:5432/tracker"
 
-[[sources]]
-name     = "orcfax-burn-mainnet"
-tii_path = "./.tx3/tii/main.tii"
-profile  = "mainnet"
+[oci]
+registry_url  = "http://localhost:3000"
+include_names = ["txpipe/orcfax-burn"]

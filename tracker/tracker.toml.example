@@ -1,26 +1,32 @@
-# Tracker configuration example.
-# See docs/superpowers/specs/2026-05-11-tracker-daemon-design.md for an
-# overview of how the daemon uses each section.
-
 [upstream]
-endpoint = "https://preview.utxorpc-v0.demeter.run"
-# api_key  = "dmtr_..."     # uncomment if your endpoint requires auth
-intersect = "tip"            # or { slot = 12345, hash = "abcd..." }
+endpoint  = "https://preview.utxorpc-v0.demeter.run"
+profile   = "preview"            # applied to every discovered TII
+# api_key = "dmtr_..."
+intersect = "tip"
 
-# Optional server-side filter that narrows the WatchTx stream. Leaving
-# [upstream.filter] empty (or removing it) streams every transaction;
-# configure at least one entry on a busy network.
 [upstream.filter]
+# unchanged from phase 1: server-side WatchTx pre-filter
 addresses = []
-# moves_policy_id = "abc123..."   # hex-encoded policy id (uncomment to enable)
-# mints_policy_id = "abc123..."
 
 [storage]
-# Use a real Postgres in prod. The DATABASE_URL env var, if set, overrides
-# this value at startup so the same TOML can be reused across environments.
 database_url = "postgres://tracker:tracker@localhost:5432/tracker"
 
-[[sources]]
-name      = "transfer-preprod"
-tii_path  = "./protocols/transfer.tii"
-profile   = "preprod"
+[oci]
+registry_url = "http://localhost:3000"   # zot base URL
+
+# Allow/deny — semantics:
+# - If `include_scopes` and `include_names` are BOTH empty: allow every repo.
+# - Otherwise: allow only repos matching at least one include entry.
+# - `exclude_*` is applied after includes; exclude wins on conflict.
+# - `include_names` / `exclude_names` are exact "scope/name" strings, no tag.
+# - No wildcards / regex in this phase.
+include_scopes = []
+include_names  = []
+exclude_scopes = []
+exclude_names  = []
+
+# Optional per-protocol profile overrides. Empty by default.
+# Matched on exact "scope/name". First match wins.
+[[oci.profile_override]]
+match   = "txpipe/orcfax-burn"
+profile = "mainnet"
