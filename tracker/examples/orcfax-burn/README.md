@@ -102,14 +102,14 @@ mainnet tip almost always has a recent example.
    `1e31b362…b81a86`. Logs default to `tracker=info`; set
    `RUST_LOG=tracker=debug` to see every Apply, Idle, and resolved-inputs
    summary.
-4. Inspect the resulting row:
+5. Inspect the resulting row:
    ```sh
    # Connect with the credentials from your tracker.toml database_url.
    psql "$DATABASE_URL" -c "SELECT source_name, tx_name, encode(tx_hash,'hex'), block_slot FROM matches"
    psql "$DATABASE_URL" -c "SELECT lifted->'parties' FROM matches"
    psql "$DATABASE_URL" -c "SELECT lifted->'burns'    FROM matches"
    ```
-5. Restart `./run.sh`. The daemon resumes from the cursor stored in
+6. Restart `./run.sh`. The daemon resumes from the cursor stored in
    Postgres (the database referenced by `database_url` in `tracker.toml`);
    the `UNIQUE(tx_hash, source_name)` index makes the re-application a no-op.
 
