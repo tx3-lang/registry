@@ -6,12 +6,13 @@ it into Postgres — using utxorpc v1beta and a local server.
 
 ## Prerequisites
 
-- **Zot OCI registry** running on `localhost:3000`. Start one with:
+- **Zot OCI registry** running on `localhost:3000`. From the registry repo
+  root (one directory above `tracker/`), start one with:
   ```sh
   # ARM (Apple Silicon / aarch64):
-  docker compose -f registry/zot/docker-compose.arm.yml up -d
+  docker compose -f zot/docker-compose.arm.yml up -d
   # x86-64:
-  docker compose -f registry/zot/docker-compose.amd.yml up -d
+  docker compose -f zot/docker-compose.amd.yml up -d
   ```
 - **`trix`** on `$PATH` (built with the `unstable` feature — `trix publish` requires it).
 - **Postgres** reachable at the URL in `tracker.toml` (`postgres://tracker:tracker@localhost:5432/tracker` by default). The tracker schema must already be applied.

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Run the tracker against the orcfax-burn demo. Compiles main.tx3 (party
-# addresses come from .env.mainnet via trix), splices `DMTR_API_KEY` /
-# `DMTR_ENDPOINT` (if any) into a temp copy of tracker.toml, and execs
-# the daemon.
+# Run the tracker against the orcfax-burn demo. Compiles main.tx3, publishes
+# the resulting protocol + TII to the local Zot at `http://localhost:3000`
+# (Zot must be running first — see README.md), splices `DMTR_API_KEY` /
+# `DMTR_ENDPOINT` (if any) into a temp copy of tracker.toml, and execs the
+# daemon, which then auto-discovers the just-published protocol from Zot.
 #
 # The committed default targets `http://localhost:50051` (a local utxorpc
 # server speaking v1beta), so you can run without any env entirely.
@@ -11,7 +12,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 trix build -p mainnet >/dev/null
-trix publish
+trix publish >/dev/null
 
 if [[ -f .env ]]; then
     set -a
