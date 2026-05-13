@@ -1,9 +1,9 @@
-//! Pre-specialize each configured TII against its profile.
+//! Pre-specialize each discovered TII against its profile.
 //!
-//! The tracker's matcher walks every streamed tx against every configured
+//! The tracker's matcher walks every streamed tx against every discovered
 //! TII; specializing on the hot path would mean re-applying the profile
 //! args to the TIR for every block. We do it once at startup instead and
-//! cache the result here as a `SpecializedTii` per `[[sources]]` entry.
+//! cache the result here as a `SpecializedTii` per discovered source.
 //!
 //! The cached representation pairs each transaction's specialized TIR with
 //! its fingerprint, so the matcher's cheap pre-filter (`Fingerprint::matches`)
@@ -17,8 +17,19 @@ use tx3_sdk::tii::spec::TiiFile;
 use tx3_tir::model::v1beta0::Tx;
 use tx3_tir::reduce::{apply_args, ArgMap};
 
-use crate::config::SourceConfig;
 use crate::error::{Error, Result};
+
+/// One discovered protocol, ready to be specialized.
+#[derive(Debug, Clone)]
+pub struct DiscoveredSource {
+    /// `scope/name:version` — also stored as `source_name` per match.
+    pub source_name: String,
+    pub scope: String,
+    pub name: String,
+    pub version: String,
+    pub tii: TiiFile,
+    pub profile_name: String,
+}
 
 /// A TII whose transactions have all been pre-specialized against one
 /// configured profile, with a fingerprint cached alongside each TIR.
@@ -31,17 +42,16 @@ pub struct SpecializedTii {
     pub txs: BTreeMap<String, (Tx, Fingerprint)>,
 }
 
-/// Specialize every configured `[[sources]]` entry. Returns one
+/// Specialize every discovered TII source. Returns one
 /// `SpecializedTii` per source, in the same order.
-pub fn specialize_all(sources: &[SourceConfig]) -> Result<Vec<SpecializedTii>> {
+pub fn specialize_all(sources: &[DiscoveredSource]) -> Result<Vec<SpecializedTii>> {
     sources.iter().map(specialize_one).collect()
 }
 
-fn specialize_one(src: &SourceConfig) -> Result<SpecializedTii> {
-    let raw = std::fs::read_to_string(&src.tii_path)?;
-    let tii: TiiFile = serde_json::from_str(&raw)?;
+fn specialize_one(src: &DiscoveredSource) -> Result<SpecializedTii> {
+    let tii = src.tii.clone();
 
-    let profile = lookup_profile(&tii, &src.profile)?;
+    let profile = lookup_profile(&tii, &src.profile_name)?;
     let args: ArgMap = args_from_profile(profile, &ArgMap::new())?;
 
     let mut txs = BTreeMap::new();
@@ -49,21 +59,21 @@ fn specialize_one(src: &SourceConfig) -> Result<SpecializedTii> {
         let tx_meta = lookup_tx(&tii, tx_name)?;
         let raw_tir = decode_tir(tx_meta)?;
         let specialized = apply_args(raw_tir, &args).map_err(tx3_lift::Error::from)?;
-        let fp = extract(&tii, tx_name, &src.profile, &specialized, &args)?;
+        let fp = extract(&tii, tx_name, &src.profile_name, &specialized, &args)?;
         txs.insert(tx_name.clone(), (specialized, fp));
     }
 
     if txs.is_empty() {
         return Err(Error::Config(format!(
-            "source {:?} has no transactions in its TII",
-            src.name
+            "protocol {} has no transactions for profile {}",
+            src.source_name, src.profile_name
         )));
     }
 
     Ok(SpecializedTii {
-        name: src.name.clone(),
+        name: src.source_name.clone(),
         tii,
-        profile_name: src.profile.clone(),
+        profile_name: src.profile_name.clone(),
         txs,
     })
 }
