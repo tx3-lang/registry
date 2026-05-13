@@ -212,6 +212,20 @@ mod tests {
     }
 
     #[test]
+    fn apply_filters_exclude_names_drops_matching() {
+        let mut oci = oci_empty();
+        oci.exclude_names = vec!["txpipe/transfer".to_string()];
+
+        let repos = vec![
+            repo("txpipe", "orcfax-burn", "1.0.0"),
+            repo("txpipe", "transfer", "1.0.0"),
+        ];
+        let result = apply_filters(repos, &oci);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].name, "txpipe/orcfax-burn");
+    }
+
+    #[test]
     fn apply_filters_exclude_wins_over_include() {
         let mut oci = oci_empty();
         oci.include_scopes = vec!["txpipe".to_string()];
