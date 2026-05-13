@@ -1,4 +1,5 @@
 pub mod config;
+pub mod discovery;
 pub mod error;
 pub mod process;
 pub mod specialization;
@@ -18,7 +19,9 @@ pub async fn run(config_path: PathBuf) -> Result<()> {
     let cfg = config::load(&config_path)?;
 
     let store = store::Store::open(&cfg.storage.database_url).await?;
-    let specialized = specialization::specialize_all(&cfg.sources)?;
+    // TODO(Task 4): replace with discovery::fetch_catalog(&cfg.oci, &cfg.upstream.profile).await?
+    let discovered: Vec<discovery::DiscoveredSource> = vec![];
+    let specialized = specialization::specialize_all(&discovered)?;
     info!(
         sources = specialized.len(),
         txs = specialized.iter().map(|s| s.txs.len()).sum::<usize>(),

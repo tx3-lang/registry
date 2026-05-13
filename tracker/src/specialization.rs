@@ -17,22 +17,8 @@ use tx3_sdk::tii::spec::TiiFile;
 use tx3_tir::model::v1beta0::Tx;
 use tx3_tir::reduce::{apply_args, ArgMap};
 
+use crate::discovery::DiscoveredSource;
 use crate::error::{Error, Result};
-
-/// One discovered protocol, ready to be specialized.
-#[derive(Debug, Clone)]
-pub struct DiscoveredSource {
-    /// Full OCI reference string: `scope/name:version`. This is stored as `matches.source_name` in the database.
-    pub source_name: String,
-    /// OCI repository scope (e.g. `"txpipe"`).
-    pub scope: String,
-    /// Protocol name without scope (e.g. `"orcfax-burn"`).
-    pub name: String,
-    /// OCI tag / protocol version (e.g. `"1.0.0"`).
-    pub version: String,
-    pub tii: TiiFile,
-    pub profile_name: String,
-}
 
 /// A TII whose transactions have all been pre-specialized against one
 /// configured profile, with a fingerprint cached alongside each TIR.
