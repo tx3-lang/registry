@@ -19,13 +19,12 @@ pub async fn run(config_path: PathBuf) -> Result<()> {
     let cfg = config::load(&config_path)?;
 
     let store = store::Store::open(&cfg.storage.database_url).await?;
-    // TODO(Task 4): replace with discovery::fetch_catalog(&cfg.oci, &cfg.upstream.profile).await?
-    let discovered: Vec<discovery::DiscoveredSource> = vec![];
+    let discovered = discovery::fetch_catalog(&cfg.oci, &cfg.upstream.profile).await?;
     let specialized = specialization::specialize_all(&discovered)?;
     info!(
         sources = specialized.len(),
         txs = specialized.iter().map(|s| s.txs.len()).sum::<usize>(),
-        "specialized sources"
+        "specialized discovered sources"
     );
 
     let intersect = match store.cursor().await? {

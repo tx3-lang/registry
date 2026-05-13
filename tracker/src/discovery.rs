@@ -10,11 +10,15 @@
 //!
 //! The two pure helpers (`apply_filters` and `resolve_profile`) contain no I/O
 //! and are unit-tested in-file. The network path (`fetch_catalog` and its
-//! private sub-functions) lives in Task 4.
+//! private sub-functions) are also in this module.
 
+use oci_client::{client::ClientConfig, secrets::RegistryAuth, Client as OciClient, Reference};
+use serde::Deserialize;
+use tracing::{info, warn};
 use tx3_sdk::tii::spec::TiiFile;
 
 use crate::config::OciConfig;
+use crate::error::{Error, Result};
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -52,6 +56,259 @@ struct RepoSummary {
     scope: String,
     /// Most-recent OCI tag (e.g. `"1.0.0"`).
     tag: String,
+}
+
+// ---------------------------------------------------------------------------
+// GraphQL wire types (private — mirrors backend/src/oci.rs for
+// RepoListWithNewestImage instead of GlobalSearch/ExpandedRepoInfo)
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Deserialize)]
+struct ZotResponse {
+    data: Option<ZotData>,
+    errors: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ZotData {
+    #[serde(rename = "RepoListWithNewestImage")]
+    repo_list_with_newest_image: Option<RepoListWithNewestImage>,
+}
+
+#[derive(Debug, Deserialize)]
+struct RepoListWithNewestImage {
+    #[serde(rename = "Page")]
+    page: PageInfo,
+    #[serde(rename = "Results")]
+    results: Vec<RepoSummaryWire>,
+}
+
+#[derive(Debug, Deserialize)]
+struct PageInfo {
+    #[serde(rename = "TotalCount")]
+    #[allow(dead_code)]
+    total_count: i64,
+    #[serde(rename = "ItemCount")]
+    item_count: i64,
+}
+
+#[derive(Debug, Deserialize)]
+struct RepoSummaryWire {
+    #[serde(rename = "Name")]
+    name: String,
+    #[serde(rename = "NewestImage")]
+    newest_image: NewestImage,
+}
+
+#[derive(Debug, Deserialize)]
+struct NewestImage {
+    #[serde(rename = "Tag")]
+    tag: Option<String>,
+    #[serde(rename = "Vendor")]
+    vendor: Option<String>,
+}
+
+// ---------------------------------------------------------------------------
+// Network helpers
+// ---------------------------------------------------------------------------
+
+const LIMIT: i64 = 100;
+const TII_MEDIA_TYPE: &str = "application/tii+json";
+
+/// Derive the `oci_client::client::ClientProtocol` from a registry URL string.
+fn oci_protocol(registry_url: &str) -> oci_client::client::ClientProtocol {
+    if registry_url.starts_with("http://") {
+        oci_client::client::ClientProtocol::Http
+    } else {
+        oci_client::client::ClientProtocol::Https
+    }
+}
+
+/// Strip the URL scheme to get the bare `host[:port]` used inside an
+/// `oci_client::Reference`. Mirrors `backend/src/oci.rs::get_oci_image`.
+fn registry_host(registry_url: &str) -> &str {
+    registry_url
+        .split_once("://")
+        .map(|(_, host)| host)
+        .unwrap_or(registry_url)
+}
+
+/// Paginated `RepoListWithNewestImage` GraphQL query against Zot.
+///
+/// Loops in steps of `LIMIT` until `Page.ItemCount < LIMIT`. Returns the
+/// assembled list of `RepoSummary` values (tag-less entries are skipped with a
+/// warning).
+async fn query_repo_list(
+    http: &reqwest::Client,
+    base_url: &str,
+) -> Result<Vec<RepoSummary>> {
+    let mut repos: Vec<RepoSummary> = Vec::new();
+    let mut offset: i64 = 0;
+
+    loop {
+        let query_body = format!(
+            r#"{{ RepoListWithNewestImage(requestedPage: {{ limit: {LIMIT}, offset: {offset} }}) {{ Page {{ TotalCount ItemCount }} Results {{ Name NewestImage {{ Tag Vendor }} }} }} }}"#
+        );
+        let encoded = urlencoding::encode(&query_body);
+        let url = format!("{base_url}/v2/_zot/ext/search?query={encoded}");
+
+        let resp: ZotResponse = http
+            .get(&url)
+            .send()
+            .await?
+            .json()
+            .await?;
+
+        // Surface GraphQL-level errors as a Config error so operators can read
+        // them in the log (schema drift, auth issues, etc.).
+        if resp.data.is_none() {
+            if let Some(errs) = resp.errors {
+                return Err(Error::Config(format!(
+                    "zot returned graphql errors: {errs}"
+                )));
+            }
+            // data is null and errors is also null — treat as empty page.
+            break;
+        }
+
+        let page_data = resp
+            .data
+            .unwrap()
+            .repo_list_with_newest_image
+            .ok_or_else(|| {
+                Error::Config(
+                    "zot response missing RepoListWithNewestImage field".to_string(),
+                )
+            })?;
+
+        let item_count = page_data.page.item_count;
+
+        for wire in page_data.results {
+            let tag = match wire.newest_image.tag {
+                Some(t) if !t.is_empty() => t,
+                _ => {
+                    warn!(repo = %wire.name, "skipping repo: no tag in NewestImage");
+                    continue;
+                }
+            };
+            let scope = wire
+                .newest_image
+                .vendor
+                .unwrap_or_default();
+            repos.push(RepoSummary {
+                name: wire.name,
+                scope,
+                tag,
+            });
+        }
+
+        if item_count < LIMIT {
+            break;
+        }
+        offset += LIMIT;
+    }
+
+    Ok(repos)
+}
+
+/// Pull the `application/tii+json` layer from an OCI image and decode it.
+async fn pull_tii(
+    oci: &OciClient,
+    registry_host_str: &str,
+    scope: &str,
+    name: &str,
+    version: &str,
+) -> Result<TiiFile> {
+    let reference =
+        Reference::try_from(format!("{registry_host_str}/{scope}/{name}:{version}"))
+            .map_err(|e| Error::Config(format!("invalid OCI reference: {e}")))?;
+
+    let image = oci
+        .pull(&reference, &RegistryAuth::Anonymous, vec![TII_MEDIA_TYPE])
+        .await?;
+
+    let layer = image
+        .layers
+        .iter()
+        .find(|l| l.media_type == TII_MEDIA_TYPE)
+        .ok_or_else(|| {
+            Error::Config(format!(
+                "protocol {scope}/{name}:{version} has no application/tii+json layer"
+            ))
+        })?;
+
+    let tii = serde_json::from_slice::<TiiFile>(&layer.data)?;
+    Ok(tii)
+}
+
+// ---------------------------------------------------------------------------
+// Public async entry point
+// ---------------------------------------------------------------------------
+
+/// Query Zot, apply filters, fetch each protocol's TII layer, and resolve
+/// the profile name. Returns the full catalog of protocols the tracker should
+/// match against.
+///
+/// Errors if the registry is unreachable, the catalog is empty, every
+/// protocol is filtered out, or any individual protocol fails to pull/decode.
+pub async fn fetch_catalog(oci: &OciConfig, default_profile: &str) -> Result<Vec<DiscoveredSource>> {
+    let http = reqwest::Client::new();
+    let oci_client = OciClient::new(ClientConfig {
+        protocol: oci_protocol(&oci.registry_url),
+        ..Default::default()
+    });
+
+    let host = registry_host(&oci.registry_url);
+
+    let repos = query_repo_list(&http, &oci.registry_url).await?;
+    info!(total = repos.len(), "fetched repo list from OCI registry");
+
+    let filtered = apply_filters(repos, oci);
+    info!(filtered = filtered.len(), "repos after allow/deny filter");
+
+    let mut discovered: Vec<DiscoveredSource> = Vec::new();
+
+    for repo in filtered {
+        // Split full `scope/name` path into components.
+        let (repo_scope, name_only) = match repo.name.split_once('/') {
+            Some((s, n)) => (s.to_string(), n.to_string()),
+            None => {
+                warn!(repo = %repo.name, "skipping repo: name has no '/' separator");
+                continue;
+            }
+        };
+
+        // The manifest `Vendor` field is operator-set and untrusted. Prefer
+        // the path-derived scope; log a warning when they disagree.
+        if !repo.scope.is_empty() && repo.scope != repo_scope {
+            warn!(
+                repo = %repo.name,
+                vendor = %repo.scope,
+                path_scope = %repo_scope,
+                "Vendor disagrees with repo path scope; using path scope"
+            );
+        }
+
+        let tii = pull_tii(&oci_client, host, &repo_scope, &name_only, &repo.tag).await?;
+        let profile_name = resolve_profile(&repo_scope, &name_only, oci, default_profile);
+
+        discovered.push(DiscoveredSource {
+            source_name: format!("{repo_scope}/{name_only}:{}", repo.tag),
+            scope: repo_scope,
+            name: name_only,
+            version: repo.tag,
+            tii,
+            profile_name,
+        });
+    }
+
+    if discovered.is_empty() {
+        return Err(Error::Config(
+            "OCI registry returned no protocols (catalog empty or all filtered out)".to_string(),
+        ));
+    }
+
+    Ok(discovered)
 }
 
 // ---------------------------------------------------------------------------
@@ -238,6 +495,28 @@ mod tests {
         let result = apply_filters(repos, &oci);
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].name, "txpipe/orcfax-burn");
+    }
+
+    // ------------------------------------------------------------------
+    // registry_host (scheme stripper) tests
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn registry_host_strips_http_scheme() {
+        assert_eq!(registry_host("http://localhost:3000"), "localhost:3000");
+    }
+
+    #[test]
+    fn registry_host_strips_https_scheme() {
+        assert_eq!(registry_host("https://reg.example.com"), "reg.example.com");
+    }
+
+    #[test]
+    fn registry_host_strips_https_scheme_with_port() {
+        assert_eq!(
+            registry_host("https://reg.example.com:8443"),
+            "reg.example.com:8443"
+        );
     }
 
     // ------------------------------------------------------------------

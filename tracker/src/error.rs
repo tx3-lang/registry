@@ -42,6 +42,12 @@ pub enum Error {
     #[error("tx not found in containing block: {0}")]
     TxNotInBlock(String),
 
+    #[error("oci registry: {0}")]
+    OciRegistry(#[from] oci_client::errors::OciDistributionError),
+
+    #[error("zot http: {0}")]
+    ZotHttp(#[from] reqwest::Error),
+
     #[error("internal: {0}")]
     Internal(&'static str),
 }
