@@ -52,10 +52,15 @@ pub struct DiscoveredSource {
 struct RepoSummary {
     /// Full `scope/name` string (e.g. `"txpipe/orcfax-burn"`).
     name: String,
-    /// Scope portion only (e.g. `"txpipe"`).
+    /// Scope portion derived from the first path component of `name`
+    /// (e.g. `"txpipe"`). This is the authoritative value used for filtering
+    /// and `DiscoveredSource` construction.
     scope: String,
     /// Most-recent OCI tag (e.g. `"1.0.0"`).
     tag: String,
+    /// Raw `Vendor` annotation from the manifest, if present. Carried purely
+    /// to emit a warning when it disagrees with the path-derived `scope`.
+    vendor: Option<String>,
 }
 
 // ---------------------------------------------------------------------------
@@ -156,6 +161,7 @@ async fn query_repo_list(
             .get(&url)
             .send()
             .await?
+            .error_for_status()?
             .json()
             .await?;
 
@@ -191,14 +197,16 @@ async fn query_repo_list(
                     continue;
                 }
             };
-            let scope = wire
-                .newest_image
-                .vendor
+            let scope = wire.name
+                .split_once('/')
+                .map(|(s, _)| s.to_string())
                 .unwrap_or_default();
+            let vendor = wire.newest_image.vendor;
             repos.push(RepoSummary {
                 name: wire.name,
                 scope,
                 tag,
+                vendor,
             });
         }
 
@@ -237,7 +245,11 @@ async fn pull_tii(
             ))
         })?;
 
-    let tii = serde_json::from_slice::<TiiFile>(&layer.data)?;
+    let tii = serde_json::from_slice::<TiiFile>(&layer.data).map_err(|e| {
+        crate::error::Error::Config(format!(
+            "failed to decode tii+json layer for {scope}/{name}:{version}: {e}"
+        ))
+    })?;
     Ok(tii)
 }
 
@@ -252,7 +264,10 @@ async fn pull_tii(
 /// Errors if the registry is unreachable, the catalog is empty, every
 /// protocol is filtered out, or any individual protocol fails to pull/decode.
 pub async fn fetch_catalog(oci: &OciConfig, default_profile: &str) -> Result<Vec<DiscoveredSource>> {
-    let http = reqwest::Client::new();
+    let http = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .expect("failed to build HTTP client");
     let oci_client = OciClient::new(ClientConfig {
         protocol: oci_protocol(&oci.registry_url),
         ..Default::default()
@@ -280,13 +295,15 @@ pub async fn fetch_catalog(oci: &OciConfig, default_profile: &str) -> Result<Vec
 
         // The manifest `Vendor` field is operator-set and untrusted. Prefer
         // the path-derived scope; log a warning when they disagree.
-        if !repo.scope.is_empty() && repo.scope != repo_scope {
-            warn!(
-                repo = %repo.name,
-                vendor = %repo.scope,
-                path_scope = %repo_scope,
-                "Vendor disagrees with repo path scope; using path scope"
-            );
+        if let Some(v) = &repo.vendor {
+            if v != &repo_scope {
+                warn!(
+                    repo = %repo.name,
+                    vendor = %v,
+                    path_scope = %repo_scope,
+                    "Vendor disagrees with repo path scope; using path scope"
+                );
+            }
         }
 
         let tii = pull_tii(&oci_client, host, &repo_scope, &name_only, &repo.tag).await?;
@@ -389,6 +406,7 @@ mod tests {
             name: format!("{scope}/{short_name}"),
             scope: scope.to_string(),
             tag: tag.to_string(),
+            vendor: None,
         }
     }
 
