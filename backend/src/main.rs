@@ -4,7 +4,7 @@ use dotenvy::dotenv;
 use rocket::{http::Method, response::content::RawHtml, State};
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
 
-mod db;
+use tx3_registry_backend::db;
 mod schema;
 mod oci;
 mod ast_to_svg;
