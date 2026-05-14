@@ -1,0 +1,30 @@
+# End-to-end demo: replay one historical Orcfax oracle burn on Cardano
+# mainnet and watch the tracker capture it. See README.md for the full
+# walk-through.
+
+[upstream]
+endpoint = "http://localhost:50051"
+profile  = "mainnet"
+# Local utxorpc server speaking v1beta — no Demeter key needed. The runner
+# script (./run.sh) overrides this from `DMTR_ENDPOINT` if you want to
+# retarget at a hosted endpoint.
+
+# Parent block of the target burn tx
+#   1e31b36253043a89a388714f7245156788cbdbceed5d74ee81679e56a7b81a86
+# (block a18369937e9acd0b0095173cbd35b8b2f013ba13dcc34518e6d5a8a5004433e1
+# at slot 186188550). The burn is therefore the very next block after the
+# intersect (14 slots later).
+intersect = { slot = 186188536, hash = "26993814bd8770da765f482fafe9d9e47d206b0ff4b42cd6e68d5910ba298ae6" }
+
+# Server-side pre-filter: only stream txs that mint or burn the Orcfax
+# policy. The protobuf field is named `mints_asset` but per the spec it
+# matches both directions (positive mint and negative burn).
+[upstream.filter]
+mints_policy_id = "193ee65211bb3b4e0ea5f751f415269355a650e2e3706f625cdf1a4b"
+
+[storage]
+database_url = "postgres://tracker:tracker@localhost:5432/tracker"
+
+[oci]
+registry_url  = "http://localhost:3000"
+include_names = ["txpipe/orcfax-burn"]

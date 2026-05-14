@@ -1,0 +1,25 @@
+party Burner;
+
+party Recipient;
+
+tx burn_orcfax(
+    quantity: Int
+) {
+    locals {
+        token: AnyAsset(0x193ee65211bb3b4e0ea5f751f415269355a650e2e3706f625cdf1a4b, "", quantity),
+    }
+
+    input source {
+        from: Burner,
+        min_amount: fees,
+    }
+
+    burn {
+        amount: token,
+    }
+
+    output {
+        to: Recipient,
+        amount: source - token - fees,
+    }
+}

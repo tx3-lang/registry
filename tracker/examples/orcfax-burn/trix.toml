@@ -1,0 +1,11 @@
+[protocol]
+name    = "orcfax-burn"
+scope   = "txpipe"
+version = "0.0.1"
+main    = "main.tx3"
+
+[ledger]
+family = "cardano"
+
+[registry]
+url = "http://localhost:3000"

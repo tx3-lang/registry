@@ -1,0 +1,58 @@
+[package]
+name        = "tx3-registry-tracker"
+version     = "0.1.0"
+edition     = "2021"
+license     = "Apache-2.0"
+repository  = "https://github.com/tx3-lang/registry"
+description = "24/7 tracker daemon for the tx3 registry — lifts matched txs into Postgres"
+
+[lib]
+name = "tx3_registry_tracker"
+path = "src/lib.rs"
+
+[[bin]]
+name = "tracker"
+path = "src/main.rs"
+
+[dependencies]
+tx3-lift         = { git = "https://github.com/tx3-lang/tx3-lift", rev = "04d0b90a34b2461dd497f9941b491aed5d925bfd" }
+tx3-lift-cardano = { git = "https://github.com/tx3-lang/tx3-lift", rev = "04d0b90a34b2461dd497f9941b491aed5d925bfd" }
+tx3-tir          = "0.17.0"
+tx3-sdk          = "0.11.0"
+pallas           = ">=1.0.0-alpha, <2.0.0"
+
+utxorpc-spec = "0.19"
+tonic        = { version = "0.12", features = ["tls", "tls-roots"] }
+prost        = "0.13"
+prost-types  = "0.13"
+
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal", "sync"] }
+
+sqlx = { version = "0.8", features = [
+    "runtime-tokio",
+    "tls-rustls",
+    "postgres",
+    "macros",
+    "migrate",
+    "json",
+    "chrono",
+] }
+
+oci-client   = "0.14"
+reqwest      = { version = "0.12", features = ["json"] }
+urlencoding  = "2.1"
+
+toml         = "0.8"
+serde        = { version = "1.0", features = ["derive"] }
+serde_bytes  = "0.11"
+serde_json   = "1.0"
+
+thiserror          = "2.0"
+hex                = "0.4"
+bech32             = "0.11"
+tracing            = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dev-dependencies]
+wiremock = "0.6"
+sha2     = "0.10"
