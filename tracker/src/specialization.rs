@@ -25,6 +25,9 @@ use crate::error::{Error, Result};
 #[derive(Debug)]
 pub struct SpecializedTii {
     pub name: String,
+    pub repo_scope: String,
+    pub repo_name: String,
+    pub repo_version: String,
     pub tii: TiiFile,
     pub profile_name: String,
     /// Per-tx-name pre-specialized TIR + fingerprint.
@@ -61,6 +64,9 @@ fn specialize_one(src: &DiscoveredSource) -> Result<SpecializedTii> {
 
     Ok(SpecializedTii {
         name: src.source_name.clone(),
+        repo_scope: src.scope.clone(),
+        repo_name: src.name.clone(),
+        repo_version: src.version.clone(),
         tii,
         profile_name: src.profile_name.clone(),
         txs,
