@@ -119,6 +119,12 @@ struct NewestImage {
 
 const LIMIT: i64 = 100;
 const TII_MEDIA_TYPE: &str = "application/tii+json";
+// Layer media types `trix publish` may produce alongside the TII. We don't
+// consume the protocol source or README, but oci-client's `pull` validates
+// every layer against `accepted_media_types` before returning, so they must
+// all be listed or the whole pull errors with `IncompatibleLayerMediaType`.
+const PROTOCOL_MEDIA_TYPE: &str = "application/tx3";
+const MARKDOWN_MEDIA_TYPE: &str = "text/markdown";
 
 /// Derive the `oci_client::client::ClientProtocol` from a registry URL string.
 fn oci_protocol(registry_url: &str) -> oci_client::client::ClientProtocol {
@@ -232,7 +238,11 @@ async fn pull_tii(
             .map_err(|e| Error::Config(format!("invalid OCI reference: {e}")))?;
 
     let image = oci
-        .pull(&reference, &RegistryAuth::Anonymous, vec![TII_MEDIA_TYPE])
+        .pull(
+            &reference,
+            &RegistryAuth::Anonymous,
+            vec![TII_MEDIA_TYPE, PROTOCOL_MEDIA_TYPE, MARKDOWN_MEDIA_TYPE],
+        )
         .await?;
 
     let layer = image

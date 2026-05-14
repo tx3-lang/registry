@@ -89,7 +89,9 @@ fn manifest_json(tii_bytes: &[u8]) -> Vec<u8> {
     json.into_bytes()
 }
 
-/// OCI manifest JSON for Step 7: only has non-TII layers so `pull` rejects it.
+/// OCI manifest JSON with only a non-TII (`application/tx3`) layer. Lets
+/// `pull_tii` complete the pull (since `application/tx3` is in the accepted
+/// list) and then fail at the `.find(media_type == TII)` step.
 fn manifest_json_no_tii_layer() -> Vec<u8> {
     let dummy = dummy_config_bytes();
     let config_digest = sha256_hex(&dummy);
@@ -452,19 +454,37 @@ async fn fetch_catalog_errors_on_missing_tii_layer() {
         .mount(&server)
         .await;
 
+    // pull_tii now passes `application/tx3` to oci-client as an accepted media
+    // type (real `trix publish` manifests include it alongside the TII), so
+    // oci-client will fetch the non-TII layer body before pull_tii's own
+    // `.find(media_type == TII)` runs and fails. Stub the layer blob too.
+    let layer_bytes = b"fake tx3 blob".to_vec();
+    let layer_digest = sha256_hex(&layer_bytes);
+    Mock::given(method("GET"))
+        .and(path(format!(
+            "/v2/txpipe/orcfax-burn/blobs/{layer_digest}"
+        )))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("Docker-Content-Digest", layer_digest.as_str())
+                .set_body_bytes(layer_bytes),
+        )
+        .mount(&server)
+        .await;
+
     let oci = oci_config(&server.uri());
     let err = fetch_catalog(&oci, DEFAULT_PROFILE)
         .await
         .expect_err("should fail when no tii+json layer");
 
-    // oci-client's validate_layers rejects the manifest before pull_tii even
-    // runs, because pull() is called with accepted_media_types=[TII_MEDIA_TYPE]
-    // and the manifest only has an `application/tx3` layer. The error surfaces
-    // as Error::OciRegistry(IncompatibleLayerMediaTypeError).
+    // pull_tii returns Error::Config with "has no application/tii+json layer"
+    // when the pulled manifest has no TII layer. The Incompatible-media-type
+    // branch remains as a forward-compat guard in case oci-client tightens
+    // validation again.
     let msg = err.to_string();
     assert!(
-        msg.contains("Incompatible layer media type")
-            || msg.contains("has no application/tii+json layer"),
+        msg.contains("has no application/tii+json layer")
+            || msg.contains("Incompatible layer media type"),
         "error message should indicate missing tii+json layer, got: {msg}"
     );
 }
