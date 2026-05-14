@@ -1,5 +1,11 @@
 use async_graphql::SimpleObject;
 
+#[derive(SimpleObject, Clone)]
+pub struct PageInfo {
+    pub has_next_page: bool,
+    pub end_cursor: Option<String>,
+}
+
 #[derive(SimpleObject)]
 struct PaginationInfo {
   total_nodes: usize,

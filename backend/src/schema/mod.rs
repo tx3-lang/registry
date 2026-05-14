@@ -3,7 +3,7 @@ use std::{fs::File, io::Write};
 use async_graphql::{EmptyMutation, EmptySubscription, MergedObject, Schema};
 
 mod protocol;
-mod pagination;
+pub mod pagination;
 mod match_query;
 
 // MARK: Query Struct
