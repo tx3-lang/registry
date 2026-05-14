@@ -4,10 +4,7 @@ use dotenvy::dotenv;
 use rocket::{http::Method, response::content::RawHtml, State};
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
 
-use tx3_registry_backend::db;
-mod schema;
-mod oci;
-mod ast_to_svg;
+use tx3_registry_backend::{db, schema};
 
 #[macro_use]
 extern crate rocket;

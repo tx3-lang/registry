@@ -1,6 +1,8 @@
 mod cursor;
+mod query;
 
 pub use cursor::{decode_cursor, encode_cursor, CursorError};
+pub use query::MatchQuery;
 
 use async_graphql::{
     connection::{Connection, CursorType, EmptyFields},
