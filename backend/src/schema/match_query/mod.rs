@@ -1,12 +1,40 @@
 mod cursor;
 
-#[allow(unused_imports)]
 pub use cursor::{decode_cursor, encode_cursor, CursorError};
 
-use async_graphql::{SimpleObject, ID};
+use async_graphql::{
+    connection::{Connection, CursorType, EmptyFields},
+    SimpleObject, ID,
+};
 
 use crate::db;
-use super::pagination::PageInfo;
+
+// MARK: MatchCursor
+
+/// Newtype wrapping a row-id used as a cursor for the `MatchConnection`.
+///
+/// Delegates encode/decode to the opaque base64 helpers in `cursor.rs` so
+/// the wire format stays consistent with what Task 4 locked in.
+#[derive(Debug, Clone, PartialEq)]
+pub struct MatchCursor(pub i64);
+
+impl CursorType for MatchCursor {
+    type Error = CursorError;
+
+    fn decode_cursor(s: &str) -> Result<Self, Self::Error> {
+        decode_cursor(s).map(MatchCursor)
+    }
+
+    fn encode_cursor(&self) -> String {
+        encode_cursor(self.0)
+    }
+}
+
+// MARK: MatchConnection type alias
+
+pub type MatchConnection = Connection<MatchCursor, Match, EmptyFields, EmptyFields>;
+
+// MARK: GraphQL types
 
 #[derive(SimpleObject, Clone)]
 pub struct MatchSource {
@@ -29,19 +57,6 @@ pub struct Match {
     /// ISO 8601 UTC timestamp with literal Z suffix, no fractional seconds.
     pub matched_at: String,
     pub lifted: String,
-}
-
-#[derive(SimpleObject, Clone)]
-pub struct MatchEdge {
-    pub node: Match,
-    pub cursor: String,
-}
-
-#[derive(SimpleObject, Clone)]
-pub struct MatchConnection {
-    pub page_info: PageInfo,
-    pub edges: Vec<MatchEdge>,
-    pub nodes: Vec<Match>,
 }
 
 impl From<db::MatchRow> for Match {
@@ -112,5 +127,13 @@ mod tests {
         assert_eq!(m.source.scope, "txpipe");
         assert_eq!(m.source.name, "orcfax-burn");
         assert_eq!(m.source.version, "1.0.0");
+    }
+
+    #[test]
+    fn match_cursor_type_roundtrip() {
+        let original = MatchCursor(42);
+        let encoded = original.encode_cursor();
+        let decoded = MatchCursor::decode_cursor(&encoded).expect("roundtrip should succeed");
+        assert_eq!(decoded.0, 42);
     }
 }
