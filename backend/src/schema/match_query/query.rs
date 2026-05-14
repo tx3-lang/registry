@@ -9,6 +9,32 @@ pub struct MatchQuery;
 
 #[Object]
 impl MatchQuery {
+    async fn protocol_match(
+        &self,
+        ctx: &Context<'_>,
+        scope: String,
+        name: String,
+        tx_hash: String,
+    ) -> Result<Option<Match>, Error> {
+        let is_valid_hex = tx_hash.chars().all(|c| c.is_ascii_hexdigit());
+        if !is_valid_hex || tx_hash.len() % 2 != 0 {
+            return Err(Error::new("invalid txHash"));
+        }
+
+        let bytes = hex::decode(&tx_hash).map_err(|_| Error::new("invalid txHash"))?;
+
+        let pool = ctx.data_unchecked::<sqlx::PgPool>();
+
+        let row = db::fetch_match(pool, &scope, &name, &bytes)
+            .await
+            .map_err(|e| {
+                eprintln!("database error in protocol_match: {e}");
+                Error::new("database unavailable")
+            })?;
+
+        Ok(row.map(Match::from))
+    }
+
     async fn protocol_matches(
         &self,
         ctx: &Context<'_>,
