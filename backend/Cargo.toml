@@ -9,8 +9,10 @@ documentation = "https://telchar.txpipe.io"
 [dependencies]
 async-graphql = "7.0.17"
 async-graphql-rocket = "7.0.17"
+base64 = "0.22"
 chrono = "0.4.39"
 dotenvy = "0.15.7"
+sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "chrono", "macros", "migrate"] }
 hex = "0.4.3"
 oci-client = "0.14.0"
 reqwest = { version = "0.12.12", features = ["json"] }
