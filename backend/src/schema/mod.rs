@@ -4,6 +4,7 @@ use async_graphql::{EmptyMutation, EmptySubscription, MergedObject, Schema};
 
 mod protocol;
 mod pagination;
+mod match_query;
 
 // MARK: Query Struct
 #[derive(MergedObject, Default)]
