@@ -34,6 +34,7 @@
     "morgan": "^1.10.1",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
+    "react-json-view-lite": "^2.5.0",
     "react-markdown": "^10.1.0",
     "react-router": "^7.9.1",
     "react-router-typesafe-routes": "^2.2.1",

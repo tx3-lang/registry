@@ -4,9 +4,7 @@ use dotenvy::dotenv;
 use rocket::{http::Method, response::content::RawHtml, State};
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
 
-mod schema;
-mod oci;
-mod ast_to_svg;
+use tx3_registry_backend::{db, schema};
 
 #[macro_use]
 extern crate rocket;
@@ -27,8 +25,18 @@ async fn graphql() -> RawHtml<String> {
 }
 
 #[launch]
-fn rocket() -> _ {
+async fn rocket() -> _ {
     let _ = dotenv();
+
+    let database_url = std::env::var("DATABASE_URL")
+        .unwrap_or_default();
+    if database_url.is_empty() {
+        panic!("DATABASE_URL is required but was not set or is empty");
+    }
+
+    let pool = db::open_pool(&database_url)
+        .await
+        .expect("failed to open Postgres pool");
 
     let cors = rocket_cors::CorsOptions {
         allowed_origins: AllowedOrigins::All,
@@ -38,10 +46,11 @@ fn rocket() -> _ {
         ..Default::default()
     }
     .to_cors().unwrap();
-    
-    let schema = schema::build_schema();
+
+    let schema = schema::build_schema(pool.clone());
 
     rocket::build()
+        .manage(pool)
         .manage(schema)
         .mount("/", routes![index, graphql, graphql_request])
         .attach(cors)

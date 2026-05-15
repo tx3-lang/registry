@@ -14,6 +14,11 @@ export default defineConfig(({ isSsrBuild }) => ({
       : undefined,
     target: 'es2022',
   },
+  server: {
+    watch: {
+      ignored: ['**/*.db', '**/*.db-shm', '**/*.db-wal', '**/*.db-journal'],
+    },
+  },
   plugins: [
     tailwindcss(),
     devtoolsJson(),

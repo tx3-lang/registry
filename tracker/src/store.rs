@@ -22,6 +22,9 @@ pub struct OwnedMatchRow {
     pub block_slot: u64,
     pub block_hash: Vec<u8>,
     pub source_name: String,
+    pub repo_scope: String,
+    pub repo_name: String,
+    pub repo_version: String,
     pub protocol_name: String,
     pub tx_name: String,
     pub profile_name: String,
@@ -97,14 +100,18 @@ impl Store {
             let n = sqlx::query(
                 "INSERT INTO matches \
                    (tx_hash, block_slot, block_hash, source_name, \
+                    repo_scope, repo_name, repo_version, \
                     protocol_name, tx_name, profile_name, lifted) \
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb) \
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb) \
                  ON CONFLICT (tx_hash, source_name) DO NOTHING",
             )
             .bind(&row.tx_hash)
             .bind(row.block_slot as i64)
             .bind(&row.block_hash)
             .bind(&row.source_name)
+            .bind(&row.repo_scope)
+            .bind(&row.repo_name)
+            .bind(&row.repo_version)
             .bind(&row.protocol_name)
             .bind(&row.tx_name)
             .bind(&row.profile_name)

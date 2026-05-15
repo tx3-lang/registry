@@ -74,7 +74,10 @@ export async function loader({ context, params }: Route.LoaderArgs) {
 
 export default function DAppDetails({ loaderData }: Route.ComponentProps) {
   return (
-    <Page protocol={loaderData.protocol!} rpcDocsUrl={loaderData.rpcDocsUrl} />
+    <Page
+      protocol={loaderData.protocol!}
+      rpcDocsUrl={loaderData.rpcDocsUrl}
+    />
   );
 }
 
