@@ -77,7 +77,7 @@ materialise the StatefulSet, Service, PVC and credentials Secret.
 | `db_name` | `string` | `"tracker"` | Database created and owned by `owner_user`. |
 | `owner_user` | `string` | `"tracker"` | Postgres role owning `db_name`. |
 | `team_id` | `string` | `"telchar"` | Zalando `teamId`. |
-| `version` | `string` | `"16"` | PostgreSQL major version. |
+| `pg_version` | `string` | `"16"` | PostgreSQL major version. Named `pg_version` because `version` is reserved by Terraform module meta-arguments. |
 | `replicas` | `number` | `1` | `numberOfInstances`. |
 | `volume` | `object({ storage_class, size })` | `{ "fast", "20Gi" }` | PVC. |
 | `resources` | `object({ requests, limits })` | requests `cpu=100m, memory=2Gi`, limits `cpu=2000m, memory=4Gi` | Pod resources. |

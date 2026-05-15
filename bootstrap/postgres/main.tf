@@ -46,8 +46,14 @@ variable "volume" {
 
 variable "resources" {
   type = object({
-    requests = map(string)
-    limits   = map(string)
+    requests = object({
+      cpu    = optional(string)
+      memory = string
+    })
+    limits = object({
+      cpu    = optional(string)
+      memory = string
+    })
   })
   default = {
     requests = {
@@ -68,7 +74,7 @@ variable "params" {
 
 variable "docker_image" {
   type        = string
-  default     = "ghcr.io/zalando/spilo-16:3.3-p1"
+  default     = "ghcr.io/zalando/spilo-16:3.3-p3"
   description = "Spilo image. Major version must match pg_version (e.g. spilo-16 for pg_version=16)."
 }
 

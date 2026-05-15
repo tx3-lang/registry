@@ -19,7 +19,7 @@ resource "kubernetes_manifest" "postgres" {
       "numberOfInstances"         = var.replicas
       "enableMasterLoadBalancer"  = false
       "enableReplicaLoadBalancer" = false
-      "allowedSourceRanges"       = null
+      "allowedSourceRanges"       = []
       "dockerImage"               = var.docker_image
       "teamId"                    = var.team_id
       "tolerations"               = var.tolerations
