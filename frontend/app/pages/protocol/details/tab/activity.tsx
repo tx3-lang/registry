@@ -19,8 +19,6 @@ type DetailResp =
   | { match: Match | null; }
   | { error: string; message?: string; };
 
-type MatchesResponse = MatchesListResp;
-
 function dedupeById<T extends { id: string | number }>(rows: T[]): T[] {
   const seen = new Set<string | number>();
   return rows.filter(row => {
@@ -90,7 +88,7 @@ export function TabActivity({ protocol }: Props) {
   useEffect(() => {
     if (!selectedHash) return;
     detailFetcher.load(`/api/protocols/${scope}/${name}/matches/${selectedHash}`);
-  }, [selectedHash, scope, name]);
+  }, [selectedHash, scope, name, detailFetcher]);
 
   const firstPageEndCursor =
     fetcher.data && 'matches' in fetcher.data

@@ -14,11 +14,6 @@ export default defineConfig(({ isSsrBuild }) => ({
       : undefined,
     target: 'es2022',
   },
-  // SQLite in WAL mode (read by the Activity tab via better-sqlite3) creates
-  // -shm and -wal companion files alongside the .db. Without this ignore list
-  // vite's HMR sees them mutate on every loader invocation and triggers a
-  // page reload, which re-runs the loader, which re-touches the SHM — infinite
-  // reload loop. Excluding *.db* keeps HMR sane.
   server: {
     watch: {
       ignored: ['**/*.db', '**/*.db-shm', '**/*.db-wal', '**/*.db-journal'],

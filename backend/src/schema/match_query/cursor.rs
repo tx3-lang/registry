@@ -1,7 +1,6 @@
 use base64::{engine::general_purpose::STANDARD, Engine};
 use std::fmt;
 
-#[allow(dead_code)]
 #[derive(Debug, PartialEq)]
 pub enum CursorError {
     Malformed,
@@ -15,12 +14,10 @@ impl fmt::Display for CursorError {
     }
 }
 
-#[allow(dead_code)]
 pub fn encode_cursor(id: i64) -> String {
     STANDARD.encode(format!("id:{}", id))
 }
 
-#[allow(dead_code)]
 pub fn decode_cursor(cursor: &str) -> Result<i64, CursorError> {
     let bytes = STANDARD.decode(cursor).map_err(|_| CursorError::Malformed)?;
     let s = std::str::from_utf8(&bytes).map_err(|_| CursorError::Malformed)?;

@@ -38,6 +38,7 @@ mod tests {
         let schema = Schema::build(Query::default(), EmptyMutation, EmptySubscription).finish();
         let sdl = schema.sdl();
         assert!(sdl.contains("protocolMatches"), "SDL must contain protocolMatches");
+        assert!(sdl.contains("protocolMatch("), "SDL must contain protocolMatch");
         let mut file = File::create("schema.graphql").expect("Failed to create schema file");
         file.write_all(sdl.as_bytes()).expect("Failed to write schema");
     }
