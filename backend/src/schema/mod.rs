@@ -1,6 +1,7 @@
 use std::{fs::File, io::Write};
 
 use async_graphql::{EmptyMutation, EmptySubscription, MergedObject, Schema};
+use sqlx::PgPool;
 
 mod protocol;
 pub mod pagination;
@@ -15,9 +16,10 @@ pub struct Query(protocol::ProtocolQuery, match_query::MatchQuery);
 // MARK: End Query Struct
 pub type Tx3Schema = Schema<Query, EmptyMutation, EmptySubscription>;
 
-pub fn build_schema() -> Tx3Schema {
+pub fn build_schema(pool: PgPool) -> Tx3Schema {
     let schema = Schema::build(Query::default(), EmptyMutation, EmptySubscription)
         // .limit_depth(4)
+        .data(pool)
         .finish();
 
     let sdl = schema.sdl();

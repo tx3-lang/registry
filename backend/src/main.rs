@@ -47,7 +47,7 @@ async fn rocket() -> _ {
     }
     .to_cors().unwrap();
 
-    let schema = schema::build_schema();
+    let schema = schema::build_schema(pool.clone());
 
     rocket::build()
         .manage(pool)
