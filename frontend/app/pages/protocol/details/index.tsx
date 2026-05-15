@@ -50,8 +50,7 @@ export function ProtocolDetails({ protocol, rpcDocsUrl }: ProtocolDetailsProps) 
   return (
     <>
       <Header
-        appName="Registry"
-        centerNode={<SearchBar className="md:max-w-[426px] mx-auto" dark />}
+        centerNode={<SearchBar className="md:max-w-[426px] mx-auto max-h-11" dark />}
       />
       <main className="mt-8 flex flex-col flex-1">
         <div className="container relative after:content-[''] after:absolute after:w-[719px] after:h-[559.95px] after:bg-[radial-gradient(ellipse_359px_280px_at_center,#5A5BED_0%,rgba(37,45,71,0)_100%)] after:-right-[223px] after:-top-12.5 after:-z-1 after:opacity-15">
