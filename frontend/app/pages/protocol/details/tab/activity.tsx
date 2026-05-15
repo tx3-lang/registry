@@ -346,28 +346,25 @@ function DetailHeader({ match }: { match: Match; }) {
 
   return (
     <header className="space-y-3">
-      <div className="flex items-center gap-3">
-        <TxNamePill name={match.txName} />
-        <span className="text-xs text-zinc-500 font-mono">v{match.source.version}</span>
-        <span className="text-sm text-zinc-500">
-          {match.protocolName} · {match.profileName} · slot {Number(match.blockSlot).toLocaleString()}
-        </span>
-      </div>
-      <p className="font-mono text-sm break-all text-zinc-50">{match.txHash}</p>
-      <div className="flex flex-wrap items-center gap-4 text-xs text-zinc-500">
-        <span className="font-mono">{when}</span>
-        <Link to="?activeTab=activity" className="text-primary-600 hover:underline">
-          ← back to list
-        </Link>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <TxNamePill name={match.txName} />
+          <span className="text-xs text-zinc-500 font-mono">v{match.source.version}</span>
+          <span className="text-sm text-zinc-500">
+            {match.protocolName} · {match.profileName} · slot {Number(match.blockSlot).toLocaleString()}
+          </span>
+        </div>
         <a
           href={cexplorerUrl(match.profileName, match.txHash)}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-primary-600 hover:underline"
+          className="inline-flex items-center rounded-md border border-zinc-800 px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-900"
         >
           View on cexplorer ↗
         </a>
       </div>
+      <p className="font-mono text-sm break-all text-zinc-50">{match.txHash}</p>
+      <span className="block font-mono text-xs text-zinc-500">{when}</span>
     </header>
   );
 }
