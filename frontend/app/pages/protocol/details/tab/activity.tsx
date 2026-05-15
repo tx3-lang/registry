@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useFetcher, useSearchParams } from 'react-router';
 import { type darkStyles, JsonView } from 'react-json-view-lite';
 
 import { parseLifted, truncateHex } from '~/lib/tracker/lifted';
@@ -11,9 +11,20 @@ interface Props {
   protocol: Protocol;
 }
 
-type MatchesResponse =
+type MatchesListResp =
   | { matches: Match[]; pageInfo: { hasNextPage: boolean; endCursor: string | null; }; }
   | { error: string; message?: string; };
+
+type MatchesResponse = MatchesListResp;
+
+function dedupeById<T extends { id: string | number }>(rows: T[]): T[] {
+  const seen = new Set<string | number>();
+  return rows.filter(row => {
+    if (seen.has(row.id)) return false;
+    seen.add(row.id);
+    return true;
+  });
+}
 
 // JSON viewer theme matching the registry's zinc palette.
 const jsonStyles: Partial<typeof darkStyles> = {
@@ -38,17 +49,22 @@ const jsonStyles: Partial<typeof darkStyles> = {
 };
 
 export function TabActivity({ protocol }: Props) {
+  const { scope, name } = protocol;
   const [searchParams] = useSearchParams();
   const selectedHash = searchParams.get('tx');
 
-  const fetcher = useFetcherPolling<MatchesResponse>({
-    key: `activity-list:${protocol.scope}/${protocol.name}`,
-    url: `/api/protocols/${protocol.scope}/${protocol.name}/matches`,
+  const fetcher = useFetcherPolling<MatchesListResp>({
+    key: `activity-list:${scope}/${name}`,
+    url: `/api/protocols/${scope}/${name}/matches`,
     intervalMs: 12_000,
   });
 
+  const loadMoreFetcher = useFetcher<MatchesListResp>({ key: `activity-loadmore:${scope}/${name}` });
+
   const [firstPage, setFirstPage] = useState<Match[]>([]);
   const [hasNext, setHasNext] = useState(false);
+  const [extraPages, setExtraPages] = useState<Match[]>([]);
+  const [extraEndCursor, setExtraEndCursor] = useState<string | null>(null);
 
   useEffect(() => {
     if (fetcher.data && 'matches' in fetcher.data) {
@@ -57,12 +73,41 @@ export function TabActivity({ protocol }: Props) {
     }
   }, [fetcher.data]);
 
+  useEffect(() => {
+    if (loadMoreFetcher.data && 'matches' in loadMoreFetcher.data) {
+      const { matches, pageInfo } = loadMoreFetcher.data;
+      setExtraPages(prev => [...prev, ...matches]);
+      setExtraEndCursor(pageInfo.endCursor ?? null);
+      setHasNext(pageInfo.hasNextPage);
+    }
+  }, [loadMoreFetcher.data]);
+
+  const firstPageEndCursor =
+    fetcher.data && 'matches' in fetcher.data
+      ? (fetcher.data.pageInfo?.endCursor ?? null)
+      : null;
+
+  function loadMore() {
+    const cursor = extraEndCursor ?? firstPageEndCursor;
+    if (!cursor) return;
+    loadMoreFetcher.load(
+      `/api/protocols/${scope}/${name}/matches?after=${encodeURIComponent(cursor)}`,
+    );
+  }
+
+  const renderedList = useMemo(
+    () => dedupeById([...firstPage, ...extraPages]),
+    [firstPage, extraPages],
+  );
+
   const selected = selectedHash
-    ? firstPage.find(m => m.txHash === selectedHash) ?? null
+    ? renderedList.find(m => m.txHash === selectedHash) ?? null
     : null;
 
   const hasError = fetcher.data !== undefined && 'error' in fetcher.data;
   const isInitialLoading = fetcher.data === undefined && fetcher.state === 'loading';
+  const isLoadingMore = loadMoreFetcher.state !== 'idle';
+  const showLoadMore = firstPage.length > 0;
 
   return (
     <div className="container flex-1 py-8">
@@ -77,7 +122,16 @@ export function TabActivity({ protocol }: Props) {
             )}
             {isInitialLoading
               ? <LoadingSkeleton />
-              : <ListView matches={firstPage} fetcherState={fetcher.state} />}
+              : (
+                <ListView
+                  matches={renderedList}
+                  fetcherState={fetcher.state}
+                  hasNext={hasNext}
+                  isLoadingMore={isLoadingMore}
+                  onLoadMore={loadMore}
+                  showLoadMore={showLoadMore}
+                />
+              )}
           </>
         )}
     </div>
@@ -94,7 +148,16 @@ function LoadingSkeleton() {
   );
 }
 
-function ListView({ matches, fetcherState }: { matches: Match[]; fetcherState: string; }) {
+interface ListViewProps {
+  matches: Match[];
+  fetcherState: string;
+  hasNext: boolean;
+  isLoadingMore: boolean;
+  onLoadMore: () => void;
+  showLoadMore: boolean;
+}
+
+function ListView({ matches, fetcherState, hasNext, isLoadingMore, onLoadMore, showLoadMore }: ListViewProps) {
   if (matches.length === 0) return <EmptyState />;
 
   const isRefreshing = fetcherState === 'submitting' || fetcherState === 'loading';
@@ -128,6 +191,19 @@ function ListView({ matches, fetcherState }: { matches: Match[]; fetcherState: s
           </tbody>
         </table>
       </div>
+
+      {showLoadMore && (
+        <div className="mt-4 flex justify-center">
+          <button
+            type="button"
+            onClick={onLoadMore}
+            disabled={!hasNext || isLoadingMore}
+            className="px-4 py-2 rounded-md border border-zinc-800 text-sm text-zinc-200 hover:bg-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoadingMore ? 'Loading…' : 'Load more'}
+          </button>
+        </div>
+      )}
     </section>
   );
 }
