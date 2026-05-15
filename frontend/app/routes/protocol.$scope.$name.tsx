@@ -103,7 +103,6 @@ export default function DAppDetails({ loaderData }: Route.ComponentProps) {
     <Page
       protocol={loaderData.protocol!}
       rpcDocsUrl={loaderData.rpcDocsUrl}
-      matches={loaderData.matches}
     />
   );
 }

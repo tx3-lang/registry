@@ -1,15 +1,19 @@
+import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { type darkStyles, JsonView } from 'react-json-view-lite';
 
-import { truncateHex } from '~/lib/tracker/lifted';
-import type { MatchRow } from '~/lib/tracker/queries';
+import { parseLifted, truncateHex } from '~/lib/tracker/lifted';
+import { useFetcherPolling } from '~/hooks/useFetcherPolling';
 import { PartyChip } from './activity/PartyChip';
 import { TxNamePill } from './activity/TxNamePill';
 
 interface Props {
   protocol: Protocol;
-  matches: MatchRow[];
 }
+
+type MatchesResponse =
+  | { matches: Match[]; pageInfo: { hasNextPage: boolean; endCursor: string | null; }; }
+  | { error: string; message?: string; };
 
 // JSON viewer theme matching the registry's zinc palette.
 const jsonStyles: Partial<typeof darkStyles> = {
@@ -33,31 +37,79 @@ const jsonStyles: Partial<typeof darkStyles> = {
   quotesForFieldNames: false,
 };
 
-export function TabActivity({ matches }: Props) {
+export function TabActivity({ protocol }: Props) {
   const [searchParams] = useSearchParams();
   const selectedHash = searchParams.get('tx');
 
+  const fetcher = useFetcherPolling<MatchesResponse>({
+    key: `activity-list:${protocol.scope}/${protocol.name}`,
+    url: `/api/protocols/${protocol.scope}/${protocol.name}/matches`,
+    intervalMs: 12_000,
+  });
+
+  const [firstPage, setFirstPage] = useState<Match[]>([]);
+  const [hasNext, setHasNext] = useState(false);
+
+  useEffect(() => {
+    if (fetcher.data && 'matches' in fetcher.data) {
+      setFirstPage(fetcher.data.matches);
+      setHasNext(fetcher.data.pageInfo?.hasNextPage ?? false);
+    }
+  }, [fetcher.data]);
+
   const selected = selectedHash
-    ? matches.find(m => m.hash === selectedHash) ?? null
+    ? firstPage.find(m => m.txHash === selectedHash) ?? null
     : null;
+
+  const hasError = fetcher.data !== undefined && 'error' in fetcher.data;
+  const isInitialLoading = fetcher.data === undefined && fetcher.state === 'loading';
 
   return (
     <div className="container flex-1 py-8">
       {selectedHash
         ? <DetailView match={selected} hash={selectedHash} />
-        : <ListView matches={matches} />}
+        : (
+          <>
+            {hasError && (
+              <div className="mb-4 rounded-md border border-red-900/40 bg-red-950/30 p-3 text-sm text-red-200">
+                No se pudo cargar la actividad — reintentando…
+              </div>
+            )}
+            {isInitialLoading
+              ? <LoadingSkeleton />
+              : <ListView matches={firstPage} fetcherState={fetcher.state} />}
+          </>
+        )}
     </div>
   );
 }
 
-function ListView({ matches }: { matches: MatchRow[]; }) {
+function LoadingSkeleton() {
+  return (
+    <section className="space-y-2">
+      <div className="animate-pulse bg-zinc-800/40 rounded h-14 w-full" />
+      <div className="animate-pulse bg-zinc-800/40 rounded h-14 w-full" />
+      <div className="animate-pulse bg-zinc-800/40 rounded h-14 w-full" />
+    </section>
+  );
+}
+
+function ListView({ matches, fetcherState }: { matches: Match[]; fetcherState: string; }) {
   if (matches.length === 0) return <EmptyState />;
+
+  const isRefreshing = fetcherState === 'submitting' || fetcherState === 'loading';
 
   return (
     <section>
       <header className="flex items-baseline justify-between mb-4">
         <h2 className="text-lg font-semibold text-zinc-50">Recent activity</h2>
-        <p className="text-sm text-zinc-500">{matches.length} most recent matches</p>
+        {isRefreshing
+          ? (
+            <span className="text-xs text-zinc-500">
+              {matches.length} most recent matches • Refreshing…
+            </span>
+          )
+          : <p className="text-sm text-zinc-500">{matches.length} most recent matches</p>}
       </header>
 
       <div className="overflow-x-auto rounded-md border border-zinc-800 bg-zinc-950">
@@ -80,18 +132,21 @@ function ListView({ matches }: { matches: MatchRow[]; }) {
   );
 }
 
-function MatchRowItem({ match }: { match: MatchRow; }) {
-  const matchedAt = match.matchedAt instanceof Date ? match.matchedAt : new Date(match.matchedAt);
+function MatchRowItem({ match }: { match: Match; }) {
+  const matchedAt = new Date(match.matchedAt);
   const when = matchedAt.toISOString().replace('T', ' ').slice(0, 19);
   const linkClass = 'block px-4 py-3';
-  // Preserve the existing activeTab=activity on the URL while adding ?tx.
-  const linkSearch = `?activeTab=activity&tx=${match.hash}`;
+  const linkSearch = `?activeTab=activity&tx=${match.txHash}`;
+  const { parties } = parseLifted(match.lifted);
 
   return (
     <tr className="group cursor-pointer hover:bg-zinc-900/40">
       <td className="align-middle">
         <Link to={linkSearch} className={linkClass}>
-          <TxNamePill name={match.txName} />
+          <div className="flex items-center gap-2">
+            <TxNamePill name={match.txName} />
+            <span className="text-xs text-zinc-500 font-mono">v{match.source.version}</span>
+          </div>
         </Link>
       </td>
       <td className="align-middle">
@@ -99,18 +154,18 @@ function MatchRowItem({ match }: { match: MatchRow; }) {
           to={linkSearch}
           className={`${linkClass} font-mono text-sm text-primary-600 group-hover:underline`}
         >
-          {truncateHex(match.hash)}
+          {truncateHex(match.txHash)}
         </Link>
       </td>
       <td className="align-middle">
         <Link to={linkSearch} className={linkClass}>
-          <span className="font-mono text-sm text-zinc-500">{match.blockSlot.toLocaleString()}</span>
+          <span className="font-mono text-sm text-zinc-500">{Number(match.blockSlot).toLocaleString()}</span>
         </Link>
       </td>
       <td className="align-middle">
         <Link to={linkSearch} className={linkClass}>
           <div className="flex flex-wrap gap-2">
-            {Object.entries(match.parties).map(([name, party]) => (
+            {Object.entries(parties).map(([name, party]) => (
               <PartyChip key={name} name={name} address={party.address} role={party.role} />
             ))}
           </div>
@@ -135,7 +190,7 @@ function EmptyState() {
   );
 }
 
-function DetailView({ match, hash }: { match: MatchRow | null; hash: string; }) {
+function DetailView({ match, hash }: { match: Match | null; hash: string; }) {
   if (!match) {
     return (
       <div className="rounded-md border border-dashed border-zinc-800 bg-zinc-950 px-6 py-12 text-center space-y-2">
@@ -148,35 +203,38 @@ function DetailView({ match, hash }: { match: MatchRow | null; hash: string; }) 
     );
   }
 
+  const { parties } = parseLifted(match.lifted);
+
   return (
     <article className="space-y-8">
       <DetailHeader match={match} />
-      <PartiesSection parties={match.parties} />
-      <RawLiftedDetails rawLifted={match.rawLifted} />
+      <PartiesSection parties={parties} />
+      <RawLiftedDetails rawLifted={match.lifted} />
     </article>
   );
 }
 
-function DetailHeader({ match }: { match: MatchRow; }) {
-  const matchedAt = match.matchedAt instanceof Date ? match.matchedAt : new Date(match.matchedAt);
+function DetailHeader({ match }: { match: Match; }) {
+  const matchedAt = new Date(match.matchedAt);
   const when = matchedAt.toISOString().replace('T', ' ').slice(0, 19);
 
   return (
     <header className="space-y-3">
       <div className="flex items-center gap-3">
         <TxNamePill name={match.txName} />
+        <span className="text-xs text-zinc-500 font-mono">v{match.source.version}</span>
         <span className="text-sm text-zinc-500">
-          {match.protocolName} · {match.profileName} · slot {match.blockSlot.toLocaleString()}
+          {match.protocolName} · {match.profileName} · slot {Number(match.blockSlot).toLocaleString()}
         </span>
       </div>
-      <p className="font-mono text-sm break-all text-zinc-50">{match.hash}</p>
+      <p className="font-mono text-sm break-all text-zinc-50">{match.txHash}</p>
       <div className="flex flex-wrap items-center gap-4 text-xs text-zinc-500">
         <span className="font-mono">{when}</span>
         <Link to="?activeTab=activity" className="text-primary-600 hover:underline">
           ← back to list
         </Link>
         <a
-          href={cexplorerUrl(match.profileName, match.hash)}
+          href={cexplorerUrl(match.profileName, match.txHash)}
           target="_blank"
           rel="noopener noreferrer"
           className="text-primary-600 hover:underline"
@@ -188,7 +246,7 @@ function DetailHeader({ match }: { match: MatchRow; }) {
   );
 }
 
-function PartiesSection({ parties }: { parties: MatchRow['parties']; }) {
+function PartiesSection({ parties }: { parties: Record<string, { address: string; role: string; }>; }) {
   const entries = Object.entries(parties);
   return (
     <section className="space-y-3">

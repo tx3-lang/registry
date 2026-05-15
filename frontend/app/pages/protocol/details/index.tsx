@@ -18,7 +18,6 @@ import { FileCode } from '~/components/icons/file-code';
 import { GraphIcon } from '~/components/icons/graph';
 
 // Tabs
-import type { MatchRow } from '~/lib/tracker/queries';
 import { TabReadme } from './tab/readme';
 import { TabTryOut } from './tab/tryOut';
 import { TabTx3File } from './tab/tx3File';
@@ -42,10 +41,9 @@ function getValidTab(tab?: string): Tab {
 interface ProtocolDetailsProps {
   protocol: Protocol;
   rpcDocsUrl: string | null;
-  matches: MatchRow[];
 }
 
-export function ProtocolDetails({ protocol, rpcDocsUrl, matches }: ProtocolDetailsProps) {
+export function ProtocolDetails({ protocol, rpcDocsUrl }: ProtocolDetailsProps) {
   const [searchParams, setSearchParams] = useSearchParams({ activeTab: 'readme' });
   const activeTab: Tab = getValidTab(searchParams.get('activeTab')?.toLowerCase());
 
@@ -124,7 +122,7 @@ export function ProtocolDetails({ protocol, rpcDocsUrl, matches }: ProtocolDetai
           {activeTab === 'tx3-file' && <TabTx3File protocol={protocol} />}
           {activeTab === 'try-out' && <TabTryOut protocol={protocol} />}
           {activeTab === 'sdks' && <TabSDKs protocol={protocol} />}
-          {activeTab === 'activity' && <TabActivity protocol={protocol} matches={matches} />}
+          {activeTab === 'activity' && <TabActivity protocol={protocol} />}
         </div>
 
         <div className="container py-4">
