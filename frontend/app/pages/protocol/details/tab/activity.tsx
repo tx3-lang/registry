@@ -88,7 +88,11 @@ export function TabActivity({ protocol }: Props) {
   useEffect(() => {
     if (!selectedHash) return;
     detailFetcher.load(`/api/protocols/${scope}/${name}/matches/${selectedHash}`);
-  }, [selectedHash, scope, name, detailFetcher]);
+    // detailFetcher is intentionally NOT in deps: its identity changes when
+    // its state cycles (idle → loading → idle), which would re-fire this
+    // effect on every load and produce an infinite request loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedHash, scope, name]);
 
   const firstPageEndCursor =
     fetcher.data && 'matches' in fetcher.data
