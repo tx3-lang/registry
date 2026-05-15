@@ -346,7 +346,7 @@ function DetailHeader({ match }: { match: Match; }) {
 
   return (
     <header className="space-y-3">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <TxNamePill name={match.txName} />
           <span className="text-xs text-zinc-500 font-mono">v{match.source.version}</span>
