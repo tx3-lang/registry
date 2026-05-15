@@ -20,6 +20,44 @@ interface EnvironmentParam {
   type: Scalars['String']['output'];
 }
 
+interface Match {
+  blockHash: Scalars['String']['output'];
+  /** Stored as decimal string to preserve full u64 range. */
+  blockSlot: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  lifted: Scalars['String']['output'];
+  /** ISO 8601 UTC timestamp with literal Z suffix, no fractional seconds. */
+  matchedAt: Scalars['String']['output'];
+  profileName: Scalars['String']['output'];
+  protocolName: Scalars['String']['output'];
+  source: MatchSource;
+  txHash: Scalars['String']['output'];
+  txName: Scalars['String']['output'];
+}
+
+interface MatchConnection {
+  /** A list of edges. */
+  edges: Array<MatchEdge>;
+  /** A list of nodes. */
+  nodes: Array<Match>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+}
+
+/** An edge in a connection. */
+interface MatchEdge {
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: Match;
+}
+
+interface MatchSource {
+  name: Scalars['String']['output'];
+  scope: Scalars['String']['output'];
+  version: Scalars['String']['output'];
+}
+
 /** Information about pagination in a connection */
 interface PageInfo {
   /** When paginating forwards, the cursor to continue. */
@@ -97,6 +135,8 @@ type ProtocolSort =
 
 interface Query {
   protocol: Maybe<Protocol>;
+  protocolMatch: Maybe<Match>;
+  protocolMatches: MatchConnection;
   protocols: ProtocolConnection;
 }
 
@@ -104,6 +144,22 @@ interface Query {
 interface QueryProtocolArgs {
   name: Scalars['String']['input'];
   scope: Scalars['String']['input'];
+}
+
+
+interface QueryProtocolMatchArgs {
+  name: Scalars['String']['input'];
+  scope: Scalars['String']['input'];
+  txHash: Scalars['String']['input'];
+}
+
+
+interface QueryProtocolMatchesArgs {
+  after: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  name: Scalars['String']['input'];
+  scope: Scalars['String']['input'];
+  version: InputMaybe<Scalars['String']['input']>;
 }
 
 
