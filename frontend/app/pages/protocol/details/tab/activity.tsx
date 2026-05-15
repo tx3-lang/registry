@@ -15,6 +15,10 @@ type MatchesListResp =
   | { matches: Match[]; pageInfo: { hasNextPage: boolean; endCursor: string | null; }; }
   | { error: string; message?: string; };
 
+type DetailResp =
+  | { match: Match | null; }
+  | { error: string; message?: string; };
+
 type MatchesResponse = MatchesListResp;
 
 function dedupeById<T extends { id: string | number }>(rows: T[]): T[] {
@@ -60,6 +64,7 @@ export function TabActivity({ protocol }: Props) {
   });
 
   const loadMoreFetcher = useFetcher<MatchesListResp>({ key: `activity-loadmore:${scope}/${name}` });
+  const detailFetcher = useFetcher<DetailResp>({ key: 'activity-detail' });
 
   const [firstPage, setFirstPage] = useState<Match[]>([]);
   const [hasNext, setHasNext] = useState(false);
@@ -82,6 +87,11 @@ export function TabActivity({ protocol }: Props) {
     }
   }, [loadMoreFetcher.data]);
 
+  useEffect(() => {
+    if (!selectedHash) return;
+    detailFetcher.load(`/api/protocols/${scope}/${name}/matches/${selectedHash}`);
+  }, [selectedHash, scope, name]);
+
   const firstPageEndCursor =
     fetcher.data && 'matches' in fetcher.data
       ? (fetcher.data.pageInfo?.endCursor ?? null)
@@ -100,9 +110,14 @@ export function TabActivity({ protocol }: Props) {
     [firstPage, extraPages],
   );
 
-  const selected = selectedHash
-    ? renderedList.find(m => m.txHash === selectedHash) ?? null
-    : null;
+  const detailMatch: Match | null =
+    detailFetcher.data && 'match' in detailFetcher.data
+      ? detailFetcher.data.match
+      : null;
+
+  const isDetailLoading = detailFetcher.state !== 'idle';
+  const hasDetailError =
+    detailFetcher.data !== undefined && 'error' in detailFetcher.data;
 
   const hasError = fetcher.data !== undefined && 'error' in fetcher.data;
   const isInitialLoading = fetcher.data === undefined && fetcher.state === 'loading';
@@ -112,7 +127,16 @@ export function TabActivity({ protocol }: Props) {
   return (
     <div className="container flex-1 py-8">
       {selectedHash
-        ? <DetailView match={selected} hash={selectedHash} />
+        ? (
+          <>
+            {hasDetailError && (
+              <div className="mb-4 rounded-md border border-red-900/40 bg-red-950/30 p-3 text-sm text-red-200">
+                No se pudo cargar el detalle — reintentando…
+              </div>
+            )}
+            <DetailView match={detailMatch} hash={selectedHash} loading={isDetailLoading} />
+          </>
+        )
         : (
           <>
             {hasError && (
@@ -266,11 +290,23 @@ function EmptyState() {
   );
 }
 
-function DetailView({ match, hash }: { match: Match | null; hash: string; }) {
+function DetailView({ match, hash, loading }: { match: Match | null; hash: string; loading: boolean; }) {
+  if (loading && !match) {
+    return (
+      <div className="rounded-md border border-dashed border-zinc-800 bg-zinc-950 px-6 py-12 text-center space-y-2">
+        <span className="text-xs text-zinc-500">Loading…</span>
+        <p className="text-xs text-zinc-500 font-mono break-all">{hash}</p>
+        <Link to="?activeTab=activity" className="inline-block text-sm text-primary-600 hover:underline">
+          ← back to list
+        </Link>
+      </div>
+    );
+  }
+
   if (!match) {
     return (
       <div className="rounded-md border border-dashed border-zinc-800 bg-zinc-950 px-6 py-12 text-center space-y-2">
-        <p className="text-sm text-zinc-50">Tx not found in recent matches</p>
+        <p className="text-sm text-zinc-50">Tx not found</p>
         <p className="text-xs text-zinc-500 font-mono break-all">{hash}</p>
         <Link to="?activeTab=activity" className="inline-block text-sm text-primary-600 hover:underline">
           ← back to list
