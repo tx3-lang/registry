@@ -1,4 +1,4 @@
-name: Tracker
+name: Build Tracker Image
 permissions:
   packages: write
 
