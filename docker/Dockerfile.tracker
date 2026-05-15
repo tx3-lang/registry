@@ -1,0 +1,23 @@
+FROM rust:1.88 AS build
+
+WORKDIR /app
+
+RUN apt update
+RUN apt install -y build-essential pkg-config libssl-dev cmake
+
+COPY ./tracker/Cargo.toml ./tracker/Cargo.toml
+COPY ./tracker/Cargo.lock ./tracker/Cargo.lock
+COPY ./tracker/src ./tracker/src
+COPY ./tracker/migrations ./tracker/migrations
+
+WORKDIR /app/tracker
+
+RUN cargo build --release
+
+FROM rust:1.88-slim
+
+COPY --from=build /app/tracker/target/release/tracker /app/bin/tracker
+
+WORKDIR /app/bin
+
+CMD ["./tracker", "/etc/tracker/tracker.toml"]
