@@ -7,8 +7,9 @@ export function useFetcherPolling<T>(args: {
   key: string;
   url: string;
   intervalMs: number;
+  enabled?: boolean;
 }): FetcherLike<T> {
-  const { key, url, intervalMs } = args;
+  const { key, url, intervalMs, enabled = true } = args;
   const fetcher = useFetcher<T>({ key });
   const urlRef = useRef(url);
 
@@ -17,6 +18,8 @@ export function useFetcherPolling<T>(args: {
   }, [url]);
 
   useEffect(() => {
+    if (!enabled) return;
+
     fetcher.load(url);
 
     const intervalId = setInterval(() => {
@@ -38,7 +41,7 @@ export function useFetcherPolling<T>(args: {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, url, intervalMs]);
+  }, [key, url, intervalMs, enabled]);
 
   return fetcher;
 }

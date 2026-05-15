@@ -59,6 +59,7 @@ export function TabActivity({ protocol }: Props) {
     key: `activity-list:${scope}/${name}`,
     url: `/api/protocols/${scope}/${name}/matches`,
     intervalMs: 12_000,
+    enabled: !selectedHash,
   });
 
   const loadMoreFetcher = useFetcher<MatchesListResp>({ key: `activity-loadmore:${scope}/${name}` });
@@ -128,38 +129,40 @@ export function TabActivity({ protocol }: Props) {
 
   return (
     <div className="container flex-1 py-8">
-      {selectedHash
-        ? (
-          <>
-            {hasDetailError && (
-              <div className="mb-4 rounded-md border border-red-900/40 bg-red-950/30 p-3 text-sm text-red-200">
-                No se pudo cargar el detalle — reintentando…
-              </div>
-            )}
-            <DetailView match={detailMatch} hash={selectedHash} loading={isDetailLoading} />
-          </>
-        )
-        : (
-          <>
-            {hasError && (
-              <div className="mb-4 rounded-md border border-red-900/40 bg-red-950/30 p-3 text-sm text-red-200">
-                No se pudo cargar la actividad — reintentando…
-              </div>
-            )}
-            {isInitialLoading
-              ? <LoadingSkeleton />
-              : (
-                <ListView
-                  matches={renderedList}
-                  fetcherState={fetcher.state}
-                  hasNext={hasNext}
-                  isLoadingMore={isLoadingMore}
-                  onLoadMore={loadMore}
-                  showLoadMore={showLoadMore}
-                />
-              )}
-          </>
+      {/*
+        ListView stays mounted while viewing a detail so its scroll position
+        and loaded pages survive the round trip. Polling is paused via the
+        `enabled` flag above.
+      */}
+      <div hidden={!!selectedHash}>
+        {hasError && (
+          <div className="mb-4 rounded-md border border-red-900/40 bg-red-950/30 p-3 text-sm text-red-200">
+            No se pudo cargar la actividad — reintentando…
+          </div>
         )}
+        {isInitialLoading
+          ? <LoadingSkeleton />
+          : (
+            <ListView
+              matches={renderedList}
+              fetcherState={fetcher.state}
+              hasNext={hasNext}
+              isLoadingMore={isLoadingMore}
+              onLoadMore={loadMore}
+              showLoadMore={showLoadMore}
+            />
+          )}
+      </div>
+      {selectedHash && (
+        <>
+          {hasDetailError && (
+            <div className="mb-4 rounded-md border border-red-900/40 bg-red-950/30 p-3 text-sm text-red-200">
+              No se pudo cargar el detalle — reintentando…
+            </div>
+          )}
+          <DetailView match={detailMatch} hash={selectedHash} loading={isDetailLoading} />
+        </>
+      )}
     </div>
   );
 }
