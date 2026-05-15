@@ -296,26 +296,32 @@ function EmptyState() {
 }
 
 function DetailView({ match, hash, loading }: { match: Match | null; hash: string; loading: boolean; }) {
+  const backLink = (
+    <Link to="?activeTab=activity" className="inline-block text-sm text-zinc-400 hover:text-primary-600">
+      ← Back to activity
+    </Link>
+  );
+
   if (loading && !match) {
     return (
-      <div className="rounded-md border border-dashed border-zinc-800 bg-zinc-950 px-6 py-12 text-center space-y-2">
-        <span className="text-xs text-zinc-500">Loading…</span>
-        <p className="text-xs text-zinc-500 font-mono break-all">{hash}</p>
-        <Link to="?activeTab=activity" className="inline-block text-sm text-primary-600 hover:underline">
-          ← back to list
-        </Link>
+      <div className="space-y-6">
+        {backLink}
+        <div className="rounded-md border border-dashed border-zinc-800 bg-zinc-950 px-6 py-12 text-center space-y-2">
+          <span className="text-xs text-zinc-500">Loading…</span>
+          <p className="text-xs text-zinc-500 font-mono break-all">{hash}</p>
+        </div>
       </div>
     );
   }
 
   if (!match) {
     return (
-      <div className="rounded-md border border-dashed border-zinc-800 bg-zinc-950 px-6 py-12 text-center space-y-2">
-        <p className="text-sm text-zinc-50">Tx not found</p>
-        <p className="text-xs text-zinc-500 font-mono break-all">{hash}</p>
-        <Link to="?activeTab=activity" className="inline-block text-sm text-primary-600 hover:underline">
-          ← back to list
-        </Link>
+      <div className="space-y-6">
+        {backLink}
+        <div className="rounded-md border border-dashed border-zinc-800 bg-zinc-950 px-6 py-12 text-center space-y-2">
+          <p className="text-sm text-zinc-50">Tx not found</p>
+          <p className="text-xs text-zinc-500 font-mono break-all">{hash}</p>
+        </div>
       </div>
     );
   }
@@ -323,11 +329,14 @@ function DetailView({ match, hash, loading }: { match: Match | null; hash: strin
   const { parties } = parseLifted(match.lifted);
 
   return (
-    <article className="space-y-8">
-      <DetailHeader match={match} />
-      <PartiesSection parties={parties} />
-      <RawLiftedDetails rawLifted={match.lifted} />
-    </article>
+    <div className="space-y-6">
+      {backLink}
+      <article className="space-y-8">
+        <DetailHeader match={match} />
+        <PartiesSection parties={parties} />
+        <RawLiftedDetails rawLifted={match.lifted} />
+      </article>
+    </div>
   );
 }
 
