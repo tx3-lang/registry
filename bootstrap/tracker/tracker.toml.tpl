@@ -1,7 +1,9 @@
 [upstream]
 endpoint  = ${jsonencode(upstream_endpoint)}
 profile   = ${jsonencode(upstream_profile)}
+%{ if upstream_api_key != "" ~}
 api_key   = ${jsonencode(upstream_api_key)}
+%{ endif ~}
 intersect = ${jsonencode(upstream_intersect)}
 
 [upstream.filter]

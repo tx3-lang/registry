@@ -44,8 +44,10 @@ variable "upstream_profile" {
 }
 
 variable "upstream_api_key" {
-  type      = string
-  sensitive = true
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Demeter UTxORPC API key. Leave empty when talking to the cluster-internal UTxORPC service, which does not require authentication."
 }
 
 variable "upstream_intersect" {
