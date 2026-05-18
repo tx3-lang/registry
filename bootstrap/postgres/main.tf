@@ -24,8 +24,8 @@ variable "team_id" {
 
 variable "pg_version" {
   type        = string
-  default     = "16"
-  description = "PostgreSQL major version. Must match the major encoded in docker_image (e.g. spilo-16 → 16). Named pg_version because `version` is reserved by Terraform module meta-arguments."
+  default     = "15"
+  description = "PostgreSQL major version. Must match the major encoded in docker_image (e.g. spilo-15 → 15). Named pg_version because `version` is reserved by Terraform module meta-arguments. Cap is operator-dependent: the postgres-operator running in m2-prod-7xjh33 only supports up to 15 at the time of writing."
 }
 
 variable "replicas" {
@@ -74,8 +74,8 @@ variable "params" {
 
 variable "docker_image" {
   type        = string
-  default     = "ghcr.io/zalando/spilo-16:3.3-p3"
-  description = "Spilo image. Major version must match pg_version (e.g. spilo-16 for pg_version=16)."
+  default     = "ghcr.io/zalando/spilo-15:3.2-p1"
+  description = "Spilo image. Major version must match pg_version (e.g. spilo-15 for pg_version=15). Matches the image used by ext-balius in the same cluster."
 }
 
 variable "tolerations" {
