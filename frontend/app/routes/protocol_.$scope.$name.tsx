@@ -2,7 +2,7 @@ import { redirect, type ShouldRevalidateFunctionArgs } from 'react-router';
 import { DETAIL_QUERY, detailQueryKeyGenerator } from '~/gql/protocols.query';
 import { requestGraphQL } from '~/gql/gql.server';
 import { ProtocolDetails as Page } from '~/pages/protocol/details';
-import type { Route } from './+types/protocol.$scope.$name';
+import type { Route } from './+types/protocol_.$scope.$name';
 
 export function meta({ params }: Route.MetaArgs) {
   let title = 'Tx3';
@@ -66,7 +66,7 @@ export async function loader({ context, params }: Route.LoaderArgs) {
   ]);
 
   if (!result.protocol) {
-    throw redirect('/');
+    throw redirect('/protocols');
   }
 
   return { ...result, rpcDocsUrl };
