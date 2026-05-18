@@ -29,6 +29,24 @@ variable "registry_protocol" {
   type = string
 }
 
+variable "db_host" {
+  type = string
+}
+
+variable "db_port" {
+  type    = number
+  default = 5432
+}
+
+variable "db_name" {
+  type = string
+}
+
+variable "db_credentials_secret" {
+  type        = string
+  description = "Name of the Kubernetes Secret holding the Postgres credentials. Must contain keys `username` and `password` (Zalando operator convention)."
+}
+
 variable "cert_issuer" {
   type    = string
   default = "letsencrypt-dns01-cloudflare"
