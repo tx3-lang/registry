@@ -1,4 +1,4 @@
-FROM rust:1.87 AS build
+FROM rust:1.88 AS build
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ WORKDIR /app/backend
 
 RUN cargo build --release
 
-FROM rust:1.87-slim
+FROM rust:1.88-slim
 
 COPY --from=build /app/backend/target/release/tx3-registry-backend /app/bin/tx3-registry-backend
 
