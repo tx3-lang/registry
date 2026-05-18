@@ -20,4 +20,5 @@ COPY --from=build /app/tracker/target/release/tracker /app/bin/tracker
 
 WORKDIR /app/bin
 
-CMD ["./tracker", "/etc/tracker/tracker.toml"]
+ENTRYPOINT ["./tracker"]
+CMD ["/etc/tracker/tracker.toml"]
