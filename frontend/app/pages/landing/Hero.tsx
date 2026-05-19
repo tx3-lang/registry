@@ -19,7 +19,8 @@ export function Hero() {
           </h1>
 
           <p className="max-w-[760px] text-zinc-400 text-lg leading-7">
-            Protocol authors publish a spec. Application developers generate typed clients from it. The interface is data, not lore.
+            Protocol authors publish a spec. Application developers generate typed clients from it.
+            The interface is data, not lore.
           </p>
         </div>
 
@@ -37,7 +38,8 @@ export function Hero() {
             </h2>
 
             <p className="text-[15px] leading-6 text-zinc-300">
-              Declare what your protocol exposes in a .tx3 spec — parties, types, transactions. Ship it as a TII artifact that any consumer can read.
+              Declare what your protocol exposes in a .tx3 spec — parties, types, transactions. Ship it as a
+              TII artifact that any consumer can read.
             </p>
 
             <div className="mt-auto flex flex-wrap items-center gap-4 pt-2">
@@ -79,7 +81,8 @@ export function Hero() {
             </h2>
 
             <p className="text-[15px] leading-6 text-zinc-300">
-              Generate a typed client from a published .tii and invoke protocol transactions from TypeScript, Rust, Go or Python.
+              Generate a typed client from a published .tii and invoke protocol transactions from
+              TypeScript, Rust, Go or Python.
             </p>
 
             <div className="mt-auto flex flex-wrap items-center gap-4 pt-2">
@@ -100,7 +103,8 @@ export function Hero() {
             </div>
 
             <p className="text-[12px] leading-4 text-zinc-500">
-              codegen&nbsp;&nbsp;·&nbsp;&nbsp;TRP&nbsp;&nbsp;·&nbsp;&nbsp;TS&nbsp;&nbsp;·&nbsp;&nbsp;Rust&nbsp;&nbsp;·&nbsp;&nbsp;Go&nbsp;&nbsp;·&nbsp;&nbsp;Python
+              codegen&nbsp;&nbsp;·&nbsp;&nbsp;TRP&nbsp;&nbsp;·&nbsp;&nbsp;TS&nbsp;&nbsp;·&nbsp;
+              Rust&nbsp;&nbsp;·&nbsp;&nbsp;Go&nbsp;&nbsp;·&nbsp;&nbsp;Python
             </p>
           </article>
         </div>
