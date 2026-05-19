@@ -1,62 +1,121 @@
 import { Link } from 'react-router';
 import { ArrowRightIcon } from '~/components/icons/arrow-right';
-import { CodeCard } from './CodeCard';
 
 export function Hero() {
+  const docsUrl = import.meta.env.VITE_DOCS_URL ?? '#';
+
   return (
     <section className="relative">
-      <div className="container relative py-14">
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-14 items-start">
-          <div className="max-w-[560px]">
-            <div className="flex items-center gap-2.5 text-[11px] font-semibold tracking-[1.4px] uppercase text-zinc-500">
-              <span className="size-1.5 rounded-full bg-blue-400 shadow-[0_0_14px_rgba(81,162,255,0.6)]" />
-              Consume or publish UTxO protocols
-            </div>
-
-            <h1 className="mt-7 text-[68px] xl:text-[76px] leading-[0.95] font-semibold tracking-[-0.035em]">
-              The <span className="text-primary-600">Open API</span>
-              <span className="block">for UTxO blockchains.</span>
-            </h1>
-
-            <p className="mt-7 text-zinc-400 text-base leading-7 max-w-[500px]">
-              Whether you're using a protocol or publishing your own, Tx3 turns UTxO dApps into
-              ready-to-use SDKs and APIs — for your code, or your AI agents.
-            </p>
-
-            <div className="mt-9 flex flex-wrap items-center gap-4">
-              <Link
-                to="/protocols"
-                className="group flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-zinc-50 rounded-lg pl-5 pr-4 py-3 text-sm font-medium transition-colors shadow-[0_10px_30px_-12px_rgba(255,0,127,0.55)]"
-              >
-                Use a protocol
-                <ArrowRightIcon width={16} height={16} className="transition-transform group-hover:translate-x-0.5" />
-              </Link>
-              <a
-                href={import.meta.env.VITE_DOCS_URL ?? '#'}
-                target="_blank"
-                rel="noreferrer"
-                className="group flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-zinc-50 rounded-lg pl-5 pr-4 py-3 text-sm font-medium transition-colors shadow-[0_10px_30px_-12px_rgba(43,127,255,0.55)]"
-              >
-                Publish your protocol
-                <ArrowRightIcon width={16} height={16} className="transition-transform group-hover:translate-x-0.5" />
-              </a>
-              <a
-                href={import.meta.env.VITE_DOCS_URL ?? '#'}
-                target="_blank"
-                rel="noreferrer"
-                className="text-zinc-200 text-sm underline underline-offset-4 hover:text-zinc-50 transition-colors px-1"
-              >
-                Read the docs
-              </a>
-            </div>
-
-            <p className="mt-7 text-xs text-zinc-500 tracking-wide">
-              Open source&nbsp;&nbsp;·&nbsp;&nbsp;Apache 2.0
-            </p>
+      <div className="container relative py-14 flex flex-col items-center gap-12">
+        <div className="flex flex-col items-center gap-5 text-center">
+          <div className="flex items-center gap-2 text-[12px] font-medium tracking-[1.5px] uppercase text-zinc-400">
+            <span className="size-1.5 rounded-full bg-primary-600 shadow-[0_0_14px_rgba(255,0,127,0.6)]" />
+            TX3 · Interface Description Format
           </div>
 
-          <CodeCard />
+          <h1 className="max-w-[900px] text-[40px] sm:text-[48px] lg:text-[56px] leading-[1.1] lg:leading-[64px] font-semibold tracking-[-0.027em] text-zinc-50">
+            A machine-readable interface
+            <span className="block">for UTxO blockchain protocols.</span>
+          </h1>
+
+          <p className="max-w-[760px] text-zinc-400 text-lg leading-7">
+            Protocol authors publish a spec. Application developers generate typed clients from it. The interface is data, not lore.
+          </p>
         </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+          <article className="flex flex-col gap-4 rounded-2xl border border-zinc-800 bg-[#181818] px-9 py-8 min-h-[304px]">
+            <div className="flex items-center gap-2">
+              <span className="block h-[1.5px] w-3.5 bg-primary-600" />
+              <span className="text-[12px] font-medium tracking-[1.5px] uppercase text-primary-600">
+                Authoring protocols
+              </span>
+            </div>
+
+            <h2 className="text-[28px] leading-9 font-semibold tracking-[-0.018em] text-zinc-50">
+              Publishing a protocol?
+            </h2>
+
+            <p className="text-[15px] leading-6 text-zinc-300">
+              Declare what your protocol exposes in a .tx3 spec — parties, types, transactions. Ship it as a TII artifact that any consumer can read.
+            </p>
+
+            <div className="mt-auto flex flex-wrap items-center gap-4 pt-2">
+              <a
+                href={docsUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="group inline-flex items-center gap-2.5 bg-primary-600 hover:bg-primary-700 text-zinc-50 rounded-lg px-5 py-3 text-sm font-semibold transition-colors shadow-[0_10px_30px_-12px_rgba(255,0,127,0.55)]"
+              >
+                Author a protocol
+                <ArrowRightIcon width={16} height={16} className="transition-transform group-hover:translate-x-0.5" />
+              </a>
+              <a
+                href={docsUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="group inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-zinc-50 transition-colors"
+              >
+                Read the spec
+                <ArrowRightIcon width={16} height={16} className="transition-transform group-hover:translate-x-0.5" />
+              </a>
+            </div>
+
+            <p className="text-[12px] leading-4 text-zinc-500">
+              trix CLI&nbsp;&nbsp;·&nbsp;&nbsp;.tx3&nbsp;&nbsp;·&nbsp;&nbsp;TII&nbsp;&nbsp;·&nbsp;&nbsp;TIR
+            </p>
+          </article>
+
+          <article className="flex flex-col gap-4 rounded-2xl border border-zinc-800 bg-[#181818] px-9 py-8 min-h-[304px]">
+            <div className="flex items-center gap-2">
+              <span className="block h-[1.5px] w-3.5 bg-blue-400" />
+              <span className="text-[12px] font-medium tracking-[1.5px] uppercase text-blue-400">
+                Consuming protocols
+              </span>
+            </div>
+
+            <h2 className="text-[28px] leading-9 font-semibold tracking-[-0.018em] text-zinc-50">
+              Integrating a protocol?
+            </h2>
+
+            <p className="text-[15px] leading-6 text-zinc-300">
+              Generate a typed client from a published .tii and invoke protocol transactions from TypeScript, Rust, Go or Python.
+            </p>
+
+            <div className="mt-auto flex flex-wrap items-center gap-4 pt-2">
+              <Link
+                to="/protocols"
+                className="group inline-flex items-center gap-2.5 bg-blue-500 hover:bg-blue-600 text-zinc-50 rounded-lg px-5 py-3 text-sm font-semibold transition-colors shadow-[0_10px_30px_-12px_rgba(43,127,255,0.55)]"
+              >
+                Consume a protocol
+                <ArrowRightIcon width={16} height={16} className="transition-transform group-hover:translate-x-0.5" />
+              </Link>
+              <Link
+                to="/protocols"
+                className="group inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-zinc-50 transition-colors"
+              >
+                Browse the registry
+                <ArrowRightIcon width={16} height={16} className="transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </div>
+
+            <p className="text-[12px] leading-4 text-zinc-500">
+              codegen&nbsp;&nbsp;·&nbsp;&nbsp;TRP&nbsp;&nbsp;·&nbsp;&nbsp;TS&nbsp;&nbsp;·&nbsp;&nbsp;Rust&nbsp;&nbsp;·&nbsp;&nbsp;Go&nbsp;&nbsp;·&nbsp;&nbsp;Python
+            </p>
+          </article>
+        </div>
+
+        <p className="text-xs text-zinc-500 tracking-wide text-center">
+          Open source&nbsp;&nbsp;·&nbsp;&nbsp;Apache 2.0&nbsp;&nbsp;·&nbsp;&nbsp;
+          <a
+            href={docsUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-4 hover:text-zinc-300 transition-colors"
+          >
+            docs.txpipe.io/tx3
+          </a>
+        </p>
       </div>
     </section>
   );
