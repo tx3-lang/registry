@@ -13,7 +13,8 @@ export function ArrowLeftRightIcon({ strokeWidth = 1.5, ...props }: SVGProps<SVG
       strokeLinejoin="round"
       viewBox="0 0 24 24"
       strokeWidth={strokeWidth}
-      {...props}>
+      {...props}
+    >
       <path stroke="none" d="M0 0h24v24H0z" />
       <path d="M21 17H3M6 10 3 7l3-3M3 7h18M18 20l3-3-3-3" />
     </svg>

@@ -11,15 +11,15 @@ interface Props {
   protocol: Protocol;
 }
 
-type MatchesListResp =
-  | { matches: Match[]; pageInfo: { hasNextPage: boolean; endCursor: string | null; }; }
-  | { error: string; message?: string; };
+type MatchesListResp
+  = | { matches: Match[]; pageInfo: { hasNextPage: boolean; endCursor: string | null; }; }
+    | { error: string; message?: string; };
 
-type DetailResp =
-  | { match: Match | null; }
-  | { error: string; message?: string; };
+type DetailResp
+  = | { match: Match | null; }
+    | { error: string; message?: string; };
 
-function dedupeById<T extends { id: string | number }>(rows: T[]): T[] {
+function dedupeById<T extends { id: string | number; }>(rows: T[]): T[] {
   const seen = new Set<string | number>();
   return rows.filter(row => {
     if (seen.has(row.id)) return false;
@@ -95,8 +95,8 @@ export function TabActivity({ protocol }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedHash, scope, name]);
 
-  const firstPageEndCursor =
-    fetcher.data && 'matches' in fetcher.data
+  const firstPageEndCursor
+    = fetcher.data && 'matches' in fetcher.data
       ? (fetcher.data.pageInfo?.endCursor ?? null)
       : null;
 
@@ -113,14 +113,14 @@ export function TabActivity({ protocol }: Props) {
     [firstPage, extraPages],
   );
 
-  const detailMatch: Match | null =
-    detailFetcher.data && 'match' in detailFetcher.data
+  const detailMatch: Match | null
+    = detailFetcher.data && 'match' in detailFetcher.data
       ? detailFetcher.data.match
       : null;
 
   const isDetailLoading = detailFetcher.state !== 'idle';
-  const hasDetailError =
-    detailFetcher.data !== undefined && 'error' in detailFetcher.data;
+  const hasDetailError
+    = detailFetcher.data !== undefined && 'error' in detailFetcher.data;
 
   const hasError = fetcher.data !== undefined && 'error' in fetcher.data;
   const isInitialLoading = fetcher.data === undefined && fetcher.state === 'loading';

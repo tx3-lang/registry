@@ -269,7 +269,7 @@ interface Props {
 }
 
 export function TabSDKs({ protocol }: Props) {
-  const profiles = protocol.profiles ?? [];
+  const [profiles] = useState(protocol.profiles ?? []);
 
   const defaultProfile = useMemo(() => pickDefaultProfile(profiles), [profiles]);
 

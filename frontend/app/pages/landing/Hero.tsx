@@ -19,7 +19,8 @@ export function Hero() {
             </h1>
 
             <p className="mt-7 text-zinc-400 text-base leading-7 max-w-[500px]">
-              Whether you’re using a protocol or publishing your own, Tx3 turns UTxO dApps into ready-to-use SDKs and APIs — for your code, or your AI agents.
+              Whether you're using a protocol or publishing your own, Tx3 turns UTxO dApps into
+              ready-to-use SDKs and APIs — for your code, or your AI agents.
             </p>
 
             <div className="mt-9 flex flex-wrap items-center gap-4">

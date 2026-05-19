@@ -24,6 +24,7 @@ export async function loader({ context, params }: Route.LoaderArgs) {
 
     return { match: result.protocolMatch };
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.warn('upstream error fetching protocolMatch:', err);
     return Response.json(
       { error: 'upstream error', message: err instanceof Error ? err.message : String(err) },
