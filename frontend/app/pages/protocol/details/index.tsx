@@ -103,7 +103,7 @@ export function ProtocolDetails({ protocol, rpcDocsUrl }: ProtocolDetailsProps) 
               <a href={rpcDocsUrl} target="_blank" rel="noreferrer">
                 <TabName
                   icon={<FileDescriptionIcon width="20" height="20" />}
-                  name="RPC Docs"
+                  name="Web API"
                   active={false}
                 />
               </a>
