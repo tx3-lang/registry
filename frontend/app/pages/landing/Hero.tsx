@@ -5,22 +5,21 @@ import { CodeCard } from './CodeCard';
 export function Hero() {
   return (
     <section className="relative">
-      <div className="container relative pt-20 pb-24">
+      <div className="container relative py-14">
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-14 items-start">
           <div className="max-w-[560px]">
-            <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[1.4px] uppercase text-primary-400">
-              <span className="size-1.5 rounded-full bg-primary-600 shadow-[0_0_14px_rgba(255,0,127,0.6)]" />
-              Use or publish UTxO protocols
+            <div className="flex items-center gap-2.5 text-[11px] font-semibold tracking-[1.4px] uppercase text-zinc-500">
+              <span className="size-1.5 rounded-full bg-blue-400 shadow-[0_0_14px_rgba(81,162,255,0.6)]" />
+              Consume or publish UTxO protocols
             </div>
 
             <h1 className="mt-7 text-[68px] xl:text-[76px] leading-[0.95] font-semibold tracking-[-0.035em]">
-              The <span className="text-primary-600">Open API</span><br />
-              for UTxO<br />
-              blockchains.
+              The <span className="text-primary-600">Open API</span>
+              <span className="block">for UTxO blockchains.</span>
             </h1>
 
             <p className="mt-7 text-zinc-400 text-base leading-7 max-w-[500px]">
-              Whether you're using a protocol or publishing your own, Tx3 turns UTxO dApps into ready-to-use SDKs and APIs — for your code, or your AI agents.
+              Whether you’re using a protocol or publishing your own, Tx3 turns UTxO dApps into ready-to-use SDKs and APIs — for your code, or your AI agents.
             </p>
 
             <div className="mt-9 flex flex-wrap items-center gap-4">
@@ -51,7 +50,7 @@ export function Hero() {
             </div>
 
             <p className="mt-7 text-xs text-zinc-500 tracking-wide">
-              Open source · Apache 2.0
+              Open source&nbsp;&nbsp;·&nbsp;&nbsp;Apache 2.0
             </p>
           </div>
 

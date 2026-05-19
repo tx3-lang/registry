@@ -14,11 +14,11 @@ export function Landing() {
 
       <div className="relative">
         <Header centerNode={<SearchBar dark className="mx-auto max-w-[420px]" />} />
-        <main className="flex flex-col gap-24 pb-24">
+        <main className="flex flex-col">
           <Hero />
           <Features />
-          <Ticker />
           <SneakPeek />
+          <Ticker />
           <DualCTA />
         </main>
       </div>

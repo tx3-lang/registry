@@ -11,10 +11,10 @@ export function Footer({ className }: Props) {
         <span>Copyright © 2025 TxPipe</span>
         <span className="hidden sm:block">|</span>
         <span>All Rights Reserved</span>
-        <span className="hidden sm:block">|</span>
+        {/* <span className="hidden sm:block">|</span>
         <a href="#" className="text-blue-300 underline">Terms and Conditions</a>
         <span className="hidden sm:block">|</span>
-        <a href="#" className="text-blue-300 underline">Privacy Policy</a>
+        <a href="#" className="text-blue-300 underline">Privacy Policy</a> */}
       </div>
     </footer>
   );
