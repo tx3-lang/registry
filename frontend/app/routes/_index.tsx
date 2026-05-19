@@ -11,8 +11,8 @@ const TICKER_PAGE_SIZE = 25;
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: 'Tx3 — The Open API for UTxO blockchains' },
-    { name: 'description', content: 'Tx3 turns UTxO dApps into ready-to-use SDKs and APIs — for your code, or your AI agents.' },
+    { title: 'Tx3 — A machine-readable interface for UTxO blockchain protocols' },
+    { name: 'description', content: 'Protocol authors publish a .tx3 spec. Application developers generate typed clients in TypeScript, Rust, Go or Python. The interface is data, not lore.' },
   ];
 }
 
