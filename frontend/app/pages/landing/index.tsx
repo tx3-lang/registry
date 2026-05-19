@@ -13,7 +13,7 @@ export function Landing({ protocols }: { protocols: ProtocolConnection; }) {
       <div className="absolute inset-x-0 top-0 h-[900px] landing-grid-noise pointer-events-none" aria-hidden />
 
       <div className="relative">
-        <Header centerNode={<SearchBar dark className="mx-auto max-w-[420px]" />} />
+        <Header centerNode={<SearchBar dark className="mx-auto max-w-[420px] max-h-11" />} />
         <main className="flex flex-col">
           <Hero />
           <Features />
