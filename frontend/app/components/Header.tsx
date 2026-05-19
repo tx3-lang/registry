@@ -8,6 +8,9 @@ interface Props {
   centerNode?: React.ReactNode;
 }
 
+const navLinkClass = ({ isActive }: { isActive: boolean; }) =>
+  clsx('transition-colors', isActive ? 'text-primary-600' : 'text-zinc-300 hover:text-zinc-100');
+
 export function Header({ className, appName, appLink, centerNode }: Props) {
   return (
     <header className={clsx('border-b border-zinc-800 py-8', className)}>
@@ -29,9 +32,21 @@ export function Header({ className, appName, appLink, centerNode }: Props) {
         </div>
 
         <nav className="flex items-center justify-end gap-8" style={{ gridArea: 'nav' }}>
-          <NavLink to={import.meta.env.VITE_DOCS_URL} target="_blank" rel="noreferrer">Docs</NavLink>
-          <NavLink to="/protocols" className="text-primary-600">Registry</NavLink>
-          {/* <NavLink to="/support">Support</NavLink> */}
+          <NavLink to={import.meta.env.VITE_DOCS_URL} target="_blank" rel="noreferrer" className={navLinkClass}>
+            Docs
+          </NavLink>
+          <NavLink to="/protocols" className={navLinkClass}>
+            Protocols
+          </NavLink>
+          <button
+            type="button"
+            aria-label="Toggle theme"
+            className="text-zinc-400 hover:text-zinc-100 transition-colors cursor-pointer"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+          </button>
         </nav>
       </div>
     </header>
