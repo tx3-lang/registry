@@ -139,19 +139,21 @@ function PreviewCard({
 export function SneakPeek() {
   return (
     <section className="container py-14">
-      <div className="text-center">
-        <div className="inline-flex items-center justify-center text-[11px] font-semibold tracking-[1.4px] uppercase text-zinc-500">
-          Inside every protocol
+      <div className="flex flex-col items-center gap-4 max-w-[760px] mx-auto py-2">
+        <div className="inline-flex items-center gap-2 text-[12px] font-medium tracking-[1.5px] uppercase text-zinc-400">
+          <span className="size-1.5 rounded-full bg-[#ff007f]" />
+          Inside every published spec
         </div>
-        <h2 className="mt-3 text-3xl xl:text-4xl font-semibold tracking-[-0.02em]">
-          Everything you need, one tab away.
+        <h2 className="text-center text-[32px] xl:text-[40px] font-semibold leading-[1.2] tracking-[-0.025em] text-zinc-50">
+          Generated from one .tx3 spec.
         </h2>
-        <p className="mt-3 text-sm text-zinc-400 max-w-[560px] mx-auto leading-6">
-          Each protocol page on tx3.land ships with ready-to-use SDKs, a public web API and live transaction activity.
+        <p className="text-center text-base leading-6 text-zinc-400">
+          Each protocol page on tx3.land exposes typed SDKs (TS · Rust · Go · Python),
+          <br className="hidden sm:inline" /> a TRP-backed HTTP endpoint and a live transaction stream — all derived from the same TII.
         </p>
       </div>
 
-      <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-4">
         <SdkPreviewCard />
 
         <PreviewCard
@@ -187,14 +189,7 @@ export function SneakPeek() {
           title="Live on-chain activity."
           description="Every protocol transaction streamed in real time."
         >
-          <div className="flex flex-col gap-1.5">
-            <div className="grid grid-cols-[80px_90px_70px_1fr] gap-3.5 pb-1.5 border-b border-[#232326] text-[9px] font-semibold uppercase tracking-[0.8px] text-zinc-700 leading-3">
-              <span>TX</span><span>Hash</span><span>Slot</span><span>When</span>
-            </div>
-            <ActivityRow tx="unstake" hash="95ffba…2a063a" slot="186,750,253" when="2026-05-11" />
-            <ActivityRow tx="place_buy" hash="60d263…8a0c2a" slot="187,287,264" when="2026-05-15" />
-            <ActivityRow tx="cancel_order" hash="66a7be…4a01ca" slot="187,287,264" when="2026-05-15" />
-          </div>
+          <ActivityChart />
         </PreviewCard>
       </div>
     </section>
@@ -239,15 +234,88 @@ function SdkPreviewCard() {
   );
 }
 
-function ActivityRow({ tx, hash, slot, when }: { tx: string; hash: string; slot: string; when: string; }) {
+const TXS_PATH = '0,82 26,78 52,70 78,75 104,60 130,55 156,50 182,42 208,46 234,32 260,36 286,22 312,28 338,18';
+const CALLERS_PATH = '0,90 26,88 52,85 78,82 104,84 130,78 156,77 182,72 208,75 234,66 260,70 286,60 312,64 338,58';
+const MARKER_X_PCT = (338 / 365) * 100;
+
+function ActivityChart() {
   return (
-    <div className="grid grid-cols-[80px_90px_70px_1fr] gap-3.5 items-center py-[5px]">
-      <span>
-        <span className="inline-block text-[9px] font-semibold text-[#ff637e] bg-[#4d0218] rounded-full px-2 py-0.5 leading-3">{tx}</span>
-      </span>
-      <span className="text-[10px] font-medium text-[#ff637e] leading-[14px]">{hash}</span>
-      <span className="text-[10px] font-medium text-zinc-500 leading-[14px]">{slot}</span>
-      <span className="text-[10px] font-medium text-zinc-500 leading-[14px]">{when}</span>
+    <div className="relative h-full font-sans">
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1.5">
+          <span className="block w-2.5 h-0.5 bg-[#51a2ff]" />
+          <span className="text-[11px] leading-[14px] text-zinc-400">txs / day</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="block w-2.5 h-0.5 bg-[#ff637e]" />
+          <span className="text-[11px] leading-[14px] text-zinc-400">unique callers</span>
+        </div>
+      </div>
+
+      <div className="absolute inset-x-0 top-[56px] h-[120px]">
+        <div className="relative h-[100px] w-full">
+          <svg
+            viewBox="0 0 365 100"
+            preserveAspectRatio="none"
+            className="absolute inset-0 h-full w-full overflow-visible"
+            aria-hidden
+          >
+            <path d="M0 0H365" stroke="#27272A" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+            <path d="M0 33H365" stroke="#27272A" strokeWidth="0.5" strokeDasharray="2 4" vectorEffect="non-scaling-stroke" />
+            <path d="M0 66H365" stroke="#27272A" strokeWidth="0.5" strokeDasharray="2 4" vectorEffect="non-scaling-stroke" />
+            <path d="M0 99H365" stroke="#27272A" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+            <polyline
+              points={TXS_PATH}
+              fill="none"
+              stroke="#51A2FF"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+            />
+            <polyline
+              points={CALLERS_PATH}
+              fill="none"
+              stroke="#FF637E"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
+
+          <span
+            className="absolute block size-[7px] -ml-[3.5px] -mt-[3.5px] rounded-full bg-woodsmoke-950 border-[1.5px] border-[#51A2FF]"
+            style={{ left: `${MARKER_X_PCT}%`, top: '18%' }}
+          />
+          <span
+            className="absolute block size-[7px] -ml-[3.5px] -mt-[3.5px] rounded-full bg-woodsmoke-950 border-[1.5px] border-[#FF637E]"
+            style={{ left: `${MARKER_X_PCT}%`, top: '58%' }}
+          />
+        </div>
+
+        <div className="absolute inset-x-0 top-[108px] flex justify-between text-[10px] leading-3 text-zinc-500">
+          <span>May 5</span>
+          <span>May 9</span>
+          <span>May 13</span>
+          <span>May 17</span>
+          <span>May 19</span>
+        </div>
+      </div>
+
+      <div className="absolute right-2 top-[22px] bg-zinc-800 border border-[#3f3f46] rounded-md px-2.5 py-2 flex flex-col gap-1.5">
+        <p className="text-[10px] leading-3 text-zinc-500 tracking-[0.5px]">May 19, 2026</p>
+        <div className="flex items-center gap-2">
+          <span className="block size-1.5 rounded-full bg-[#51A2FF]" />
+          <span className="text-[11px] leading-[14px] text-zinc-400 w-[34px]">txs</span>
+          <span className="text-[11px] leading-[14px] text-zinc-50 font-semibold">1,284</span>
+          <span className="inline-flex items-center bg-[#2b7fff] rounded-full px-1.5 py-px text-[10px] leading-3 text-blue-50">+47%</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="block size-1.5 rounded-full bg-[#FF637E]" />
+          <span className="text-[11px] leading-[14px] text-zinc-400">callers</span>
+          <span className="text-[11px] leading-[14px] text-zinc-50 font-semibold w-[30px]">312</span>
+          <span className="inline-flex items-center bg-[#ff007f] rounded-full px-1.5 py-px text-[10px] leading-3 text-rose-50">+12%</span>
+        </div>
+      </div>
     </div>
   );
 }
