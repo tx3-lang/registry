@@ -6,7 +6,7 @@ import { Ticker } from './Ticker';
 import { SneakPeek } from './SneakPeek';
 import { DualCTA } from './DualCTA';
 
-export function Landing() {
+export function Landing({ protocols }: { protocols: ProtocolConnection; }) {
   return (
     <div className="relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 h-[900px] landing-glow-pink pointer-events-none" aria-hidden />
@@ -18,7 +18,7 @@ export function Landing() {
           <Hero />
           <Features />
           <SneakPeek />
-          <Ticker />
+          <Ticker protocols={protocols} />
           <DualCTA />
         </main>
       </div>

@@ -162,7 +162,7 @@ export function SneakPeek() {
         >
           <div className="flex h-full flex-col">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-[0.6px] text-primary-400 bg-[#4d0218] rounded-md px-2 py-0.5 leading-[14px]">POST</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.6px] text-[#ff637e] bg-[#4d0218] rounded-md px-2 py-0.5 leading-[14px]">POST</span>
               <span className="text-zinc-50 text-[12px] font-semibold leading-4">/api/indigo/swap</span>
             </div>
             <CodeBlock
@@ -243,9 +243,9 @@ function ActivityRow({ tx, hash, slot, when }: { tx: string; hash: string; slot:
   return (
     <div className="grid grid-cols-[80px_90px_70px_1fr] gap-3.5 items-center py-[5px]">
       <span>
-        <span className="inline-block text-[9px] font-semibold text-primary-400 bg-[#4d0218] rounded-full px-2 py-0.5 leading-3">{tx}</span>
+        <span className="inline-block text-[9px] font-semibold text-[#ff637e] bg-[#4d0218] rounded-full px-2 py-0.5 leading-3">{tx}</span>
       </span>
-      <span className="text-[10px] font-medium text-primary-400 leading-[14px]">{hash}</span>
+      <span className="text-[10px] font-medium text-[#ff637e] leading-[14px]">{hash}</span>
       <span className="text-[10px] font-medium text-zinc-500 leading-[14px]">{slot}</span>
       <span className="text-[10px] font-medium text-zinc-500 leading-[14px]">{when}</span>
     </div>
