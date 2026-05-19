@@ -8,15 +8,20 @@ import { DualCTA } from './DualCTA';
 
 export function Landing() {
   return (
-    <>
-      <Header centerNode={<SearchBar dark className="mx-auto max-w-[420px]" />} />
-      <main className="flex flex-col gap-24 pb-24">
-        <Hero />
-        <Features />
-        <Ticker />
-        <SneakPeek />
-        <DualCTA />
-      </main>
-    </>
+    <div className="relative overflow-hidden">
+      <div className="absolute inset-x-0 top-0 h-[900px] landing-glow-pink pointer-events-none" aria-hidden />
+      <div className="absolute inset-x-0 top-0 h-[900px] landing-grid-noise pointer-events-none" aria-hidden />
+
+      <div className="relative">
+        <Header centerNode={<SearchBar dark className="mx-auto max-w-[420px]" />} />
+        <main className="flex flex-col gap-24 pb-24">
+          <Hero />
+          <Features />
+          <Ticker />
+          <SneakPeek />
+          <DualCTA />
+        </main>
+      </div>
+    </div>
   );
 }

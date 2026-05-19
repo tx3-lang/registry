@@ -4,10 +4,7 @@ import { CodeCard } from './CodeCard';
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden">
-      <div className="absolute inset-0 landing-glow-pink pointer-events-none" aria-hidden />
-      <div className="absolute inset-0 landing-grid-noise pointer-events-none" aria-hidden />
-
+    <section className="relative">
       <div className="container relative pt-20 pb-24">
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-14 items-start">
           <div className="max-w-[560px]">

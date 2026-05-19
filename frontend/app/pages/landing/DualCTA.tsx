@@ -4,7 +4,6 @@ import { ArrowRightIcon } from '~/components/icons/arrow-right';
 export function DualCTA() {
   return (
     <section className="container relative">
-      <div className="absolute inset-x-0 -bottom-12 h-72 landing-glow-blue pointer-events-none" aria-hidden />
       <div className="relative grid grid-cols-1 md:grid-cols-2 gap-5">
         <article className="relative overflow-hidden rounded-2xl border border-primary-900/60 bg-gradient-to-br from-primary-950/60 via-woodsmoke-950 to-woodsmoke-950 p-8">
           <div className="absolute -top-20 -right-16 size-64 rounded-full bg-primary-600/20 blur-3xl pointer-events-none" aria-hidden />
