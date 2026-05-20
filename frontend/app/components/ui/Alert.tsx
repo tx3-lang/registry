@@ -49,6 +49,7 @@ export function Alert({ type, children, className, textToCopy, title }: AlertPro
     return () => {
       observer.disconnect();
       if (contentRef.current) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         contentRef.current.removeEventListener('scroll', handleScroll);
       }
     };

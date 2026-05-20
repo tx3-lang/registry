@@ -38,6 +38,7 @@ export async function loader({ context, params, request }: Route.LoaderArgs) {
       pageInfo: result.protocolMatches.pageInfo,
     };
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.warn('upstream error fetching protocolMatches:', err);
     return Response.json({ error: 'upstream error', message: String(err) }, { status: 502 });
   }

@@ -79,4 +79,56 @@
     @apply grid grid-cols-[auto_1fr_auto] xl:grid-cols-[minmax(0,1fr)_minmax(500px,1fr)_minmax(0,1fr)] gap-4;
     grid-template-areas: "logo center nav";
   }
+
+  .landing-glow-pink {
+    background: radial-gradient(70% 60% at 8% 12%, rgba(255, 0, 127, 0.22) 0%, rgba(255, 0, 127, 0.08) 35%, rgba(10, 10, 12, 0) 72%);
+    opacity: 0.85;
+  }
+
+  .landing-glow-blue {
+    background: radial-gradient(70% 80% at 100% 100%, rgba(43, 127, 255, 0.22) 0%, rgba(43, 127, 255, 0.05) 40%, rgba(10, 10, 12, 0) 75%);
+  }
+
+  .landing-grid-noise {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(80% 60% at 50% 0%, #000 0%, transparent 70%);
+  }
+
+  .code-card-block {
+    line-height: 22px !important;
+  }
+
+  .code-card-block code {
+    counter-reset: line;
+    display: block;
+    line-height: 22px;
+  }
+
+  .code-card-block .line::before {
+    counter-increment: line;
+    content: counter(line);
+    display: inline-block;
+    width: 1.5rem;
+    margin-right: 1.125rem;
+    text-align: right;
+    color: var(--color-zinc-700);
+    font-size: 12px;
+    user-select: none;
+  }
+
+  .ticker-track {
+    animation: ticker-slide 120s linear infinite;
+  }
+
+  .ticker-track:hover {
+    animation-play-state: paused;
+  }
+
+  @keyframes ticker-slide {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
 }

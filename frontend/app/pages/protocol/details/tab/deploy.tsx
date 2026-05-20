@@ -50,7 +50,7 @@ const oneClickDeploymentItems = [
   { icon: <BellRinging2Icon width="20" height="20" />, text: 'Notifications for key events.' },
 ];
 
-export function TabDeploy({ protocol }: Props) {
+export function TabDeploy(_: Props) {
   return (
     <div className="container flex-1 pt-8 pb-14 relative">
       <div className="absolute w-[719px] h-[559.95px] bg-[radial-gradient(ellipse_359px_280px_at_center,#5A5BED_0%,rgba(37,45,71,0)_100%)] left-[calc(50%+54px)] transform -translate-x-1/2 -top-[45px] pointer-events-none opacity-20 z-0" />

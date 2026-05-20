@@ -103,7 +103,7 @@ export function ProtocolDetails({ protocol, rpcDocsUrl }: ProtocolDetailsProps) 
               <a href={rpcDocsUrl} target="_blank" rel="noreferrer">
                 <TabName
                   icon={<FileDescriptionIcon width="20" height="20" />}
-                  name="RPC Docs"
+                  name="Web API"
                   active={false}
                 />
               </a>
@@ -125,7 +125,7 @@ export function ProtocolDetails({ protocol, rpcDocsUrl }: ProtocolDetailsProps) 
         </div>
 
         <div className="container py-4">
-          <Link to="/" className="flex items-center gap-3 w-fit text-zinc-400 hover:text-zinc-100 font-medium py-3">
+          <Link to="/protocols" className="flex items-center gap-3 w-fit text-zinc-400 hover:text-zinc-100 font-medium py-3">
             <ArrowLeftIcon width="20" height="20" /> Back to all Protocols
           </Link>
         </div>
