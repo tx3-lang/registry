@@ -21,45 +21,58 @@ const SDK_SHIKI: Record<SdkLanguage, SupportedLanguages> = {
 };
 
 const SDK_SNIPPETS: Record<SdkLanguage, string> = {
-  TypeScript: `import { swap } from "@tx3/indigo";
+  TypeScript: `import { Tx3Client, Protocol, TrpClient } from "tx3-sdk";
+const protocol = await Protocol.fromFile("indigo.tii");
+const trp = new TrpClient({ endpoint, headers });
+const tx3 = new Tx3Client(protocol, trp);
 
-const tx = await swap({
-  quantity: 1_000,
-  price:    ada(420),
-});
+const unstake = await tx3.tx("unstake")
+  .arg("owner_pkh", "0011…")
+  .arg("position_utxo", "tx_hash#0")
+  .resolve();
+const submitted = await (await unstake.sign()).submit();`,
+  Rust: `use tx3_sdk::{tii::Protocol, Tx3Client};
+use tx3_sdk::trp::{Client, ClientOptions};
+let protocol = Protocol::from_file("indigo.tii")?;
+let trp = Client::new(ClientOptions { endpoint, headers });
+let tx3 = Tx3Client::new(protocol, trp);
 
-await wallet.sign(tx);`,
-  Rust: `use tx3_indigo::swap;
+let unstake = tx3.tx("unstake")
+  .arg("owner_pkh", json!("0011…"))
+  .arg("position_utxo", json!("tx_hash#0"))
+  .resolve().await?;
+let submitted = unstake.sign()?.submit().await?;`,
+  Go: `import tx3 "github.com/tx3-lang/go-sdk/sdk"
+import "github.com/tx3-lang/go-sdk/sdk/trp"
+protocol, _ := tx3.ProtocolFromFile("indigo.tii")
+opts := trp.ClientOptions{Endpoint: endpoint, Headers: headers}
+client := tx3.NewClient(protocol, tx3.NewTRPClient(opts))
 
-let tx = swap(SwapArgs {
-  quantity: 1_000,
-  price:    ada(420),
-}).await?;
+unstake, _ := client.Tx("unstake").
+  Arg("owner_pkh", "0011…").
+  Arg("position_utxo", "tx_hash#0").
+  Resolve(ctx)
+submitted, _ := unstake.Sign().Submit(ctx)`,
+  Python: `from tx3_sdk import Protocol, TrpClient, Tx3Client
+protocol = Protocol.from_file("indigo.tii")
+trp = TrpClient(endpoint=endpoint, headers=headers)
+tx3 = Tx3Client(protocol, trp)
 
-wallet.sign(&tx).await?;`,
-  Go: `import "github.com/tx3/indigo"
-
-tx, err := indigo.Swap(indigo.SwapArgs{
-  Quantity: 1_000,
-  Price:    indigo.Ada(420),
-})
-
-wallet.Sign(tx)`,
-  Python: `from tx3_indigo import swap
-
-tx = await swap(
-  quantity=1_000,
-  price=   ada(420),
-)
-
-await wallet.sign(tx)`,
+unstake = await (tx3.tx("unstake")
+  .arg("owner_pkh", "0011…")
+  .arg("position_utxo", "tx_hash#0")
+  .resolve())
+submitted = await (await unstake.sign()).submit()`,
 };
 
 const API_SNIPPET = `{
-  "args": {
-    "quantity": 1000,
-    "price":    420
-  }
+  "jsonrpc": "2.0",
+  "method": "unstake",
+  "params": {
+    "owner_pkh": "0011…",
+    "position_utxo": "tx_hash#0"
+  },
+  "id": 0
 }`;
 
 const TAB_ICONS: Record<TabName, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
@@ -125,7 +138,7 @@ function PreviewCard({
           </span>
         )}
       </div>
-      <div className="bg-woodsmoke-950 h-[210px] px-5 py-[18px] font-mono text-[11.5px] leading-[18px] text-zinc-100 overflow-hidden">
+      <div className="bg-woodsmoke-950 h-[260px] px-5 py-[18px] font-mono text-[11.5px] leading-[18px] text-zinc-100 overflow-hidden">
         {children}
       </div>
       <div className="flex flex-col gap-1 bg-[#151519] border-t border-[#232326] px-6 py-4">
@@ -165,7 +178,7 @@ export function SneakPeek() {
           <div className="flex h-full flex-col">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-[10px] font-bold uppercase tracking-[0.6px] text-[#ff637e] bg-[#4d0218] rounded-md px-2 py-0.5 leading-[14px]">POST</span>
-              <span className="text-zinc-50 text-[12px] font-semibold leading-4">/api/indigo/swap</span>
+              <span className="text-zinc-50 text-[12px] font-semibold leading-4">/indigo</span>
             </div>
             <CodeBlock
               code={API_SNIPPET}
@@ -176,7 +189,7 @@ export function SneakPeek() {
             <div className="mt-auto">
               <span className="inline-flex items-center gap-2 bg-[#151519] border border-[#232326] rounded-lg px-2.5 py-1.5 text-[10px] font-medium text-zinc-500 leading-[14px]">
                 <span className="size-1.5 rounded-full bg-emerald-300 shadow-[0_0_6px_rgba(94,233,181,0.6)]" />
-                200 OK · cbor: 84a4008182…
+                200 OK
               </span>
             </div>
           </div>

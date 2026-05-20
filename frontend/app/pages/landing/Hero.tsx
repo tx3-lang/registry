@@ -25,7 +25,7 @@ export function Hero() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-          <article className="flex flex-col gap-4 rounded-2xl border border-zinc-800 bg-[#181818] px-9 py-8 min-h-[304px]">
+          <article className="flex flex-col gap-4 rounded-2xl border border-zinc-800 bg-[#181818] px-9 py-8 min-h-[280px]">
             <div className="flex items-center gap-2">
               <span className="block h-[1.5px] w-3.5 bg-primary-600" />
               <span className="text-[12px] font-medium tracking-[1.5px] uppercase text-primary-600">
@@ -62,13 +62,9 @@ export function Hero() {
                 <ArrowRightIcon width={16} height={16} className="transition-transform group-hover:translate-x-0.5" />
               </a>
             </div>
-
-            <p className="text-[12px] leading-4 text-zinc-500">
-              trix CLI&nbsp;&nbsp;·&nbsp;&nbsp;.tx3&nbsp;&nbsp;·&nbsp;&nbsp;TII&nbsp;&nbsp;·&nbsp;&nbsp;TIR
-            </p>
           </article>
 
-          <article className="flex flex-col gap-4 rounded-2xl border border-zinc-800 bg-[#181818] px-9 py-8 min-h-[304px]">
+          <article className="flex flex-col gap-4 rounded-2xl border border-zinc-800 bg-[#181818] px-9 py-8 min-h-[280px]">
             <div className="flex items-center gap-2">
               <span className="block h-[1.5px] w-3.5 bg-blue-400" />
               <span className="text-[12px] font-medium tracking-[1.5px] uppercase text-blue-400">
@@ -101,11 +97,6 @@ export function Hero() {
                 <ArrowRightIcon width={16} height={16} className="transition-transform group-hover:translate-x-0.5" />
               </Link>
             </div>
-
-            <p className="text-[12px] leading-4 text-zinc-500">
-              codegen&nbsp;&nbsp;·&nbsp;&nbsp;TRP&nbsp;&nbsp;·&nbsp;&nbsp;TS&nbsp;&nbsp;·&nbsp;
-              Rust&nbsp;&nbsp;·&nbsp;&nbsp;Go&nbsp;&nbsp;·&nbsp;&nbsp;Python
-            </p>
           </article>
         </div>
 
