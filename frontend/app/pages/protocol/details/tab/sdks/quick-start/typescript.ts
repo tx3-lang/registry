@@ -1,10 +1,12 @@
 import {
   placeholderFor,
+  profileSuppliedNames,
   type SdkRenderer,
-  sortedProtocolParties,
-  tiiPath,
+  type SetupStep,
   toCamelCase,
+  toPascalCase,
   type TrpConfig,
+  unboundParties,
   userProvidedParams,
 } from './shared';
 
@@ -17,72 +19,93 @@ function formatValue(value: unknown, type: string): string {
   return JSON.stringify(String(value));
 }
 
-function trpInit(trp: TrpConfig): string[] {
-  const headersLine = trp.headers
-    ? `  headers: ${JSON.stringify(trp.headers)},`
-    : null;
-  if (!headersLine) {
-    return [`const trp = new TrpClient({ endpoint: ${JSON.stringify(trp.endpoint)} });`];
+function clientOptionsLiteral(trp: TrpConfig): string {
+  if (!trp.headers) {
+    return `{ endpoint: ${JSON.stringify(trp.endpoint)} }`;
   }
+  const headers = Object.entries(trp.headers)
+    .map(([k, v]) => `${JSON.stringify(k)}: ${JSON.stringify(v)}`)
+    .join(', ');
   return [
-    'const trp = new TrpClient({',
+    '{',
     `  endpoint: ${JSON.stringify(trp.endpoint)},`,
-    headersLine,
-    '});',
-  ];
-}
-
-function setup(protocol: Protocol, profile: Profile | null, trp: TrpConfig, supplied: Set<string>): string {
-  const partyLines = sortedProtocolParties(protocol, supplied).map(p =>
-    `  .withParty(${JSON.stringify(p.name)}, Party.address(${JSON.stringify(p.address)}))`,
-  );
-
-  const clientLines = [
-    'const tx3 = new Tx3Client(protocol, trp)',
-    ...(profile ? [`  .withProfile(${JSON.stringify(profile.name)})`] : []),
-    ...partyLines,
-  ];
-  clientLines[clientLines.length - 1] += ';';
-
-  return [
-    'import { Tx3Client, Protocol, TrpClient, Party, Ed25519Signer, PollConfig } from "tx3-sdk";',
-    '',
-    '// 1. Load the protocol (compiled .tii file)',
-    `const protocol = await Protocol.fromFile(${JSON.stringify(tiiPath(protocol))});`,
-    '',
-    '// 2. Connect to a TRP server',
-    ...trpInit(trp),
-    '',
-    '// 3. Configure a signer (uncomment to enable .sign() / .submit())',
-    '// const signer = Ed25519Signer.fromHex("addr_test1...", "deadbeef...");',
-    '',
-    `// 4. Bind parties${profile ? ` and select the "${profile.name}" profile` : ''}`,
-    ...clientLines,
-    '',
-    '// 5. Invoke one of the transactions listed below.',
-    '',
-    '// 6. Once a signer is bound, chain .sign() / .submit() / .waitForConfirmed():',
-    'const status = await result',
-    '  .sign()',
-    '  .then(s => s.submit())',
-    '  .then(sub => sub.waitForConfirmed(PollConfig.default()));',
+    `  headers: { ${headers} },`,
+    '}',
   ].join('\n');
 }
 
-function txBlock(tx: Tx, protocol: Protocol, supplied: Set<string>): string {
-  const varName = toCamelCase(tx.name);
-  const argLines = userProvidedParams(tx, protocol, supplied).map(param =>
-    `  .arg(${JSON.stringify(param.name)}, ${formatValue(placeholderFor(param.type), param.type)})`,
-  );
-  if (argLines.length === 0) {
-    return `const ${varName} = await tx3.tx(${JSON.stringify(tx.name)}).resolve();`;
+function quickStart(protocol: Protocol, profile: Profile | null, trp: TrpConfig): string {
+  const hasProfiles = (protocol.profiles ?? []).length > 0;
+  const supplied = profileSuppliedNames(profile);
+  const unbound = unboundParties(protocol, supplied);
+  const profileArg = hasProfiles && profile ? `, ${JSON.stringify(profile.name)}` : '';
+
+  const partyLines = unbound.map((p, i) => {
+    const setter = `with${toPascalCase(p.name)}`;
+    if (i === 0) {
+      return `  .${setter}(Party.signer(signer))`;
+    }
+    return `  .${setter}(Party.address(${JSON.stringify(p.address)}))`;
+  });
+
+  const lines: string[] = [
+    `import { Client } from "./gen/typescript/${protocol.name}";`,
+    'import { Ed25519Signer, Party } from "tx3-sdk";',
+    '',
+    'const signer = Ed25519Signer.fromHex("addr_test1...", "deadbeef...");',
+    '',
+  ];
+  if (partyLines.length === 0) {
+    lines.push(`const client = new Client(${clientOptionsLiteral(trp)}${profileArg});`);
+  } else {
+    lines.push(`const client = new Client(${clientOptionsLiteral(trp)}${profileArg})`);
+    lines.push(...partyLines);
+    lines[lines.length - 1] += ';';
   }
+  return lines.join('\n');
+}
+
+function txBlock(tx: Tx, protocol: Protocol): string {
+  const supplied = profileSuppliedNames(null);
+  const params = userProvidedParams(tx, protocol, supplied);
+  const varName = toCamelCase(tx.name);
+  const method = toCamelCase(tx.name);
+  if (params.length === 0) {
+    return `const ${varName} = await client.${method}({}).resolve();`;
+  }
+  const argLines = params.map(param =>
+    `  ${toCamelCase(param.name)}: ${formatValue(placeholderFor(param.type), param.type)},`,
+  );
   return [
-    `const ${varName} = await tx3`,
-    `  .tx(${JSON.stringify(tx.name)})`,
+    `const ${varName} = await client.${method}({`,
     ...argLines,
-    '  .resolve();',
+    '}).resolve();',
   ].join('\n');
 }
 
-export const typescriptRenderer: SdkRenderer = { lang: 'typescript', setup, txBlock };
+function lifecycle(_protocol: Protocol): string {
+  return [
+    'import { PollConfig } from "tx3-sdk";',
+    '',
+    '// `resolved` is the result of one of the transactions above.',
+    'const signed = await resolved.sign();',
+    'const submitted = await signed.submit();',
+    'const status = await submitted.waitForConfirmed(PollConfig.default());',
+  ].join('\n');
+}
+
+const postCodegenInstall: SetupStep = {
+  kind: 'shell',
+  lang: 'bash',
+  title: 'Install the generated client\'s dependencies',
+  body: 'cd gen/typescript && npm install',
+  note: 'The generated package.json declares tx3-sdk as a dependency.',
+};
+
+export const typescriptRenderer: SdkRenderer = {
+  lang: 'typescript',
+  postCodegenInstall,
+  quickStart,
+  txBlock,
+  lifecycle,
+};

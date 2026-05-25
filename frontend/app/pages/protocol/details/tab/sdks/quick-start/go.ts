@@ -1,10 +1,11 @@
 import {
   placeholderFor,
+  profileSuppliedNames,
   type SdkRenderer,
-  sortedProtocolParties,
-  tiiPath,
-  toCamelCase,
+  type SetupStep,
+  toPascalCase,
   type TrpConfig,
+  unboundParties,
   userProvidedParams,
 } from './shared';
 
@@ -16,105 +17,133 @@ function formatValue(value: unknown, type: string): string {
   return JSON.stringify(String(value));
 }
 
-function trpInit(trp: TrpConfig): string[] {
-  const endpoint = `        Endpoint: ${JSON.stringify(trp.endpoint)},`;
+function clientOptionsBlock(trp: TrpConfig): string[] {
+  const endpoint = `    Endpoint: ${JSON.stringify(trp.endpoint)},`;
   if (!trp.headers) {
     return [
-      '    trpClient := tx3.NewTRPClient(trp.ClientOptions{',
+      'options := trp.ClientOptions{',
       endpoint,
-      '    })',
+      '}',
     ];
   }
   const headerLines = Object.entries(trp.headers).map(([k, v]) =>
-    `            ${JSON.stringify(k)}: ${JSON.stringify(v)},`,
+    `        ${JSON.stringify(k)}: ${JSON.stringify(v)},`,
   );
   return [
-    '    trpClient := tx3.NewTRPClient(trp.ClientOptions{',
+    'options := trp.ClientOptions{',
     endpoint,
-    '        Headers: map[string]string{',
+    '    Headers: map[string]string{',
     ...headerLines,
-    '        },',
-    '    })',
+    '    },',
+    '}',
   ];
 }
 
-function setup(protocol: Protocol, profile: Profile | null, trp: TrpConfig, supplied: Set<string>): string {
-  const partyLines = sortedProtocolParties(protocol, supplied).map(p =>
-    `        WithParty(${JSON.stringify(p.name)}, tx3.AddressParty(${JSON.stringify(p.address)})).`,
-  );
+function quickStart(protocol: Protocol, profile: Profile | null, trp: TrpConfig): string {
+  const hasProfiles = (protocol.profiles ?? []).length > 0;
+  const supplied = profileSuppliedNames(profile);
+  const unbound = unboundParties(protocol, supplied);
+  const profileArg = hasProfiles && profile
+    ? `, protocol.Profile${toPascalCase(profile.name)}`
+    : '';
 
-  const clientLines = [
-    '    client := tx3.NewClient(protocol, trpClient).',
-    ...(profile ? [`        WithProfile(${JSON.stringify(profile.name)}).`] : []),
-    ...partyLines,
-  ];
-  // Strip trailing dot on the last chained call.
-  const lastIdx = clientLines.length - 1;
-  clientLines[lastIdx] = clientLines[lastIdx].replace(/\.\s*$/, '');
+  const partyLines = unbound.map((p, i) => {
+    const setter = `With${toPascalCase(p.name)}`;
+    if (i === 0) {
+      return `    .${setter}(facade.SignerParty(signer))`;
+    }
+    return `    .${setter}(facade.AddressParty(${JSON.stringify(p.address)}))`;
+  });
 
-  return [
-    'package main',
-    '',
+  const lines: string[] = [
     'import (',
     '    "context"',
     '    "log"',
     '',
-    '    tx3 "github.com/tx3-lang/go-sdk/sdk"',
+    '    "github.com/tx3-lang/go-sdk/sdk/facade"',
+    '    "github.com/tx3-lang/go-sdk/sdk/signer"',
     '    "github.com/tx3-lang/go-sdk/sdk/trp"',
+    '    "./gen/go/protocol"',
     ')',
     '',
-    'func main() {',
-    '    // 1. Load the protocol (compiled .tii file)',
-    `    protocol, err := tx3.ProtocolFromFile(${JSON.stringify(tiiPath(protocol))})`,
-    '    if err != nil {',
-    '        log.Fatal(err)',
-    '    }',
+    'ctx := context.Background()',
+    ...clientOptionsBlock(trp),
     '',
-    '    // 2. Connect to a TRP server',
-    ...trpInit(trp),
-    '',
-    '    // 3. Configure a signer (uncomment to enable .Sign() / .Submit())',
-    '    // mySigner, _ := signer.CardanoSignerFromMnemonic("addr_test1...", "word1 word2 ... word24")',
-    '',
-    `    // 4. Bind parties${profile ? ` and select the "${profile.name}" profile` : ''}`,
-    ...clientLines,
-    '',
-    '    ctx := context.Background()',
-    '',
-    '    // 5. Invoke one of the transactions listed below.',
-    '',
-    '    // 6. Once a signer is bound, chain .Sign() / .Submit() / .WaitForConfirmed():',
-    '    signed := result.Sign()',
-    '    submitted, _ := signed.Submit(ctx)',
-    '    status, _ := submitted.WaitForConfirmed(ctx, tx3.DefaultPollConfig())',
-    '    _ = status',
-    '}',
-  ].join('\n');
-}
-
-function txBlock(tx: Tx, protocol: Protocol, supplied: Set<string>): string {
-  const varName = toCamelCase(tx.name);
-  const argLines = userProvidedParams(tx, protocol, supplied).map(param =>
-    `    Arg(${JSON.stringify(param.name)}, ${formatValue(placeholderFor(param.type), param.type)}).`,
-  );
-  if (argLines.length === 0) {
-    return [
-      `${varName}, err := client.Tx(${JSON.stringify(tx.name)}).Resolve(ctx)`,
-      'if err != nil {',
-      '    log.Fatal(err)',
-      '}',
-      `_ = ${varName}`,
-    ].join('\n');
-  }
-  return [
-    `${varName}, err := client.Tx(${JSON.stringify(tx.name)}).`,
-    ...argLines,
-    '    Resolve(ctx)',
+    'mySigner, err := signer.Ed25519FromHex("addr_test1...", "deadbeef...")',
     'if err != nil {',
     '    log.Fatal(err)',
     '}',
-    `_ = ${varName}`,
+    '',
+  ];
+  if (partyLines.length === 0) {
+    lines.push(`client := protocol.NewClient(options${profileArg})`);
+  } else {
+    lines.push(`client := protocol.NewClient(options${profileArg}).`);
+    lines.push(...partyLines);
+    // Strip trailing dot on the last chained call.
+    const lastIdx = lines.length - 1;
+    lines[lastIdx] = lines[lastIdx].replace(/\.\s*$/, '');
+  }
+  return lines.join('\n');
+}
+
+function txBlock(tx: Tx, protocol: Protocol): string {
+  const supplied = profileSuppliedNames(null);
+  const params = userProvidedParams(tx, protocol, supplied);
+  const method = toPascalCase(tx.name);
+  const paramsType = `protocol.${toPascalCase(tx.name)}Params`;
+  if (params.length === 0) {
+    return [
+      `resolved, err := client.${method}(${paramsType}{}).Resolve(ctx)`,
+      'if err != nil {',
+      '    log.Fatal(err)',
+      '}',
+    ].join('\n');
+  }
+  const argLines = params.map(param =>
+    `    ${toPascalCase(param.name)}: ${formatValue(placeholderFor(param.type), param.type)},`,
+  );
+  return [
+    `resolved, err := client.${method}(${paramsType}{`,
+    ...argLines,
+    '}).Resolve(ctx)',
+    'if err != nil {',
+    '    log.Fatal(err)',
+    '}',
   ].join('\n');
 }
 
-export const goRenderer: SdkRenderer = { lang: 'go', setup, txBlock };
+function lifecycle(_protocol: Protocol): string {
+  return [
+    '// `resolved` is the result of one of the transactions above.',
+    'signed, err := resolved.Sign()',
+    'if err != nil {',
+    '    log.Fatal(err)',
+    '}',
+    'submitted, err := signed.Submit(ctx)',
+    'if err != nil {',
+    '    log.Fatal(err)',
+    '}',
+    'status, err := submitted.WaitForConfirmed(ctx, facade.DefaultPollConfig())',
+    'if err != nil {',
+    '    log.Fatal(err)',
+    '}',
+    '_ = status',
+  ].join('\n');
+}
+
+const postCodegenInstall: SetupStep = {
+  kind: 'shell',
+  lang: 'bash',
+  title: 'Install the generated client\'s dependencies',
+  body: 'cd gen/go && go mod tidy',
+  note: 'The generated go.mod declares the tx3 go-sdk; `go mod tidy` resolves it.',
+};
+
+export const goRenderer: SdkRenderer = {
+  lang: 'go',
+  postCodegenInstall,
+  quickStart,
+  txBlock,
+  lifecycle,
+};
