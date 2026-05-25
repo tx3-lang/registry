@@ -10,7 +10,12 @@ import { ChevronRightIcon } from '~/components/icons/chevron-right';
 import { getTrpForProfile, TRP_ENDPOINTS } from '~/trp-config';
 
 // Internal
-import { generateQuickStart, pickDefaultProfile, type QuickStartSnippet } from './sdks/quick-start';
+import {
+  generateQuickStart,
+  pickDefaultProfile,
+  type QuickStartSnippet,
+  type SetupStep,
+} from './sdks/quick-start';
 
 type TrpKind = 'local' | 'demeter';
 
@@ -30,7 +35,6 @@ interface SDKDef {
   name: string;
   title: string;
   icon: React.ReactNode;
-  installCommand: string;
 }
 
 const sdks: SDKDef[] = [
@@ -39,28 +43,24 @@ const sdks: SDKDef[] = [
     name: 'TypeScript',
     title: 'TypeScript SDK',
     icon: <img src="/images/sdks/typescript.png" className="w-8 h-8" />,
-    installCommand: 'npm install tx3-sdk',
   },
   {
     key: 'rust',
     name: 'Rust',
     title: 'Rust SDK',
     icon: <img src="/images/sdks/rust.png" className="w-8 h-8" />,
-    installCommand: 'cargo add tx3-sdk serde_json',
   },
   {
     key: 'go',
     name: 'Go',
     title: 'Go SDK',
     icon: <img src="/images/sdks/go.png" className="w-8 h-8" />,
-    installCommand: 'go get github.com/tx3-lang/go-sdk/sdk',
   },
   {
     key: 'python',
     name: 'Python',
     title: 'Python SDK',
     icon: <img src="/images/sdks/python.png" className="w-8 h-8" />,
-    installCommand: 'pip install tx3-sdk',
   },
 ];
 
@@ -134,36 +134,28 @@ function SectionHeading({ children }: { children: React.ReactNode; }) {
   );
 }
 
-function InlineCode({ children }: { children: React.ReactNode; }) {
-  return (
-    <code className="text-zinc-200 bg-zinc-900 px-1.5 py-0.5 rounded text-[0.9em]">
-      {children}
-    </code>
-  );
+interface SetupSectionProps {
+  steps: SetupStep[];
 }
 
-interface InstallSectionProps {
-  sdk: SDKDef;
-  protocol: Protocol;
-}
-
-function InstallSection({ sdk, protocol }: InstallSectionProps) {
-  const trixCmd = `trix add ${protocol.scope}/${protocol.name}@${protocol.version}`;
-  const tiiPath = `./.tx3/tii/${protocol.scope}/${protocol.name}.tii`;
+function SetupSection({ steps }: SetupSectionProps) {
   return (
     <section>
-      <SectionHeading>Install</SectionHeading>
-
-      <p className="text-zinc-400 text-sm mb-3">Install the SDK:</p>
-      <CodeBlock lang="bash" code={sdk.installCommand} className={codeBlockClasses} />
-
-      <p className="text-zinc-400 text-sm mt-6 mb-3">
-        Then download this protocol's compiled <InlineCode>.tii</InlineCode> file with{' '}
-        <InlineCode>trix</InlineCode>. It fetches the artifact into{' '}
-        <InlineCode>{tiiPath}</InlineCode> so your code can load it via{' '}
-        <InlineCode>Protocol.fromFile</InlineCode>.
-      </p>
-      <CodeBlock lang="bash" code={trixCmd} className={codeBlockClasses} />
+      <SectionHeading>Setup</SectionHeading>
+      <ol className="flex flex-col gap-6">
+        {steps.map((step, idx) => (
+          <li key={`${step.title}-${idx}`} className="flex flex-col gap-2">
+            <h4 className="text-sm font-semibold text-zinc-200">
+              <span className="text-zinc-500 mr-2">{idx + 1}.</span>
+              {step.title}
+            </h4>
+            {step.note && (
+              <p className="text-zinc-400 text-sm">{step.note}</p>
+            )}
+            <CodeBlock lang={step.lang} code={step.body} className={codeBlockClasses} />
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }
@@ -221,7 +213,7 @@ function QuickStartSection({
           />
         </div>
       </div>
-      <CodeBlock code={snippet.setup} lang={snippet.lang} className={codeBlockClasses} />
+      <CodeBlock code={snippet.quickStart} lang={snippet.lang} className={codeBlockClasses} />
 
       {snippet.transactions.length > 0 && (
         <>
@@ -260,6 +252,14 @@ function QuickStartSection({
           </div>
         </>
       )}
+
+      <h4 className="text-sm font-semibold text-zinc-200 mt-6 mb-2">
+        Sign and submit
+      </h4>
+      <p className="text-zinc-400 text-sm mb-3">
+        Take the <code className="text-zinc-200">resolved</code> tx from any transaction above, sign it, and submit it to the network.
+      </p>
+      <CodeBlock code={snippet.lifecycle} lang={snippet.lang} className={codeBlockClasses} />
     </section>
   );
 }
@@ -350,7 +350,7 @@ export function TabSDKs({ protocol }: Props) {
 
       <section className="flex-1 min-w-0 flex flex-col gap-10 pl-10 border-l border-zinc-800">
         <h2 className="text-2xl font-semibold text-zinc-50">{selected.title}</h2>
-        <InstallSection sdk={selected} protocol={protocol} />
+        <SetupSection steps={snippet.setupSteps} />
         <QuickStartSection
           snippet={snippet}
           profiles={profiles}

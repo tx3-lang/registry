@@ -1,10 +1,12 @@
 import {
   placeholderFor,
+  profileSuppliedNames,
   type SdkRenderer,
-  sortedProtocolParties,
-  tiiPath,
+  type SetupStep,
+  toPascalCase,
   toSnakeCase,
   type TrpConfig,
+  unboundParties,
   userProvidedParams,
 } from './shared';
 
@@ -16,75 +18,99 @@ function formatValue(value: unknown, type: string): string {
   return JSON.stringify(String(value));
 }
 
-function trpInit(trp: TrpConfig): string {
+function pythonModule(protocol: Protocol): string {
+  return `gen.python.${toSnakeCase(protocol.name)}`;
+}
+
+function clientOptionsLiteral(trp: TrpConfig): string {
   if (!trp.headers) {
-    return `    trp = TrpClient(endpoint=${JSON.stringify(trp.endpoint)})`;
+    return `ClientOptions(endpoint=${JSON.stringify(trp.endpoint)})`;
   }
-  const headersPyDict = '{'
+  const headers = '{'
     + Object.entries(trp.headers).map(([k, v]) => `${JSON.stringify(k)}: ${JSON.stringify(v)}`).join(', ')
     + '}';
-  return `    trp = TrpClient(endpoint=${JSON.stringify(trp.endpoint)}, headers=${headersPyDict})`;
+  return `ClientOptions(endpoint=${JSON.stringify(trp.endpoint)}, headers=${headers})`;
 }
 
-function setup(protocol: Protocol, profile: Profile | null, trp: TrpConfig, supplied: Set<string>): string {
-  const partyLines = sortedProtocolParties(protocol, supplied).map(p =>
-    `        .with_party(${JSON.stringify(p.name)}, Party.address(${JSON.stringify(p.address)}))`,
-  );
+function quickStart(protocol: Protocol, profile: Profile | null, trp: TrpConfig): string {
+  const module = pythonModule(protocol);
+  const hasProfiles = (protocol.profiles ?? []).length > 0;
+  const supplied = profileSuppliedNames(profile);
+  const unbound = unboundParties(protocol, supplied);
+  const profileArg = hasProfiles && profile
+    ? `, Profile.${toSnakeCase(profile.name).toUpperCase()}`
+    : '';
 
-  const clientLines = [
-    '    client = (',
-    '        Tx3Client(protocol, trp)',
-    ...(profile ? [`        .with_profile(${JSON.stringify(profile.name)})`] : []),
+  const partyLines = unbound.map((p, i) => {
+    const setter = `with_${toSnakeCase(p.name)}`;
+    if (i === 0) {
+      return `client = client.${setter}(Party.signer(signer))`;
+    }
+    return `client = client.${setter}(Party.address(${JSON.stringify(p.address)}))`;
+  });
+
+  return [
+    `from ${module} import Client${hasProfiles ? ', Profile' : ''}`,
+    'from tx3_sdk import Party',
+    'from tx3_sdk.signer import Ed25519Signer',
+    'from tx3_sdk.trp.client import ClientOptions',
+    '',
+    `signer = Ed25519Signer.from_hex("addr_test1...", "deadbeef...")`,
+    '',
+    `client = Client(${clientOptionsLiteral(trp)}${profileArg})`,
     ...partyLines,
-    '    )',
-  ];
-
-  return [
-    'import asyncio',
-    '',
-    'from tx3_sdk import CardanoSigner, Party, PollConfig, Protocol, TrpClient, Tx3Client',
-    '',
-    '',
-    'async def main() -> None:',
-    '    # 1) Load the protocol (compiled .tii file)',
-    `    protocol = Protocol.from_file(${JSON.stringify(tiiPath(protocol))})`,
-    '',
-    '    # 2) Connect to a TRP server',
-    trpInit(trp),
-    '',
-    '    # 3) Configure a signer (uncomment to enable .sign() / .submit())',
-    '    # signer = CardanoSigner.from_mnemonic(address="addr_test1...", phrase="word1 word2 ... word24")',
-    '',
-    `    # 4) Bind parties${profile ? ` and select the "${profile.name}" profile` : ''}`,
-    ...clientLines,
-    '',
-    '    # 5) Invoke one of the transactions listed below.',
-    '',
-    '    # 6) Once a signer is bound, chain .sign() / .submit() / .wait_for_confirmed():',
-    '    signed = await result.sign()',
-    '    submitted = await signed.submit()',
-    '    status = await submitted.wait_for_confirmed(PollConfig.default())',
-    '',
-    '',
-    'asyncio.run(main())',
   ].join('\n');
 }
 
-function txBlock(tx: Tx, protocol: Protocol, supplied: Set<string>): string {
+function txBlock(tx: Tx, protocol: Protocol): string {
+  const supplied = profileSuppliedNames(null);
+  const params = userProvidedParams(tx, protocol, supplied);
   const varName = toSnakeCase(tx.name);
-  const argLines = userProvidedParams(tx, protocol, supplied).map(param =>
-    `        .arg(${JSON.stringify(param.name)}, ${formatValue(placeholderFor(param.type), param.type)})`,
-  );
-  if (argLines.length === 0) {
-    return `${varName} = await client.tx(${JSON.stringify(tx.name)}).resolve()`;
+  const method = toSnakeCase(tx.name);
+  const paramsImport = `from ${pythonModule(protocol)} import ${toPascalCase(tx.name)}Params`;
+  const paramsType = `${toPascalCase(tx.name)}Params`;
+  if (params.length === 0) {
+    return [
+      paramsImport,
+      '',
+      `${varName} = await client.${method}(${paramsType}()).resolve()`,
+    ].join('\n');
   }
+  const argLines = params.map(param =>
+    `    ${toSnakeCase(param.name)}=${formatValue(placeholderFor(param.type), param.type)},`,
+  );
   return [
-    `${varName} = await (`,
-    `    client.tx(${JSON.stringify(tx.name)})`,
+    paramsImport,
+    '',
+    `${varName} = await client.${method}(${paramsType}(`,
     ...argLines,
-    '        .resolve()',
-    ')',
+    ')).resolve()',
   ].join('\n');
 }
 
-export const pythonRenderer: SdkRenderer = { lang: 'python', setup, txBlock };
+function lifecycle(_protocol: Protocol): string {
+  return [
+    'from tx3_sdk.facade import PollConfig',
+    '',
+    '# `resolved` is the result of one of the transactions above.',
+    'signed = await resolved.sign()',
+    'submitted = await signed.submit()',
+    'status = await submitted.wait_for_confirmed(PollConfig.default())',
+  ].join('\n');
+}
+
+const postCodegenInstall: SetupStep = {
+  kind: 'shell',
+  lang: 'bash',
+  title: 'Install the generated client\'s dependencies',
+  body: 'cd gen/python && pip install -r requirements.txt',
+  note: 'The generated requirements.txt pins tx3-sdk and its deps.',
+};
+
+export const pythonRenderer: SdkRenderer = {
+  lang: 'python',
+  postCodegenInstall,
+  quickStart,
+  txBlock,
+  lifecycle,
+};

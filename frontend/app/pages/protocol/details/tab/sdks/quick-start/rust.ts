@@ -1,28 +1,33 @@
 import {
   placeholderFor,
+  profileSuppliedNames,
   type SdkRenderer,
-  sortedProtocolParties,
-  tiiPath,
+  toPascalCase,
   toSnakeCase,
   type TrpConfig,
+  unboundParties,
   userProvidedParams,
 } from './shared';
 
-function formatValue(value: unknown): string {
-  if (typeof value === 'boolean') return `json!(${value})`;
-  if (typeof value === 'number') return `json!(${value})`;
-  if (typeof value === 'bigint') return `json!(${value})`;
-  return `json!(${JSON.stringify(String(value))})`;
+function formatValue(value: unknown, type: string): string {
+  if (typeof value === 'boolean') return String(value);
+  if (typeof value === 'number') return String(value);
+  if (typeof value === 'bigint') return String(value);
+  if (type.toLowerCase() === 'int' && typeof value === 'string' && /^-?\d+$/.test(value)) return value;
+  return `${JSON.stringify(String(value))}.to_string()`;
 }
 
-function trpInit(trp: TrpConfig): string[] {
-  const endpoint = `    endpoint: ${JSON.stringify(trp.endpoint)}.to_string(),`;
+function cratePath(protocol: Protocol): string {
+  return toSnakeCase(protocol.name);
+}
+
+function clientOptionsBlock(trp: TrpConfig): string[] {
   if (!trp.headers) {
     return [
-      'let trp = Client::new(ClientOptions {',
-      endpoint,
+      'let options = ClientOptions {',
+      `    endpoint: ${JSON.stringify(trp.endpoint)}.to_string(),`,
       '    headers: None,',
-      '});',
+      '};',
     ];
   }
   const headerInserts = Object.entries(trp.headers).map(([k, v]) =>
@@ -31,66 +36,85 @@ function trpInit(trp: TrpConfig): string[] {
   return [
     'let mut headers = std::collections::HashMap::new();',
     ...headerInserts,
-    'let trp = Client::new(ClientOptions {',
-    endpoint,
+    'let options = ClientOptions {',
+    `    endpoint: ${JSON.stringify(trp.endpoint)}.to_string(),`,
     '    headers: Some(headers),',
-    '});',
+    '};',
   ];
 }
 
-function setup(protocol: Protocol, profile: Profile | null, trp: TrpConfig, supplied: Set<string>): string {
-  const partyLines = sortedProtocolParties(protocol, supplied).map(p =>
-    `    .with_party(${JSON.stringify(p.name)}, Party::address(${JSON.stringify(p.address)}))`,
-  );
+function quickStart(protocol: Protocol, profile: Profile | null, trp: TrpConfig): string {
+  const crate = cratePath(protocol);
+  const hasProfiles = (protocol.profiles ?? []).length > 0;
+  const supplied = profileSuppliedNames(profile);
+  const unbound = unboundParties(protocol, supplied);
+  const profileArg = hasProfiles && profile
+    ? `, ${crate}::Profile::${toPascalCase(profile.name)}`
+    : '';
 
-  const clientLines = [
-    'let tx3 = Tx3Client::new(protocol, trp)',
-    ...(profile ? [`    .with_profile(${JSON.stringify(profile.name)})`] : []),
-    ...partyLines,
+  const partyLines = unbound.map((p, i) => {
+    const setter = `with_${toSnakeCase(p.name)}`;
+    if (i === 0) {
+      return `    .${setter}(Party::signer(signer))`;
+    }
+    return `    .${setter}(Party::address(${JSON.stringify(p.address)}))`;
+  });
+
+  const lines: string[] = [
+    `use ${crate}::Client;`,
+    'use tx3_sdk::Party;',
+    'use tx3_sdk::signer::Ed25519Signer;',
+    'use tx3_sdk::trp::ClientOptions;',
+    '',
+    ...clientOptionsBlock(trp),
+    '',
+    'let signer = Ed25519Signer::from_hex("addr_test1...", "deadbeef...")?;',
+    '',
   ];
-  clientLines[clientLines.length - 1] += ';';
+  if (partyLines.length === 0) {
+    lines.push(`let client = Client::new(options${profileArg});`);
+  } else {
+    lines.push(`let client = Client::new(options${profileArg})`);
+    lines.push(...partyLines);
+    lines[lines.length - 1] += ';';
+  }
+  return lines.join('\n');
+}
 
+function txBlock(tx: Tx, protocol: Protocol): string {
+  const supplied = profileSuppliedNames(null);
+  const params = userProvidedParams(tx, protocol, supplied);
+  const varName = toSnakeCase(tx.name);
+  const method = toSnakeCase(tx.name);
+  const paramsType = `${cratePath(protocol)}::${toPascalCase(tx.name)}Params`;
+  if (params.length === 0) {
+    return `let ${varName} = client.${method}(${paramsType} {}).resolve().await?;`;
+  }
+  const argLines = params.map(param =>
+    `    ${toSnakeCase(param.name)}: ${formatValue(placeholderFor(param.type), param.type)},`,
+  );
   return [
-    'use serde_json::json;',
-    'use tx3_sdk::trp::{Client, ClientOptions};',
-    'use tx3_sdk::{CardanoSigner, Party, PollConfig, Tx3Client};',
+    `let ${varName} = client.${method}(${paramsType} {`,
+    ...argLines,
+    '}).resolve().await?;',
+  ].join('\n');
+}
+
+function lifecycle(_protocol: Protocol): string {
+  return [
+    'use tx3_sdk::facade::PollConfig;',
     '',
-    '// 1. Load the protocol (compiled .tii file)',
-    `let protocol = tx3_sdk::tii::Protocol::from_file(${JSON.stringify(tiiPath(protocol))})?;`,
-    '',
-    '// 2. Connect to a TRP server',
-    ...trpInit(trp),
-    '',
-    '// 3. Configure a signer (uncomment to enable .sign() / .submit())',
-    '// let signer = CardanoSigner::from_mnemonic("addr_test1...", "word1 word2 ... word24")?;',
-    '',
-    `// 4. Bind parties${profile ? ` and select the "${profile.name}" profile` : ''}`,
-    ...clientLines,
-    '',
-    '// 5. Invoke one of the transactions listed below.',
-    '',
-    '// 6. Once a signer is bound, chain .sign() / .submit() / .wait_for_confirmed():',
-    'let signed = result.sign()?;',
+    '// `resolved` is the result of one of the transactions above.',
+    'let signed = resolved.sign()?;',
     'let submitted = signed.submit().await?;',
     'let status = submitted.wait_for_confirmed(PollConfig::default()).await?;',
   ].join('\n');
 }
 
-function txBlock(tx: Tx, protocol: Protocol, supplied: Set<string>): string {
-  const varName = toSnakeCase(tx.name);
-  const argLines = userProvidedParams(tx, protocol, supplied).map(param =>
-    `    .arg(${JSON.stringify(param.name)}, ${formatValue(placeholderFor(param.type))})`,
-  );
-  if (argLines.length === 0) {
-    return `let ${varName} = tx3.tx(${JSON.stringify(tx.name)}).resolve().await?;`;
-  }
-  return [
-    `let ${varName} = tx3`,
-    `    .tx(${JSON.stringify(tx.name)})`,
-    ...argLines,
-    '    .resolve()',
-    '    .await?;',
-  ].join('\n');
-}
-
-export const rustRenderer: SdkRenderer = { lang: 'rust', setup, txBlock };
+export const rustRenderer: SdkRenderer = {
+  lang: 'rust',
+  postCodegenInstall: null,
+  quickStart,
+  txBlock,
+  lifecycle,
+};
