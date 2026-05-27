@@ -25,6 +25,8 @@ pub struct TiiFile {
 pub struct TiiTransaction {
     pub tir: TiiTirEnvelope,
     pub description: Option<String>,
+    #[serde(default)]
+    pub params: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -197,9 +199,13 @@ impl Protocol {
                 })
                 .unwrap_or_else(|| "unknown".to_string());
 
+            let description = schema.get("description")
+                .and_then(|d| d.as_str())
+                .map(String::from);
+
             EnvironmentParam {
                 name: name.clone(),
-                description: None,
+                description,
                 r#type,
             }
         }).collect()
@@ -231,9 +237,37 @@ impl Protocol {
         parameters
     }
 
+    /// Pulls per-property `description` values out of a JSON Schema object
+    /// shaped like `{ "properties": { "<name>": { "description": "..." } } }`.
+    fn descriptions_from_params_schema(
+        params: Option<&serde_json::Value>,
+    ) -> HashMap<String, String> {
+        params
+            .and_then(|p| p.get("properties"))
+            .and_then(|p| p.as_object())
+            .map(|props| {
+                props
+                    .iter()
+                    .filter_map(|(name, schema)| {
+                        schema
+                            .get("description")
+                            .and_then(|d| d.as_str())
+                            .map(|d| (name.clone(), d.to_string()))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
+    }
+
     fn transactions_from_tii(&self, tii_file: &TiiFile) -> Vec<Tx> {
         tii_file.transactions.iter().map(|(name, tx)| {
-            let parameters = Self::extract_params_from_tir(&tx.tir);
+            let descriptions = Self::descriptions_from_params_schema(tx.params.as_ref());
+            let mut parameters = Self::extract_params_from_tir(&tx.tir);
+            for param in &mut parameters {
+                if let Some(desc) = descriptions.get(&param.name) {
+                    param.description = Some(desc.clone());
+                }
+            }
             let inputs = Self::extract_inputs_from_tir(&tx.tir);
             let outputs = Self::extract_outputs_from_tir(&tx.tir);
 
