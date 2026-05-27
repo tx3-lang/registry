@@ -1,10 +1,14 @@
 use async_graphql::http::GraphiQLSource;
 use async_graphql_rocket::{GraphQLRequest, GraphQLResponse};
 use dotenvy::dotenv;
-use rocket::{http::Method, response::content::RawHtml, State};
+use rocket::{
+    http::{ContentType, Method, Status},
+    response::content::RawHtml,
+    State,
+};
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
 
-use tx3_registry_backend::{db, schema};
+use tx3_registry_backend::{db, oci, schema};
 
 #[macro_use]
 extern crate rocket;
@@ -22,6 +26,27 @@ async fn graphql_request(schema: &State<schema::Tx3Schema>, req: GraphQLRequest)
 #[get("/graphql")]
 async fn graphql() -> RawHtml<String> {
     rocket::response::content::RawHtml(GraphiQLSource::build().endpoint("/graphql").finish())
+}
+
+/// Stream a protocol's logo from the OCI artifact at its newest tag.
+/// Returns 404 when the protocol does not exist or carries no `image/png`
+/// layer. Per-version immutability lets us cache aggressively.
+#[get("/protocols/<scope>/<name>/logo")]
+async fn protocol_logo(
+    scope: &str,
+    name: &str,
+) -> Result<(ContentType, Vec<u8>), Status> {
+    let repo = format!("{}/{}", scope, name);
+    let tag = match oci::newest_tag(&repo).await {
+        Ok(Some(tag)) => tag,
+        Ok(None) => return Err(Status::NotFound),
+        Err(_) => return Err(Status::BadGateway),
+    };
+    let image = oci::get_oci_image(&repo, &tag)
+        .await
+        .map_err(|_| Status::BadGateway)?;
+    let bytes = oci::get_logo_png(&image).ok_or(Status::NotFound)?;
+    Ok((ContentType::PNG, bytes))
 }
 
 #[launch]
@@ -52,6 +77,6 @@ async fn rocket() -> _ {
     rocket::build()
         .manage(pool)
         .manage(schema)
-        .mount("/", routes![index, graphql, graphql_request])
+        .mount("/", routes![index, graphql, graphql_request, protocol_logo])
         .attach(cors)
 }
