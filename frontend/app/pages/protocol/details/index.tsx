@@ -6,6 +6,7 @@ import { TabName } from '~/components/TabName';
 import { SearchBar } from '~/components/SearchBar';
 import { ToTopButton } from '~/components/ToTopButton';
 import { Header } from '~/components/Header';
+import { ProtocolLogo } from '~/components/ProtocolLogo';
 
 // Icons
 import { ArrowLeftIcon } from '~/components/icons/arrow-left';
@@ -54,11 +55,14 @@ export function ProtocolDetails({ protocol, rpcDocsUrl }: ProtocolDetailsProps) 
       />
       <main className="mt-8 flex flex-col flex-1">
         <div className="container relative after:content-[''] after:absolute after:w-[719px] after:h-[559.95px] after:bg-[radial-gradient(ellipse_359px_280px_at_center,#5A5BED_0%,rgba(37,45,71,0)_100%)] after:-right-[223px] after:-top-12.5 after:-z-1 after:opacity-15">
-          <div className="border-l-[7px] border-zinc-800 rounded-sm pl-4">
-            <h1 className="text-3xl font-semibold">{protocol.name}</h1>
-            <div className="mt-2">
-              <h2 className="inline text-primary-600">@{protocol.scope}</h2>
-              <span className="opacity-50"> • v{protocol.version}</span>
+          <div className="flex items-center gap-4">
+            <ProtocolLogo scope={protocol.scope} name={protocol.name} size="lg" />
+            <div className="border-l-[7px] border-zinc-800 rounded-sm pl-4">
+              <h1 className="text-3xl font-semibold">{protocol.name}</h1>
+              <div className="mt-2">
+                <h2 className="inline text-primary-600">@{protocol.scope}</h2>
+                <span className="opacity-50"> • v{protocol.version}</span>
+              </div>
             </div>
           </div>
 

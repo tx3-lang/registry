@@ -1,5 +1,6 @@
 import { Link, useSearchParams } from 'react-router';
 import clsx from 'clsx';
+import { ProtocolLogo } from '~/components/ProtocolLogo';
 import { Button } from '~/components/ui/Button';
 import { ChevronLeftIcon } from '~/components/icons/chevron-left';
 import { ChevronRightIcon } from '~/components/icons/chevron-right';
@@ -14,11 +15,14 @@ interface CatalogueProps {
 function PackageCard({ protocol }: { protocol: Protocol; }) {
   return (
     <Link to={`/protocol/${protocol.scope}/${protocol.name}`}>
-      <div className="py-6 px-8 border border-zinc-900 bg-woodsmoke-950 rounded-lg">
-        <h3 className="text-lg font-semibold">{protocol.name}</h3>
-        <div className="mt-2">
-          <span className="text-primary-600">@{protocol.scope}</span>
-          <span className="text-zinc-400"> • v{protocol.version}</span>
+      <div className="py-6 px-8 border border-zinc-900 bg-woodsmoke-950 rounded-lg flex items-center gap-4">
+        <ProtocolLogo scope={protocol.scope} name={protocol.name} size="sm" />
+        <div className="min-w-0">
+          <h3 className="text-lg font-semibold truncate">{protocol.name}</h3>
+          <div className="mt-2">
+            <span className="text-primary-600">@{protocol.scope}</span>
+            <span className="text-zinc-400"> • v{protocol.version}</span>
+          </div>
         </div>
       </div>
     </Link>
