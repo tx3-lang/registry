@@ -46,7 +46,7 @@ pub struct RepoSummary {
     #[serde(rename = "Name")]
     pub name: String,
     #[serde(rename = "NewestImage")]
-    pub newest_image: ImageSummary,
+    pub newest_image: Option<ImageSummary>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -71,6 +71,8 @@ pub struct ImageSummary {
 pub struct RepoInfo {
     #[serde(rename = "Summary")]
     pub summary: Option<RepoSummary>,
+    #[serde(rename = "Images")]
+    pub images: Option<Vec<ImageSummary>>,
 }
 
 // MARK: Custom functions

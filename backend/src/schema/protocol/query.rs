@@ -57,14 +57,17 @@ impl ProtocolQuery {
                 
                 if let Some(repos) = info.repos {
                     for (idx, repo) in repos.iter().enumerate() {
+                        let Some(image) = repo.newest_image.clone() else { continue };
 
                         let mut source = None;
                         if ctx.look_ahead().field("nodes").field("source").exists() {
-                            let oci_image = oci::get_oci_image(&repo.name, &repo.newest_image.tag.clone().unwrap()).await?;
-                            source = oci::get_protocol(&oci_image);
+                            if let Some(tag) = &image.tag {
+                                let oci_image = oci::get_oci_image(&repo.name, tag).await?;
+                                source = oci::get_protocol(&oci_image);
+                            }
                         }
 
-                        let published_date = if let Some(published_date) = &repo.newest_image.last_updated {
+                        let published_date = if let Some(published_date) = &image.last_updated {
                             chrono::DateTime::parse_from_rfc3339(&published_date)
                                 .unwrap()
                                 .timestamp()
@@ -72,11 +75,11 @@ impl ProtocolQuery {
 
                         let protocol = Protocol {
                             id: ID::from(repo.name.clone()),
-                            name: repo.newest_image.title.clone().unwrap_or_default(),
-                            scope: repo.newest_image.vendor.clone().unwrap_or_default(),
-                            version: repo.newest_image.tag.clone().unwrap_or_default(),
-                            repository_url: repo.newest_image.source.clone(),
-                            description: repo.newest_image.description.clone(),
+                            name: image.title.clone().unwrap_or_default(),
+                            scope: image.vendor.clone().unwrap_or_default(),
+                            version: image.tag.clone().unwrap_or_default(),
+                            repository_url: image.source.clone(),
+                            description: image.description.clone(),
                             published_date,
                             source,
                             readme: None,
@@ -105,6 +108,7 @@ impl ProtocolQuery {
                         Name
                         NewestImage {{ Tag Vendor Title Source Description LastUpdated }}
                     }}
+                    Images {{ Tag Vendor Title Source Description LastUpdated }}
                 }}
             }}
         "#, repo);
@@ -121,7 +125,15 @@ impl ProtocolQuery {
         if let Some(data) = response.data {
             if let Some(info) = data.expanded_repo_info {
                 if let Some(summary) = info.summary {
-                    let tag =  summary.newest_image.tag.unwrap_or_default();
+                    // Zot occasionally returns Summary.NewestImage as null even when
+                    // the repo has images (observed on open-tx3/snek-fun). Fall back
+                    // to the first entry in the Images list when that happens.
+                    let image = summary.newest_image.clone()
+                        .or_else(|| info.images.as_ref().and_then(|v| v.first().cloned()));
+
+                    let Some(image) = image else { return Ok(None) };
+
+                    let tag = image.tag.clone().unwrap_or_default();
                     let oci_image = Some(oci::get_oci_image(&repo, &tag).await?);
 
                     let readme = oci::get_readme(oci_image.as_ref().unwrap());
@@ -129,7 +141,7 @@ impl ProtocolQuery {
                     let tii = oci::get_tii(oci_image.as_ref().unwrap())
                         .and_then(|json| serde_json::from_str::<TiiFile>(&json).ok());
 
-                    let published_date = if let Some(published_date) = summary.newest_image.last_updated {
+                    let published_date = if let Some(published_date) = image.last_updated {
                         chrono::DateTime::parse_from_rfc3339(&published_date)
                             .unwrap()
                             .timestamp()
@@ -138,10 +150,10 @@ impl ProtocolQuery {
                     let protocol = Protocol {
                         id: ID::from(summary.name.clone()),
                         version: tag,
-                        name: summary.newest_image.title.unwrap_or_default(),
-                        scope: summary.newest_image.vendor.unwrap_or_default(),
-                        repository_url: summary.newest_image.source,
-                        description: summary.newest_image.description,
+                        name: image.title.unwrap_or_default(),
+                        scope: image.vendor.unwrap_or_default(),
+                        repository_url: image.source,
+                        description: image.description,
                         published_date,
                         source,
                         readme,
