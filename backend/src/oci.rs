@@ -5,6 +5,7 @@ use serde_json::{Number, Value};
 const MARKDOWN_MEDIA_TYPE: &str = "text/markdown";
 const PROTOCOL_MEDIA_TYPE: &str = "application/tx3";
 const TII_MEDIA_TYPE: &str = "application/tii+json";
+const LOGO_PNG_MEDIA_TYPE: &str = "image/png";
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -107,6 +108,35 @@ fn get_client() -> Client {
     return Client::new(client_config);
 }
 
+/// Resolve the newest tag for a `<scope>/<name>` repo via the zot search API.
+/// Returns `None` when the repo does not exist or has no images.
+pub async fn newest_tag(repo: &str) -> Result<Option<String>, Box<dyn std::error::Error + Send + Sync>> {
+    let registry_api = get_registry_api_url();
+    let query = format!(
+        r#"query ExpandedRepoInfo {{ ExpandedRepoInfo(repo: "{}") {{ Summary {{ NewestImage {{ Tag }} }} Images {{ Tag }} }} }}"#,
+        repo
+    );
+    let url = format!("{}/_zot/ext/search?query={}", registry_api, urlencoding::encode(&query));
+    let response = reqwest::get(&url).await?.json::<ZotResponse>().await?;
+
+    let Some(data) = response.data else { return Ok(None) };
+    let Some(info) = data.expanded_repo_info else { return Ok(None) };
+
+    if let Some(summary) = info.summary {
+        if let Some(image) = summary.newest_image {
+            if image.tag.is_some() {
+                return Ok(image.tag);
+            }
+        }
+    }
+    if let Some(images) = info.images {
+        if let Some(first) = images.into_iter().next() {
+            return Ok(first.tag);
+        }
+    }
+    Ok(None)
+}
+
 pub async fn get_oci_image(repo: &str, tag: &str) -> Result<ImageData, Box<dyn std::error::Error + Send + Sync>> {
     let registry_host = std::env::var("REGISTRY_HOST").unwrap_or_default();
     let reference = Reference::try_from(format!("{}/{}:{}", registry_host, repo, tag))?;
@@ -116,7 +146,7 @@ pub async fn get_oci_image(repo: &str, tag: &str) -> Result<ImageData, Box<dyn s
     let content = client.pull(
         &reference,
         &auth,
-        vec![MARKDOWN_MEDIA_TYPE, PROTOCOL_MEDIA_TYPE, TII_MEDIA_TYPE]
+        vec![MARKDOWN_MEDIA_TYPE, PROTOCOL_MEDIA_TYPE, TII_MEDIA_TYPE, LOGO_PNG_MEDIA_TYPE]
     ).await?;
 
     Ok(content)
@@ -140,6 +170,14 @@ pub fn get_protocol(image: &ImageData) -> Option<String> {
     }
 
     return None;
+}
+
+pub fn get_logo_png(image: &ImageData) -> Option<Vec<u8>> {
+    image
+        .layers
+        .iter()
+        .find(|l| l.media_type == LOGO_PNG_MEDIA_TYPE)
+        .map(|l| l.data.clone())
 }
 
 pub fn get_tii(image: &ImageData) -> Option<String> {
