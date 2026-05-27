@@ -113,7 +113,7 @@ fn get_client() -> Client {
 pub async fn newest_tag(repo: &str) -> Result<Option<String>, Box<dyn std::error::Error + Send + Sync>> {
     let registry_api = get_registry_api_url();
     let query = format!(
-        r#"query ExpandedRepoInfo {{ ExpandedRepoInfo(repo: "{}") {{ Summary {{ NewestImage {{ Tag }} }} Images {{ Tag }} }} }}"#,
+        r#"query ExpandedRepoInfo {{ ExpandedRepoInfo(repo: "{}") {{ Summary {{ Name NewestImage {{ Tag }} }} Images {{ Tag }} }} }}"#,
         repo
     );
     let url = format!("{}/_zot/ext/search?query={}", registry_api, urlencoding::encode(&query));
