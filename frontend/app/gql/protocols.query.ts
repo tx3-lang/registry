@@ -15,6 +15,7 @@ export const LIST_QUERY = gql`
         name
         scope
         version
+        description
       }
       pageInfo {
         hasPreviousPage

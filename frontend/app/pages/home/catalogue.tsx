@@ -15,15 +15,22 @@ interface CatalogueProps {
 function PackageCard({ protocol }: { protocol: Protocol; }) {
   return (
     <Link to={`/protocol/${protocol.scope}/${protocol.name}`}>
-      <div className="py-6 px-8 border border-zinc-900 bg-woodsmoke-950 rounded-lg flex items-center gap-4">
-        <ProtocolLogo scope={protocol.scope} name={protocol.name} size="sm" />
-        <div className="min-w-0">
-          <h3 className="text-lg font-semibold truncate">{protocol.name}</h3>
-          <div className="mt-2">
-            <span className="text-primary-600">@{protocol.scope}</span>
-            <span className="text-zinc-400"> • v{protocol.version}</span>
+      <div className="h-full py-5 px-5 sm:py-6 sm:px-8 border border-zinc-900 bg-woodsmoke-950 rounded-lg flex flex-col gap-3">
+        <div className="flex items-center gap-4">
+          <ProtocolLogo scope={protocol.scope} name={protocol.name} size="sm" />
+          <div className="min-w-0">
+            <h3 className="text-lg font-semibold truncate leading-tight">{protocol.name}</h3>
+            <div className="mt-0.5 text-sm">
+              <span className="text-primary-600">@{protocol.scope}</span>
+              <span className="text-zinc-400"> • v{protocol.version}</span>
+            </div>
           </div>
         </div>
+        {protocol.description && (
+          <p className="text-sm text-zinc-400 line-clamp-3">
+            {protocol.description}
+          </p>
+        )}
       </div>
     </Link>
   );
@@ -47,9 +54,9 @@ export function Catalogue({ className, protocols }: CatalogueProps) {
   const endCursor = +(protocols.pageInfo.endCursor ?? 0) + 1;
   const totalNodes = protocols.metadata?.totalNodes ?? 0;
   return (
-    <section className={clsx('container px-[162px]', className)}>
-      <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-semibold">Protocols</h2>
+    <section className={clsx('container lg:px-[162px]', className)}>
+      <div className="flex flex-wrap justify-between items-center gap-4">
+        <h2 className="text-2xl sm:text-3xl font-semibold">Protocols</h2>
         <Dropdown
           label="Sort by:"
           value={searchParams.get('sort') ?? DEFAULT_SORT}
@@ -61,7 +68,7 @@ export function Catalogue({ className, protocols }: CatalogueProps) {
           }}
         />
       </div>
-      <div className="grid grid-cols-3 gap-6 mt-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-8">
         {protocols.nodes.map(protocol => (
           <PackageCard key={`protocol-${protocol.id}`} protocol={protocol} />
         ))}

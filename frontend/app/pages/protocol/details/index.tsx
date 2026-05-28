@@ -71,7 +71,7 @@ export function ProtocolDetails({ protocol, rpcDocsUrl }: ProtocolDetailsProps) 
   return (
     <>
       <Header
-        centerNode={<SearchBar className="md:max-w-[426px] mx-auto max-h-11" dark />}
+        centerNode={<SearchBar className="hidden md:flex md:max-w-[426px] mx-auto max-h-11" dark />}
       />
       <main className="mt-8 flex flex-col flex-1">
         <div className="container relative after:content-[''] after:absolute after:w-[719px] after:h-[559.95px] after:bg-[radial-gradient(ellipse_359px_280px_at_center,#5A5BED_0%,rgba(37,45,71,0)_100%)] after:-right-[223px] after:-top-12.5 after:-z-1 after:opacity-15">
@@ -88,7 +88,7 @@ export function ProtocolDetails({ protocol, rpcDocsUrl }: ProtocolDetailsProps) 
             </div>
           </div>
 
-          <div className="flex mt-8 gap-2">
+          <div className="flex mt-8 gap-2 -mx-4 sm:-mx-8 lg:mx-0 px-4 sm:px-8 lg:px-0 overflow-x-auto custom-scrollbar">
             <TabName
               icon={<InfoCircleIcon width="20" height="20" />}
               name="Readme"

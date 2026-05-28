@@ -11,7 +11,7 @@ interface Props {
 }
 
 export function TabReadme({ protocol }: Props) {
-  const markdownClasses = 'w-full max-w-none bg-woodsmoke-950 py-8 pr-8 prose prose-sm prose-tx3' // Base
+  const markdownClasses = 'w-full max-w-none min-w-0 bg-woodsmoke-950 py-8 lg:pr-8 prose prose-sm prose-tx3' // Base
     + ' prose-headings:border-b prose-headings:border-zinc-800 prose-headings:pb-1.5' // Headings
     + ' prose-pre:whitespace-pre-wrap prose-pre:break-words'; // Preformatted
 
@@ -19,7 +19,7 @@ export function TabReadme({ protocol }: Props) {
 
   return (
     <div className="bg-zinc-950 flex flex-col flex-1">
-      <div className="flex container flex-1 bg-gradient-to-r from-woodsmoke-950 from-50% to-zinc-950 to-50%">
+      <div className="flex flex-col lg:flex-row container flex-1 bg-woodsmoke-950 lg:bg-gradient-to-r lg:from-woodsmoke-950 lg:from-50% lg:to-zinc-950 lg:to-50%">
         {protocol.readme
           ? (
             <div className={markdownClasses}>
@@ -38,7 +38,7 @@ export function TabReadme({ protocol }: Props) {
             </div>
           )
           : (
-            <div className="w-full bg-woodsmoke-950 py-8 pr-8">
+            <div className="w-full bg-woodsmoke-950 py-8 lg:pr-8">
               {isUnofficial && <UnofficialBanner />}
               <EmptyState
                 title="No README"
@@ -46,7 +46,10 @@ export function TabReadme({ protocol }: Props) {
               />
             </div>
           )}
-        <Info protocol={protocol} className="max-w-[400px] bg-zinc-950 border-l border-zinc-800 p-8" />
+        <Info
+          protocol={protocol}
+          className="w-full lg:max-w-[400px] bg-zinc-950 border-t lg:border-t-0 lg:border-l border-zinc-800 p-6 lg:p-8"
+        />
       </div>
     </div>
   );
