@@ -37,7 +37,7 @@
 
 /* Utilities */
 @utility container {
-  @apply px-20 mx-auto 2xl:max-w-[1440px] xl:max-w-[1440px];
+  @apply px-4 sm:px-8 lg:px-20 mx-auto 2xl:max-w-[1440px] xl:max-w-[1440px];
 }
 
 @utility prose-tx3 {

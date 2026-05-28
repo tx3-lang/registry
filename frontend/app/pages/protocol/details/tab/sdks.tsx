@@ -316,9 +316,11 @@ export function TabSDKs({ protocol }: Props) {
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
 
+  const sdkOptions = sdks.map(s => ({ label: s.name, value: s.key }));
+
   return (
     <div className="container flex-1 flex py-8 items-start">
-      <aside className="w-56 shrink-0 sticky top-6 self-start max-h-[calc(100vh-3rem)] pr-10 overflow-y-auto custom-scrollbar">
+      <aside className="hidden lg:block w-56 shrink-0 sticky top-6 self-start max-h-[calc(100vh-3rem)] pr-10 overflow-y-auto custom-scrollbar">
         <SidebarLabel>SDKs</SidebarLabel>
         <div className="flex flex-col gap-1">
           {sdks.map(sdk => (
@@ -348,8 +350,20 @@ export function TabSDKs({ protocol }: Props) {
         )}
       </aside>
 
-      <section className="flex-1 min-w-0 flex flex-col gap-10 pl-10 border-l border-zinc-800">
-        <h2 className="text-2xl font-semibold text-zinc-50">{selected.title}</h2>
+      <section className="flex-1 min-w-0 flex flex-col gap-10 lg:pl-10 lg:border-l lg:border-zinc-800">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <h2 className="text-2xl font-semibold text-zinc-50">{selected.title}</h2>
+          <div className="lg:hidden">
+            <Dropdown
+              label="SDK"
+              showValue
+              modal={false}
+              value={selectedKey}
+              options={sdkOptions}
+              onOptionSelected={value => setSelectedKey(value as SDKKey)}
+            />
+          </div>
+        </div>
         <SetupSection steps={snippet.setupSteps} />
         <QuickStartSection
           snippet={snippet}

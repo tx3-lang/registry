@@ -12,7 +12,7 @@ export function TabName({ icon, name, onClick, active }: TabProps) {
     <button
       data-active={active}
       type="button"
-      className="flex items-center px-3 py-2 gap-2 text-zinc-500 data-[active=true]:text-zinc-50 cursor-pointer transition-colors duration-300 hover:text-zinc-300"
+      className="flex shrink-0 items-center px-3 py-2 gap-2 text-zinc-500 data-[active=true]:text-zinc-50 cursor-pointer transition-colors duration-300 hover:text-zinc-300 whitespace-nowrap"
       onClick={onClick}
     >
       {icon}

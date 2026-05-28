@@ -158,18 +158,18 @@ const Transaction: React.FunctionComponent<TransactionProps> = props => {
 
   return (
     <div className="w-full border border-zinc-800 bg-zinc-950 rounded-md">
-      <div className="py-3 px-8 flex justify-between items-center border-b border-zinc-800">
-        <div>
-          <h3 className="text-lg text-zinc-400">
+      <div className="py-3 px-5 sm:px-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 border-b border-zinc-800">
+        <div className="min-w-0">
+          <h3 className="text-lg text-zinc-400 break-words">
             <span className="font-semibold text-zinc-50">{props.tx.name}</span> parameters
           </h3>
           {!!props.tx.description && (
-            <p className="mt-3.5 text-zinc-600">
+            <p className="mt-3.5 text-zinc-600 break-words">
               {props.tx.description}
             </p>
           )}
         </div>
-        <div className="flex gap-5 items-center">
+        <div className="flex flex-wrap gap-3 sm:gap-5 items-center">
           {hasProfiles && (
             <Dropdown
               label="Profile"
@@ -182,22 +182,22 @@ const Transaction: React.FunctionComponent<TransactionProps> = props => {
           <LoadingButton asyncOnClick={handleExecute} />
         </div>
       </div>
-      <div className="px-8 py-5">
-        <p className="border-b border-zinc-900 text-zinc-700 pb-1 flex">
+      <div className="px-5 sm:px-8 py-5">
+        <p className="hidden sm:flex border-b border-zinc-900 text-zinc-700 pb-1">
           <span className="flex-1 basis-1/4">Name</span>
           <span className="flex-1 basis-3/4">Value</span>
         </p>
         {props.tx.parameters.map(param => (
-          <div key={param.name} className="border-b last:border-b-0 border-zinc-900 flex py-4 last:pb-0 gap-1">
-            <div className="flex-1 basis-1/4">
+          <div key={param.name} className="border-b last:border-b-0 border-zinc-900 flex flex-col sm:flex-row py-4 last:pb-0 gap-3 sm:gap-1">
+            <div className="sm:flex-1 sm:basis-1/4 min-w-0">
               <p className="text-zinc-50 text-base wrap-anywhere">
                 {param.name} <span className="text-rose-400">*</span>
               </p>
-              <p className="text-zinc-600 text-sm font-mono mt-2">
+              <p className="text-zinc-600 text-sm font-mono mt-2 break-all">
                 {param.type}
               </p>
             </div>
-            <div className="flex-1 basis-3/4 flex flex-col gap-3">
+            <div className="sm:flex-1 sm:basis-3/4 flex flex-col gap-3 min-w-0">
               <input
                 type={param.type === 'Int' ? 'number' : 'text'}
                 className="w-full rounded-lg py-2.5 px-4 bg-woodsmoke-950 border border-zinc-800 text-zinc-100 text-sm"
@@ -205,7 +205,7 @@ const Transaction: React.FunctionComponent<TransactionProps> = props => {
                 onChange={e => updateParameter(param.name, param.type, e.target.value)}
               />
               {!!param.description && (
-                <p className="text-xs text-zinc-400">
+                <p className="text-xs text-zinc-400 break-words">
                   {param.description}
                 </p>
               )}
@@ -216,7 +216,7 @@ const Transaction: React.FunctionComponent<TransactionProps> = props => {
       </div>
 
       {response && (
-        <div className="px-8 py-6 max-h-55 flex">
+        <div className="px-5 sm:px-8 py-6 max-h-55 flex">
           <Alert type={response.type} title="Response" textToCopy={response.message}>
             {response.message}
           </Alert>

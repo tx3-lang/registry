@@ -20,17 +20,17 @@ function PartiesSection({ parties }: { parties: Party[]; }) {
         The participants involved in this protocol's transactions.
       </p>
       <div className="bg-zinc-950 border border-zinc-800 rounded-md overflow-hidden">
-        <div className="px-5 py-2.5 border-b border-zinc-800 flex text-xs font-medium text-zinc-500 uppercase tracking-wider">
+        <div className="hidden sm:flex px-5 py-2.5 border-b border-zinc-800 text-xs font-medium text-zinc-500 uppercase tracking-wider">
           <span className="flex-1 basis-1/3">Name</span>
           <span className="flex-1 basis-2/3">Description</span>
         </div>
         {parties.map(party => (
           <div
             key={party.name}
-            className="px-5 py-3 border-b last:border-b-0 border-zinc-800/50 flex items-baseline"
+            className="px-4 sm:px-5 py-3 border-b last:border-b-0 border-zinc-800/50 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-0"
           >
-            <span className="flex-1 basis-1/3 text-zinc-50 font-medium text-sm">{party.name}</span>
-            <span className="flex-1 basis-2/3 text-zinc-500 text-sm">
+            <span className="sm:flex-1 sm:basis-1/3 text-zinc-50 font-medium text-sm break-words min-w-0">{party.name}</span>
+            <span className="sm:flex-1 sm:basis-2/3 text-zinc-500 text-sm break-words min-w-0">
               {party.description || '\u2014'}
             </span>
           </div>
@@ -50,7 +50,7 @@ function EnvironmentSection({ environment }: { environment: EnvironmentParam[]; 
         Configuration values required to execute this protocol's transactions.
       </p>
       <div className="bg-zinc-950 border border-zinc-800 rounded-md overflow-hidden">
-        <div className="px-5 py-2.5 border-b border-zinc-800 flex text-xs font-medium text-zinc-500 uppercase tracking-wider">
+        <div className="hidden sm:flex px-5 py-2.5 border-b border-zinc-800 text-xs font-medium text-zinc-500 uppercase tracking-wider">
           <span className="flex-1 basis-1/4">Name</span>
           <span className="flex-1 basis-2/4">Description</span>
           <span className="w-40 text-right">Type</span>
@@ -58,13 +58,13 @@ function EnvironmentSection({ environment }: { environment: EnvironmentParam[]; 
         {environment.map(env => (
           <div
             key={env.name}
-            className="px-5 py-3 border-b last:border-b-0 border-zinc-800/50 flex items-baseline"
+            className="px-4 sm:px-5 py-3 border-b last:border-b-0 border-zinc-800/50 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-0"
           >
-            <span className="flex-1 basis-1/4 text-zinc-50 font-mono text-sm">{env.name}</span>
-            <span className="flex-1 basis-2/4 text-zinc-500 text-sm">
+            <span className="sm:flex-1 sm:basis-1/4 text-zinc-50 font-mono text-sm break-all min-w-0">{env.name}</span>
+            <span className="sm:flex-1 sm:basis-2/4 text-zinc-500 text-sm break-words min-w-0">
               {env.description || '\u2014'}
             </span>
-            <span className="w-40 text-right text-zinc-500 font-mono text-sm">{env.type}</span>
+            <span className="sm:w-40 sm:text-right text-zinc-500 font-mono text-sm break-all">{env.type}</span>
           </div>
         ))}
       </div>
@@ -105,7 +105,7 @@ function ProfilesSection({ profiles }: { profiles: Profile[]; }) {
                 )}
               </div>
               <div className="bg-zinc-950 border border-zinc-800 rounded-md overflow-hidden">
-                <div className="px-5 py-2.5 border-b border-zinc-800 flex text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                <div className="hidden sm:flex px-5 py-2.5 border-b border-zinc-800 text-xs font-medium text-zinc-500 uppercase tracking-wider">
                   <span className="flex-1 basis-1/4">Key</span>
                   <span className="flex-1 basis-2/4">Value</span>
                   <span className="w-20 text-right">Type</span>
@@ -113,11 +113,11 @@ function ProfilesSection({ profiles }: { profiles: Profile[]; }) {
                 {rows.map(row => (
                   <div
                     key={row.key}
-                    className="px-5 py-3 border-b last:border-b-0 border-zinc-800/50 flex items-baseline"
+                    className="px-4 sm:px-5 py-3 border-b last:border-b-0 border-zinc-800/50 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-0"
                   >
-                    <span className="flex-1 basis-1/4 text-zinc-400 font-mono text-sm">{row.key}</span>
-                    <span className="flex-1 basis-2/4 text-zinc-50 font-mono text-sm break-all">{row.value}</span>
-                    <span className={`w-20 text-right text-xs font-medium ${row.kind === 'party' ? 'text-indigo-400' : 'text-emerald-400'}`}>
+                    <span className="sm:flex-1 sm:basis-1/4 text-zinc-400 font-mono text-sm break-all min-w-0">{row.key}</span>
+                    <span className="sm:flex-1 sm:basis-2/4 text-zinc-50 font-mono text-sm break-all min-w-0">{row.value}</span>
+                    <span className={`sm:w-20 sm:text-right text-xs font-medium ${row.kind === 'party' ? 'text-indigo-400' : 'text-emerald-400'}`}>
                       {row.kind}
                     </span>
                   </div>
@@ -137,18 +137,18 @@ function TransactionDetail({ tx }: { tx: Tx; }) {
 
   return (
     <div className="bg-zinc-950 border border-zinc-800 rounded-md overflow-hidden">
-      <div className="px-8 py-5 border-b border-zinc-800">
-        <p className="text-zinc-50 text-lg font-medium">{tx.name}</p>
+      <div className="px-5 sm:px-8 py-5 border-b border-zinc-800">
+        <p className="text-zinc-50 text-lg font-medium break-words">{tx.name}</p>
         {tx.description && (
-          <p className="text-zinc-500 text-sm mt-1">{tx.description}</p>
+          <p className="text-zinc-500 text-sm mt-1 break-words">{tx.description}</p>
         )}
       </div>
 
-      <div className="px-8 py-5 space-y-6">
+      <div className="px-5 sm:px-8 py-5 space-y-6">
         {tx.svg && (
           <div>
             <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2">Diagram</p>
-            <div dangerouslySetInnerHTML={{ __html: tx.svg }} />
+            <div className="overflow-x-auto custom-scrollbar [&_svg]:max-w-full [&_svg]:h-auto" dangerouslySetInnerHTML={{ __html: tx.svg }} />
           </div>
         )}
 
@@ -156,16 +156,16 @@ function TransactionDetail({ tx }: { tx: Tx; }) {
           <div>
             <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2">Parameters</p>
             <div className="border border-zinc-800 rounded-md overflow-hidden">
-              <div className="px-4 py-2 border-b border-zinc-800 flex text-xs font-medium text-zinc-600 uppercase tracking-wider">
+              <div className="hidden sm:flex px-4 py-2 border-b border-zinc-800 text-xs font-medium text-zinc-600 uppercase tracking-wider">
                 <span className="flex-1 basis-1/3">Name</span>
                 <span className="flex-1 basis-1/3">Type</span>
                 <span className="flex-1 basis-1/3">Description</span>
               </div>
               {tx.parameters.map(param => (
-                <div key={param.name} className="px-4 py-2.5 border-b last:border-b-0 border-zinc-800/50 flex items-baseline">
-                  <span className="flex-1 basis-1/3 text-zinc-50 font-mono text-sm">{param.name}</span>
-                  <span className="flex-1 basis-1/3 text-zinc-500 font-mono text-sm">{param.type}</span>
-                  <span className="flex-1 basis-1/3 text-zinc-500 text-sm">{param.description || '\u2014'}</span>
+                <div key={param.name} className="px-4 py-2.5 border-b last:border-b-0 border-zinc-800/50 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-0">
+                  <span className="sm:flex-1 sm:basis-1/3 text-zinc-50 font-mono text-sm break-all min-w-0">{param.name}</span>
+                  <span className="sm:flex-1 sm:basis-1/3 text-zinc-500 font-mono text-sm break-all min-w-0">{param.type}</span>
+                  <span className="sm:flex-1 sm:basis-1/3 text-zinc-500 text-sm break-words min-w-0">{param.description || '\u2014'}</span>
                 </div>
               ))}
             </div>
@@ -176,16 +176,16 @@ function TransactionDetail({ tx }: { tx: Tx; }) {
           <div>
             <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2">Inputs</p>
             <div className="border border-zinc-800 rounded-md overflow-hidden">
-              <div className="px-4 py-2 border-b border-zinc-800 flex text-xs font-medium text-zinc-600 uppercase tracking-wider">
+              <div className="hidden sm:flex px-4 py-2 border-b border-zinc-800 text-xs font-medium text-zinc-600 uppercase tracking-wider">
                 <span className="flex-1 basis-1/3">Name</span>
                 <span className="flex-1 basis-1/3">Party</span>
                 <span className="w-28 text-right">Redeemer</span>
               </div>
               {inputs.map(input => (
-                <div key={input.name} className="px-4 py-2.5 border-b last:border-b-0 border-zinc-800/50 flex items-baseline">
-                  <span className="flex-1 basis-1/3 text-zinc-50 font-mono text-sm">{input.name}</span>
-                  <span className="flex-1 basis-1/3 text-indigo-400 text-sm">{input.party || '\u2014'}</span>
-                  <span className="w-28 text-right">
+                <div key={input.name} className="px-4 py-2.5 border-b last:border-b-0 border-zinc-800/50 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-0">
+                  <span className="sm:flex-1 sm:basis-1/3 text-zinc-50 font-mono text-sm break-all min-w-0">{input.name}</span>
+                  <span className="sm:flex-1 sm:basis-1/3 text-indigo-400 text-sm break-all min-w-0">{input.party || '\u2014'}</span>
+                  <span className="sm:w-28 sm:text-right">
                     {input.hasRedeemer
                       ? <span className="text-amber-400 text-xs font-medium">script</span>
                       : <span className="text-zinc-600 text-xs">wallet</span>}
@@ -200,20 +200,20 @@ function TransactionDetail({ tx }: { tx: Tx; }) {
           <div>
             <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2">Outputs</p>
             <div className="border border-zinc-800 rounded-md overflow-hidden">
-              <div className="px-4 py-2 border-b border-zinc-800 flex text-xs font-medium text-zinc-600 uppercase tracking-wider">
+              <div className="hidden sm:flex px-4 py-2 border-b border-zinc-800 text-xs font-medium text-zinc-600 uppercase tracking-wider">
                 <span className="flex-1 basis-1/3">Party</span>
                 <span className="flex-1 basis-1/3">Datum</span>
                 <span className="w-28 text-right">Optional</span>
               </div>
               {outputs.map((output, i) => (
-                <div key={i} className="px-4 py-2.5 border-b last:border-b-0 border-zinc-800/50 flex items-baseline">
-                  <span className="flex-1 basis-1/3 text-indigo-400 text-sm">{output.party || '\u2014'}</span>
-                  <span className="flex-1 basis-1/3">
+                <div key={i} className="px-4 py-2.5 border-b last:border-b-0 border-zinc-800/50 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-0">
+                  <span className="sm:flex-1 sm:basis-1/3 text-indigo-400 text-sm break-all min-w-0">{output.party || '\u2014'}</span>
+                  <span className="sm:flex-1 sm:basis-1/3">
                     {output.hasDatum
                       ? <span className="text-emerald-400 text-xs font-medium">yes</span>
                       : <span className="text-zinc-600 text-xs">no</span>}
                   </span>
-                  <span className="w-28 text-right">
+                  <span className="sm:w-28 sm:text-right">
                     {output.optional
                       ? <span className="text-amber-400 text-xs font-medium">yes</span>
                       : <span className="text-zinc-600 text-xs">no</span>}
