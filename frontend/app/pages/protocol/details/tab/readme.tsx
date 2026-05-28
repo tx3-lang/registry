@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm';
 // Info
 import { EmptyState } from '~/components/EmptyState';
 import { Info } from '../info';
+import { UNOFFICIAL_DISCLAIMER, UNOFFICIAL_SCOPE } from '../index';
 
 interface Props {
   protocol: Protocol;
@@ -14,12 +15,15 @@ export function TabReadme({ protocol }: Props) {
     + ' prose-headings:border-b prose-headings:border-zinc-800 prose-headings:pb-1.5' // Headings
     + ' prose-pre:whitespace-pre-wrap prose-pre:break-words'; // Preformatted
 
+  const isUnofficial = protocol.scope === UNOFFICIAL_SCOPE;
+
   return (
     <div className="bg-zinc-950 flex flex-col flex-1">
       <div className="flex container flex-1 bg-gradient-to-r from-woodsmoke-950 from-50% to-zinc-950 to-50%">
         {protocol.readme
           ? (
             <div className={markdownClasses}>
+              {isUnofficial && <UnofficialBanner />}
               <Markdown
                 remarkPlugins={[remarkGfm]}
                 components={{
@@ -34,14 +38,28 @@ export function TabReadme({ protocol }: Props) {
             </div>
           )
           : (
-            <EmptyState
-              title="No README"
-              description="This Protocol doesn't have a README at the moment."
-              className="w-full bg-woodsmoke-950"
-            />
+            <div className="w-full bg-woodsmoke-950 py-8 pr-8">
+              {isUnofficial && <UnofficialBanner />}
+              <EmptyState
+                title="No README"
+                description="This Protocol doesn't have a README at the moment."
+              />
+            </div>
           )}
         <Info protocol={protocol} className="max-w-[400px] bg-zinc-950 border-l border-zinc-800 p-8" />
       </div>
+    </div>
+  );
+}
+
+function UnofficialBanner() {
+  return (
+    <div
+      role="alert"
+      className="not-prose mb-8 border-l-6 border-amber-700 bg-amber-950/20 rounded-md px-4 py-3 text-sm"
+    >
+      <h3 className="font-mono font-semibold text-amber-500 mb-1">Unofficial protocol</h3>
+      <p className="text-zinc-300">{UNOFFICIAL_DISCLAIMER}</p>
     </div>
   );
 }
