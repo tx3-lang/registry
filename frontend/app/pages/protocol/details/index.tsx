@@ -66,6 +66,19 @@ export function ProtocolDetails({ protocol, rpcDocsUrl }: ProtocolDetailsProps) 
             </div>
           </div>
 
+          {protocol.scope === 'open-tx3' && (
+            <div
+              role="alert"
+              className="mt-6 border-l-6 border-amber-700 bg-amber-950/20 rounded-md px-4 py-3 text-sm text-amber-200"
+            >
+              <h3 className="font-mono font-semibold text-amber-500 mb-1">Unofficial protocol</h3>
+              <p className="text-zinc-300">
+                Preliminary, reverse-engineered version published by the tx3 team for testing and exploration.
+                It is not endorsed by the original protocol authors. Do not use in mainnet.
+              </p>
+            </div>
+          )}
+
           <div className="flex mt-8 gap-2">
             <TabName
               icon={<InfoCircleIcon width="20" height="20" />}
