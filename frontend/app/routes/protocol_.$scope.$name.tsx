@@ -2,17 +2,22 @@ import { redirect, type ShouldRevalidateFunctionArgs } from 'react-router';
 import { DETAIL_QUERY, detailQueryKeyGenerator } from '~/gql/protocols.query';
 import { requestGraphQL } from '~/gql/gql.server';
 import { ProtocolDetails as Page } from '~/pages/protocol/details';
+import { socialMeta } from '~/utils/seo';
 import type { Route } from './+types/protocol_.$scope.$name';
 
-export function meta({ params }: Route.MetaArgs) {
-  let title = 'Tx3';
-  if (params.name) {
-    title = `Tx3 - ${params.name}`;
-  }
-  return [
-    { title },
-    { name: 'description', content: 'Tx3 description' },
-  ];
+export function meta({ params, data }: Route.MetaArgs) {
+  const protocol = data?.protocol;
+  const name = protocol?.name ?? params.name ?? 'Protocol';
+  const scope = protocol?.scope ?? params.scope;
+  const title = `${name} — Tx3 Registry`;
+  const description = protocol?.description
+    || `Machine-readable spec for the @${scope}/${name} UTxO protocol. Generate typed clients in TypeScript, Rust, Go, or Python.`;
+  return socialMeta({
+    title,
+    description,
+    url: `/protocol/${scope}/${name}`,
+    type: 'article',
+  });
 }
 
 const RPC_DOCS_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
