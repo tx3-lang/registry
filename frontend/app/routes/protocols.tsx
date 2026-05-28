@@ -8,13 +8,15 @@ import {
 
 import { requestGraphQL } from '~/gql/gql.server';
 import { Home as HomePage } from '~/pages/home';
+import { socialMeta } from '~/utils/seo';
 import type { Route } from './+types/protocols';
 
 export function meta({}: Route.MetaArgs) {
-  return [
-    { title: 'Tx3 - Protocols' },
-    { name: 'description', content: 'Tx3 protocols registry' },
-  ];
+  return socialMeta({
+    title: 'Tx3 Registry — UTxO protocols',
+    description: 'Browse machine-readable specs for UTxO blockchain protocols. Generate typed clients in TypeScript, Rust, Go, or Python.',
+    url: '/protocols',
+  });
 }
 
 export async function loader({ context, ...others }: Route.LoaderArgs) {
