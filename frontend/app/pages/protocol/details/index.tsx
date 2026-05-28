@@ -26,6 +26,26 @@ import { TabProtocol } from './tab/protocol';
 import { TabSDKs } from './tab/sdks';
 import { TabActivity } from './tab/activity';
 
+export const UNOFFICIAL_SCOPE = 'open-tx3';
+export const UNOFFICIAL_DISCLAIMER
+  = 'Preliminary, reverse-engineered version published by the tx3 team for testing and exploration. '
+  + 'It is not endorsed by the original protocol authors. Do not use in mainnet.';
+
+function UnofficialBadge() {
+  return (
+    <span className="group relative inline-flex items-center gap-1.5 rounded-sm border border-amber-800/60 bg-amber-950/40 px-2 py-0.5 text-amber-300 font-mono text-sm">
+      Unofficial
+      <InfoCircleIcon width="16" height="16" />
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute left-0 top-full z-10 mt-2 w-80 rounded-md border border-zinc-800 bg-woodsmoke-950 p-3 text-xs font-sans font-normal text-zinc-300 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+      >
+        {UNOFFICIAL_DISCLAIMER}
+      </span>
+    </span>
+  );
+}
+
 const validTabs = ['readme', 'protocol', 'tx3-file', 'try-out', 'sdks', 'activity'] as const;
 type Tab = typeof validTabs[number];
 
@@ -59,25 +79,14 @@ export function ProtocolDetails({ protocol, rpcDocsUrl }: ProtocolDetailsProps) 
             <ProtocolLogo scope={protocol.scope} name={protocol.name} size="lg" />
             <div className="border-l-[7px] border-zinc-800 rounded-sm pl-4">
               <h1 className="text-3xl font-semibold">{protocol.name}</h1>
-              <div className="mt-2">
-                <h2 className="inline text-primary-600">@{protocol.scope}</h2>
+              <div className="mt-2 flex items-center gap-2">
+                {protocol.scope === 'open-tx3'
+                  ? <UnofficialBadge />
+                  : <h2 className="inline text-primary-600">@{protocol.scope}</h2>}
                 <span className="opacity-50"> • v{protocol.version}</span>
               </div>
             </div>
           </div>
-
-          {protocol.scope === 'open-tx3' && (
-            <div
-              role="alert"
-              className="mt-6 border-l-6 border-amber-700 bg-amber-950/20 rounded-md px-4 py-3 text-sm text-amber-200"
-            >
-              <h3 className="font-mono font-semibold text-amber-500 mb-1">Unofficial protocol</h3>
-              <p className="text-zinc-300">
-                Preliminary, reverse-engineered version published by the tx3 team for testing and exploration.
-                It is not endorsed by the original protocol authors. Do not use in mainnet.
-              </p>
-            </div>
-          )}
 
           <div className="flex mt-8 gap-2">
             <TabName
