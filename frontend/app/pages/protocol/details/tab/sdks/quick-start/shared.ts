@@ -108,14 +108,12 @@ export function userProvidedParams(tx: Tx, protocol: Protocol, supplied: Set<str
     .sort(byName);
 }
 
-export function placeholderFor(type: string): unknown {
-  const t = type.toLowerCase();
-  if (t === 'int' || t === 'u64' || t === 'i64') return 0;
-  if (t === 'bool') return false;
-  if (t.includes('address')) return 'addr_test1...';
-  if (t.includes('bytes') || t.includes('hash')) return '0011223344';
-  if (t.includes('utxo')) return 'tx_hash#0';
-  return '...';
+// A typed placeholder rendered as a string literal in every target language.
+// Using a string literal regardless of the field's declared type keeps the
+// snippet syntactically valid (so syntax highlighting stays consistent) while
+// making it obvious to the reader that the value must be replaced.
+export function placeholderFor(type: string): string {
+  return `<input ${type}>`;
 }
 
 // Codegen plugin name per language target (matches `[[codegen]]` plugin keys

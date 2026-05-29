@@ -10,15 +10,6 @@ import {
   userProvidedParams,
 } from './shared';
 
-function formatValue(value: unknown, type: string): string {
-  if (typeof value === 'boolean') return String(value);
-  if (typeof value === 'number' && Number.isInteger(value)) return `${value}n`;
-  if (typeof value === 'number') return String(value);
-  if (typeof value === 'bigint') return `${value}n`;
-  if (type.toLowerCase() === 'int' && typeof value === 'string' && /^-?\d+$/.test(value)) return `${value}n`;
-  return JSON.stringify(String(value));
-}
-
 function clientOptionsLiteral(trp: TrpConfig): string {
   if (!trp.headers) {
     return `{ endpoint: ${JSON.stringify(trp.endpoint)} }`;
@@ -74,7 +65,7 @@ function txBlock(tx: Tx, protocol: Protocol): string {
     return `const ${varName} = await client.${method}({}).resolve();`;
   }
   const argLines = params.map(param =>
-    `  ${toCamelCase(param.name)}: ${formatValue(placeholderFor(param.type), param.type)},`,
+    `  ${toCamelCase(param.name)}: ${JSON.stringify(placeholderFor(param.type))},`,
   );
   return [
     `const ${varName} = await client.${method}({`,
