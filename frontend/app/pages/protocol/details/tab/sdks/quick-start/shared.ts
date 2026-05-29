@@ -152,7 +152,7 @@ export function outputDir(lang: SDKKey): string {
 
 // Shared install-flow steps. Each renderer prepends its own SDK install step.
 export function commonSetupSteps(lang: SDKKey, protocol: Protocol): SetupStep[] {
-  const ref = `${protocol.scope}/${protocol.name}@${protocol.version}`;
+  const ref = `${protocol.scope}/${protocol.name}:${protocol.version}`;
   return [
     {
       kind: 'shell',
