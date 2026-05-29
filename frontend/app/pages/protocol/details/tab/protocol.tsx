@@ -329,7 +329,7 @@ export function TabProtocol({ protocol }: Props) {
     }
   };
 
-  const sections: { id: string; label: string; visible: boolean }[] = [
+  const sections: { id: string; label: string; visible: boolean; }[] = [
     { id: SECTION_PARTIES, label: 'Parties', visible: parties.length > 0 },
     { id: SECTION_ENVIRONMENT, label: 'Environment', visible: environment.length > 0 },
     { id: SECTION_TRANSACTIONS, label: 'Transactions', visible: transactions.length > 0 },

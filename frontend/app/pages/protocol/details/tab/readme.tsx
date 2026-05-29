@@ -116,7 +116,7 @@ function CollapsibleReadme({ children }: PropsWithChildren) {
   );
 }
 
-function TransactionsList({ transactions }: { transactions: Tx[] }) {
+function TransactionsList({ transactions }: { transactions: Tx[]; }) {
   return (
     <section className="not-prose mt-12">
       <h2 className="text-lg font-semibold text-white mb-4">Transactions</h2>

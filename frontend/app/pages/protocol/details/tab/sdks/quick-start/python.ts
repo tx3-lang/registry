@@ -47,7 +47,7 @@ function quickStart(protocol: Protocol, profile: Profile | null, trp: TrpConfig)
     'from tx3_sdk.signer import Ed25519Signer',
     'from tx3_sdk.trp.client import ClientOptions',
     '',
-    `signer = Ed25519Signer.from_hex("addr_test1...", "deadbeef...")`,
+    'signer = Ed25519Signer.from_hex("addr_test1...", "deadbeef...")',
     '',
     `client = Client(${clientOptionsLiteral(trp)}${profileArg})`,
     ...partyLines,
