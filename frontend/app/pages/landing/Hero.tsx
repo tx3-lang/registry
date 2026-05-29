@@ -19,8 +19,8 @@ export function Hero() {
           </h1>
 
           <p className="max-w-[760px] text-zinc-400 text-lg leading-7">
-            Protocol authors publish a spec. Application developers generate typed clients from it.
-            The interface is data, not lore.
+            Protocol authors publish a spec. Application developers generate
+            typed clients from it.
           </p>
         </div>
 
@@ -38,8 +38,9 @@ export function Hero() {
             </h2>
 
             <p className="text-[15px] leading-6 text-zinc-300">
-              Declare what your protocol exposes in a .tx3 spec — parties, types, transactions. Ship it as a
-              TII artifact that any consumer can read.
+              Declare what your protocol exposes in a .tx3 spec — parties,
+              types, transactions. Ship it as a TII artifact that any consumer
+              can read.
             </p>
 
             <div className="mt-auto flex flex-wrap items-center gap-4 pt-2">
@@ -50,7 +51,11 @@ export function Hero() {
                 className="group inline-flex items-center gap-2.5 bg-primary-600 hover:bg-primary-700 text-zinc-50 rounded-lg px-5 py-3 text-sm font-semibold transition-colors shadow-[0_10px_30px_-12px_rgba(255,0,127,0.55)]"
               >
                 Author a protocol
-                <ArrowRightIcon width={16} height={16} className="transition-transform group-hover:translate-x-0.5" />
+                <ArrowRightIcon
+                  width={16}
+                  height={16}
+                  className="transition-transform group-hover:translate-x-0.5"
+                />
               </a>
               <a
                 href={docsUrl}
@@ -59,7 +64,11 @@ export function Hero() {
                 className="group inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-zinc-50 transition-colors"
               >
                 Read the spec
-                <ArrowRightIcon width={16} height={16} className="transition-transform group-hover:translate-x-0.5" />
+                <ArrowRightIcon
+                  width={16}
+                  height={16}
+                  className="transition-transform group-hover:translate-x-0.5"
+                />
               </a>
             </div>
           </article>
@@ -77,8 +86,8 @@ export function Hero() {
             </h2>
 
             <p className="text-[15px] leading-6 text-zinc-300">
-              Generate a typed client from a published .tii and invoke protocol transactions from
-              TypeScript, Rust, Go or Python.
+              Generate a typed client from a published .tii and invoke protocol
+              transactions from TypeScript, Rust, Go or Python.
             </p>
 
             <div className="mt-auto flex flex-wrap items-center gap-4 pt-2">
@@ -87,21 +96,30 @@ export function Hero() {
                 className="group inline-flex items-center gap-2.5 bg-blue-500 hover:bg-blue-600 text-zinc-50 rounded-lg px-5 py-3 text-sm font-semibold transition-colors shadow-[0_10px_30px_-12px_rgba(43,127,255,0.55)]"
               >
                 Consume a protocol
-                <ArrowRightIcon width={16} height={16} className="transition-transform group-hover:translate-x-0.5" />
+                <ArrowRightIcon
+                  width={16}
+                  height={16}
+                  className="transition-transform group-hover:translate-x-0.5"
+                />
               </Link>
               <Link
                 to="/protocols"
                 className="group inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-zinc-50 transition-colors"
               >
                 Browse the registry
-                <ArrowRightIcon width={16} height={16} className="transition-transform group-hover:translate-x-0.5" />
+                <ArrowRightIcon
+                  width={16}
+                  height={16}
+                  className="transition-transform group-hover:translate-x-0.5"
+                />
               </Link>
             </div>
           </article>
         </div>
 
         <p className="text-xs text-zinc-500 tracking-wide text-center">
-          Open source&nbsp;&nbsp;·&nbsp;&nbsp;Apache 2.0&nbsp;&nbsp;·&nbsp;&nbsp;
+          Open source&nbsp;&nbsp;·&nbsp;&nbsp;Apache
+          2.0&nbsp;&nbsp;·&nbsp;&nbsp;
           <a
             href={docsUrl}
             target="_blank"

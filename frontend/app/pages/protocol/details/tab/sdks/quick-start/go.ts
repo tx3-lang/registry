@@ -9,14 +9,6 @@ import {
   userProvidedParams,
 } from './shared';
 
-function formatValue(value: unknown, type: string): string {
-  if (typeof value === 'boolean') return String(value);
-  if (typeof value === 'number') return String(value);
-  if (typeof value === 'bigint') return String(value);
-  if (type.toLowerCase() === 'int' && typeof value === 'string' && /^-?\d+$/.test(value)) return value;
-  return JSON.stringify(String(value));
-}
-
 function clientOptionsBlock(trp: TrpConfig): string[] {
   const endpoint = `    Endpoint: ${JSON.stringify(trp.endpoint)},`;
   if (!trp.headers) {
@@ -101,7 +93,7 @@ function txBlock(tx: Tx, protocol: Protocol): string {
     ].join('\n');
   }
   const argLines = params.map(param =>
-    `    ${toPascalCase(param.name)}: ${formatValue(placeholderFor(param.type), param.type)},`,
+    `    ${toPascalCase(param.name)}: ${JSON.stringify(placeholderFor(param.type))},`,
   );
   return [
     `resolved, err := client.${method}(${paramsType}{`,

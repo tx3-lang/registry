@@ -29,7 +29,7 @@ import { TabActivity } from './tab/activity';
 export const UNOFFICIAL_SCOPE = 'open-tx3';
 export const UNOFFICIAL_DISCLAIMER
   = 'Preliminary, reverse-engineered version published by the tx3 team for testing and exploration. '
-  + 'It is not endorsed by the original protocol authors. Do not use in mainnet.';
+    + 'It is not endorsed by the original protocol authors. Do not use in mainnet.';
 
 function UnofficialBadge() {
   return (

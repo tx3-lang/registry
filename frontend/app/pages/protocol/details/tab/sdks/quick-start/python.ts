@@ -10,14 +10,6 @@ import {
   userProvidedParams,
 } from './shared';
 
-function formatValue(value: unknown, type: string): string {
-  if (typeof value === 'boolean') return value ? 'True' : 'False';
-  if (typeof value === 'number') return String(value);
-  if (typeof value === 'bigint') return String(value);
-  if (type.toLowerCase() === 'int' && typeof value === 'string' && /^-?\d+$/.test(value)) return value;
-  return JSON.stringify(String(value));
-}
-
 function pythonModule(protocol: Protocol): string {
   return `gen.python.${toSnakeCase(protocol.name)}`;
 }
@@ -55,7 +47,7 @@ function quickStart(protocol: Protocol, profile: Profile | null, trp: TrpConfig)
     'from tx3_sdk.signer import Ed25519Signer',
     'from tx3_sdk.trp.client import ClientOptions',
     '',
-    `signer = Ed25519Signer.from_hex("addr_test1...", "deadbeef...")`,
+    'signer = Ed25519Signer.from_hex("addr_test1...", "deadbeef...")',
     '',
     `client = Client(${clientOptionsLiteral(trp)}${profileArg})`,
     ...partyLines,
@@ -77,7 +69,7 @@ function txBlock(tx: Tx, protocol: Protocol): string {
     ].join('\n');
   }
   const argLines = params.map(param =>
-    `    ${toSnakeCase(param.name)}=${formatValue(placeholderFor(param.type), param.type)},`,
+    `    ${toSnakeCase(param.name)}=${JSON.stringify(placeholderFor(param.type))},`,
   );
   return [
     paramsImport,

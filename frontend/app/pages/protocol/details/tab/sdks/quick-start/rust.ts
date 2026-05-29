@@ -9,14 +9,6 @@ import {
   userProvidedParams,
 } from './shared';
 
-function formatValue(value: unknown, type: string): string {
-  if (typeof value === 'boolean') return String(value);
-  if (typeof value === 'number') return String(value);
-  if (typeof value === 'bigint') return String(value);
-  if (type.toLowerCase() === 'int' && typeof value === 'string' && /^-?\d+$/.test(value)) return value;
-  return `${JSON.stringify(String(value))}.to_string()`;
-}
-
 function cratePath(protocol: Protocol): string {
   return toSnakeCase(protocol.name);
 }
@@ -91,7 +83,7 @@ function txBlock(tx: Tx, protocol: Protocol): string {
     return `let ${varName} = client.${method}(${paramsType} {}).resolve().await?;`;
   }
   const argLines = params.map(param =>
-    `    ${toSnakeCase(param.name)}: ${formatValue(placeholderFor(param.type), param.type)},`,
+    `    ${toSnakeCase(param.name)}: ${JSON.stringify(placeholderFor(param.type))}.to_string(),`,
   );
   return [
     `let ${varName} = client.${method}(${paramsType} {`,
