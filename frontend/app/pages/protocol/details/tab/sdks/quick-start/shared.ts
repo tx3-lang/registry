@@ -164,30 +164,16 @@ export function commonSetupSteps(lang: SDKKey, protocol: Protocol): SetupStep[] 
     {
       kind: 'shell',
       lang: 'bash',
-      title: 'Initialize a trix project',
-      body: 'trix init',
-      note: 'Skip this step if you already have a trix project.',
-    },
-    {
-      kind: 'shell',
-      lang: 'bash',
       title: 'Install the protocol',
       body: `trix use ${ref}`,
-      note: 'Downloads the compiled .tii into your trix project and registers it as a dependency.',
-    },
-    {
-      kind: 'toml',
-      lang: 'toml',
-      title: 'Configure codegen',
-      body: bindingsTomlBlock(lang),
-      note: 'Add this entry to trix.toml so trix knows which language to generate.',
+      note: 'Auto-bootstraps a trix.toml in the current directory if none exists, then downloads the compiled .tii and pins the dependency.',
     },
     {
       kind: 'shell',
       lang: 'bash',
       title: 'Generate the client',
-      body: 'trix codegen',
-      note: `Writes the typed client to ${OUTPUT_DIR[lang]}.`,
+      body: `trix codegen --plugin ${CODEGEN_PLUGIN[lang]}`,
+      note: `Adds the [[codegen]] entry to trix.toml on first run and writes the typed client (defaults to .tx3/codegen/${CODEGEN_PLUGIN[lang]}/; override with output_dir in trix.toml).`,
     },
   ];
 }
