@@ -57,7 +57,7 @@ async function checkRpcDocs(protocolName: string): Promise<string | null> {
 }
 
 export async function loader({ context, params }: Route.LoaderArgs) {
-  const id = `${params.name}/${params.scope}`;
+  const id = `${params.scope}/${params.name}`;
 
   const [result, rpcDocsUrl] = await Promise.all([
     context.queryClient.fetchQuery({
