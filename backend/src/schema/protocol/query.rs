@@ -98,7 +98,12 @@ impl ProtocolQuery {
     }
 
     async fn protocol(&self, scope: String, name: String) -> Result<Option<Protocol>, Error> {
-        let repo = format!("{}/{}", scope, name);
+        // OCI repository names are canonically lowercase, but the `scope` exposed to
+        // clients comes from the image's `Vendor` annotation, which preserves the
+        // publisher's display casing (e.g. `SundaeSwap-finance`). Lowercase both path
+        // components so the lookup matches the stored repo regardless of how the
+        // caller cased the scope/name.
+        let repo = format!("{}/{}", scope.to_lowercase(), name.to_lowercase());
 
         let registry_api = oci::get_registry_api_url();
         let query_param = format!(r#"
