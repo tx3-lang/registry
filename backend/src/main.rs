@@ -36,7 +36,11 @@ async fn protocol_logo(
     scope: &str,
     name: &str,
 ) -> Result<(ContentType, Vec<u8>), Status> {
-    let repo = format!("{}/{}", scope, name);
+    // OCI repository names are canonically lowercase, but the scope reaching this
+    // handler comes from the client (ultimately the image's `Vendor` annotation,
+    // which preserves the publisher's display casing, e.g. `SundaeSwap-finance`).
+    // Lowercase both path components so the lookup matches the stored repo.
+    let repo = format!("{}/{}", scope.to_lowercase(), name.to_lowercase());
     let tag = match oci::newest_tag(&repo).await {
         Ok(Some(tag)) => tag,
         Ok(None) => return Err(Status::NotFound),
