@@ -4,7 +4,7 @@ use async_graphql::{ComplexObject, Enum, SimpleObject, ID};
 use serde::Deserialize;
 
 mod query;
-pub use query::{load_protocol, ProtocolQuery};
+pub use query::{build_protocol, load_protocol, resolve_protocol, ProtocolQuery, ResolvedProtocol};
 use tx3_tir::reduce::Apply;
 
 use crate::ast_to_svg;
