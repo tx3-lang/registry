@@ -4,7 +4,7 @@ use async_graphql::{ComplexObject, Enum, SimpleObject, ID};
 use serde::Deserialize;
 
 mod query;
-pub use query::ProtocolQuery;
+pub use query::{load_protocol, ProtocolQuery};
 use tx3_tir::reduce::Apply;
 
 use crate::ast_to_svg;
@@ -213,6 +213,27 @@ impl Protocol {
 }
 
 impl Protocol {
+    /// Assemble the data needed to render the social/OG card, reusing the same
+    /// transaction-extraction path as the GraphQL `transactions` resolver.
+    pub fn to_card_data(&self, logo_png: Option<Vec<u8>>) -> crate::og_card::CardData {
+        let txs = if let Some(tii) = &self.tii {
+            self.transactions_from_tii(tii)
+        } else {
+            self.transactions_from_source()
+        };
+        let mut tx_names: Vec<String> = txs.into_iter().map(|tx| tx.name).collect();
+        tx_names.sort();
+
+        crate::og_card::CardData {
+            scope: self.scope.clone(),
+            name: self.name.clone(),
+            version: self.version.clone(),
+            description: self.description.clone(),
+            tx_names,
+            logo_png,
+        }
+    }
+
     fn parse_protocol(&self) -> Option<tx3_lang::ast::Program> {
         let code = self.source.as_ref()?;
         let mut protocol = tx3_lang::parsing::parse_string(code).ok()?;

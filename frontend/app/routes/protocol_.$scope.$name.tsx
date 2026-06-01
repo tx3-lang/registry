@@ -16,6 +16,7 @@ export function meta({ params, data }: Route.MetaArgs) {
     title,
     description,
     url: `/protocol/${scope}/${name}`,
+    image: `/api/protocols/${scope}/${name}/og.png`,
     type: 'article',
   });
 }

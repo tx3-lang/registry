@@ -2,13 +2,13 @@ use async_graphql::http::GraphiQLSource;
 use async_graphql_rocket::{GraphQLRequest, GraphQLResponse};
 use dotenvy::dotenv;
 use rocket::{
-    http::{ContentType, Method, Status},
+    http::{ContentType, Header, Method, Status},
     response::content::RawHtml,
     State,
 };
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
 
-use tx3_registry_backend::{db, oci, schema};
+use tx3_registry_backend::{db, oci, og_card, schema};
 
 #[macro_use]
 extern crate rocket;
@@ -53,6 +53,42 @@ async fn protocol_logo(
     Ok((ContentType::PNG, bytes))
 }
 
+/// A PNG response carrying cache headers. The card is immutable per published
+/// version, so we cache aggressively and key the ETag on version + layout.
+#[derive(Responder)]
+struct CardResponse {
+    body: (ContentType, Vec<u8>),
+    cache_control: Header<'static>,
+    etag: Header<'static>,
+}
+
+/// Render a protocol's social/Open Graph card as a 1200×630 PNG.
+/// Returns 404 when the protocol does not exist. The logo is read from the same
+/// OCI image used to build the protocol, so there is no extra registry fetch.
+#[get("/protocols/<scope>/<name>/og.png")]
+async fn protocol_og_card(scope: &str, name: &str) -> Result<CardResponse, Status> {
+    let (protocol, image) = match schema::protocol::load_protocol(scope, name).await {
+        Ok(Some(pair)) => pair,
+        Ok(None) => return Err(Status::NotFound),
+        Err(_) => return Err(Status::BadGateway),
+    };
+
+    let logo = oci::get_logo_png(&image);
+    let card = protocol.to_card_data(logo);
+    let etag = format!("\"og-v{}-{}\"", og_card::LAYOUT_VERSION, card.version);
+
+    let png = og_card::render_card(&card).map_err(|e| {
+        eprintln!("og card render failed for {scope}/{name}: {e}");
+        Status::InternalServerError
+    })?;
+
+    Ok(CardResponse {
+        body: (ContentType::PNG, png),
+        cache_control: Header::new("Cache-Control", "public, max-age=3600, s-maxage=86400"),
+        etag: Header::new("ETag", etag),
+    })
+}
+
 #[launch]
 async fn rocket() -> _ {
     let _ = dotenv();
@@ -81,6 +117,6 @@ async fn rocket() -> _ {
     rocket::build()
         .manage(pool)
         .manage(schema)
-        .mount("/", routes![index, graphql, graphql_request, protocol_logo])
+        .mount("/", routes![index, graphql, graphql_request, protocol_logo, protocol_og_card])
         .attach(cors)
 }
