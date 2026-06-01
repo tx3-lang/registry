@@ -1,8 +1,89 @@
 use async_graphql::{connection::Edge, types::connection::Connection, Context, Error, Object, ID};
+use oci_client::client::ImageData;
 use urlencoding::encode;
 
 use crate::{oci, schema::pagination::AdditionalInfo};
 use super::{Protocol, ProtocolSort, TiiFile};
+
+/// Load a single protocol and the OCI image it was assembled from.
+///
+/// Shared by the GraphQL `protocol` resolver and the social-card route: the
+/// route reuses the already-pulled [`ImageData`] to read the logo layer without
+/// a second registry round-trip. Returns `None` when the repo or its newest
+/// image cannot be resolved.
+pub async fn load_protocol(
+    scope: &str,
+    name: &str,
+) -> Result<Option<(Protocol, ImageData)>, Error> {
+    // OCI repository names are canonically lowercase, but the `scope` exposed to
+    // clients comes from the image's `Vendor` annotation, which preserves the
+    // publisher's display casing (e.g. `SundaeSwap-finance`). Lowercase both path
+    // components so the lookup matches the stored repo regardless of how the
+    // caller cased the scope/name.
+    let repo = format!("{}/{}", scope.to_lowercase(), name.to_lowercase());
+
+    let registry_api = oci::get_registry_api_url();
+    let query_param = format!(r#"
+        query ExpandedRepoInfo {{
+            ExpandedRepoInfo(repo: "{}") {{
+                Summary {{
+                    Name
+                    NewestImage {{ Tag Vendor Title Source Description LastUpdated }}
+                }}
+                Images {{ Tag Vendor Title Source Description LastUpdated }}
+            }}
+        }}
+    "#, repo);
+
+    let encode_query = encode(&query_param);
+    let url = format!("{}/_zot/ext/search?query={}", registry_api, encode_query);
+    let response = reqwest::get(&url).await?.json::<oci::ZotResponse>().await?;
+
+    if response.error.is_some() {
+        println!("error: {:?}", response.error);
+        return Ok(None);
+    }
+
+    let Some(data) = response.data else { return Ok(None) };
+    let Some(info) = data.expanded_repo_info else { return Ok(None) };
+    let Some(summary) = info.summary else { return Ok(None) };
+
+    // Zot occasionally returns Summary.NewestImage as null even when the repo has
+    // images (observed on open-tx3/snek-fun). Fall back to the first entry in the
+    // Images list when that happens.
+    let image = summary.newest_image.clone()
+        .or_else(|| info.images.as_ref().and_then(|v| v.first().cloned()));
+    let Some(image) = image else { return Ok(None) };
+
+    let tag = image.tag.clone().unwrap_or_default();
+    let oci_image = oci::get_oci_image(&repo, &tag).await?;
+
+    let readme = oci::get_readme(&oci_image);
+    let source = oci::get_protocol(&oci_image);
+    let tii = oci::get_tii(&oci_image)
+        .and_then(|json| serde_json::from_str::<TiiFile>(&json).ok());
+
+    let published_date = if let Some(published_date) = image.last_updated {
+        chrono::DateTime::parse_from_rfc3339(&published_date)
+            .unwrap()
+            .timestamp()
+    } else { 0 };
+
+    let protocol = Protocol {
+        id: ID::from(summary.name.clone()),
+        version: tag,
+        name: image.title.unwrap_or_default(),
+        scope: image.vendor.unwrap_or_default(),
+        repository_url: image.source,
+        description: image.description,
+        published_date,
+        source,
+        readme,
+        tii,
+    };
+
+    Ok(Some((protocol, oci_image)))
+}
 
 #[derive(Default)]
 pub struct ProtocolQuery;
@@ -98,79 +179,6 @@ impl ProtocolQuery {
     }
 
     async fn protocol(&self, scope: String, name: String) -> Result<Option<Protocol>, Error> {
-        // OCI repository names are canonically lowercase, but the `scope` exposed to
-        // clients comes from the image's `Vendor` annotation, which preserves the
-        // publisher's display casing (e.g. `SundaeSwap-finance`). Lowercase both path
-        // components so the lookup matches the stored repo regardless of how the
-        // caller cased the scope/name.
-        let repo = format!("{}/{}", scope.to_lowercase(), name.to_lowercase());
-
-        let registry_api = oci::get_registry_api_url();
-        let query_param = format!(r#"
-            query ExpandedRepoInfo {{
-                ExpandedRepoInfo(repo: "{}") {{
-                    Summary {{
-                        Name
-                        NewestImage {{ Tag Vendor Title Source Description LastUpdated }}
-                    }}
-                    Images {{ Tag Vendor Title Source Description LastUpdated }}
-                }}
-            }}
-        "#, repo);
-
-        let encode_query = encode(&query_param);
-        let url = format!("{}/_zot/ext/search?query={}", registry_api, encode_query);
-        let response = reqwest::get(&url).await?.json::<oci::ZotResponse>().await?;
-
-        if response.error.is_some() {
-            println!("error: {:?}", response.error);
-            return Ok(None);
-        }
-
-        if let Some(data) = response.data {
-            if let Some(info) = data.expanded_repo_info {
-                if let Some(summary) = info.summary {
-                    // Zot occasionally returns Summary.NewestImage as null even when
-                    // the repo has images (observed on open-tx3/snek-fun). Fall back
-                    // to the first entry in the Images list when that happens.
-                    let image = summary.newest_image.clone()
-                        .or_else(|| info.images.as_ref().and_then(|v| v.first().cloned()));
-
-                    let Some(image) = image else { return Ok(None) };
-
-                    let tag = image.tag.clone().unwrap_or_default();
-                    let oci_image = Some(oci::get_oci_image(&repo, &tag).await?);
-
-                    let readme = oci::get_readme(oci_image.as_ref().unwrap());
-                    let source = oci::get_protocol(oci_image.as_ref().unwrap());
-                    let tii = oci::get_tii(oci_image.as_ref().unwrap())
-                        .and_then(|json| serde_json::from_str::<TiiFile>(&json).ok());
-
-                    let published_date = if let Some(published_date) = image.last_updated {
-                        chrono::DateTime::parse_from_rfc3339(&published_date)
-                            .unwrap()
-                            .timestamp()
-                    } else { 0 };
-
-                    let protocol = Protocol {
-                        id: ID::from(summary.name.clone()),
-                        version: tag,
-                        name: image.title.unwrap_or_default(),
-                        scope: image.vendor.unwrap_or_default(),
-                        repository_url: image.source,
-                        description: image.description,
-                        published_date,
-                        source,
-                        readme,
-                        tii,
-                    };
-
-                    return Ok(Some(protocol));
-                }
-            }
-        }
-        
-        return Ok(None);
-        
+        Ok(load_protocol(&scope, &name).await?.map(|(protocol, _)| protocol))
     }
 }

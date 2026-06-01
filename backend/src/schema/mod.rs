@@ -3,7 +3,7 @@ use std::{fs::File, io::Write};
 use async_graphql::{EmptyMutation, EmptySubscription, MergedObject, Schema};
 use sqlx::PgPool;
 
-mod protocol;
+pub mod protocol;
 pub mod pagination;
 mod match_query;
 
