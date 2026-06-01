@@ -25,6 +25,14 @@ pub const LAYOUT_VERSION: u32 = 1;
 
 const MAX_CHIPS: usize = 6;
 
+// Upper bounds on an embedded logo. The logo is an attacker-controllable OCI
+// layer, and resvg fully decodes it before scaling into the small tile, so an
+// oversized file or a "pixel bomb" (tiny compressed, huge dimensions) would let
+// an unauthenticated request burn memory/CPU. Logos exceeding either bound are
+// dropped in favour of the monogram fallback.
+const MAX_LOGO_BYTES: usize = 2 * 1024 * 1024; // 2 MiB
+const MAX_LOGO_PIXELS: u64 = 16_000_000; // ~4000×4000
+
 // Palette pulled from the frontend theme (`app/app.css`): woodsmoke + primary.
 const BG: &str = "#0F0F12"; // woodsmoke-950
 const PANEL: &str = "#1C1C22"; // woodsmoke-900
@@ -155,6 +163,22 @@ fn build_card_svg(data: &CardData) -> String {
     s
 }
 
+/// Whether an embedded logo PNG is safe to decode: a valid PNG within the byte
+/// and pixel-count bounds. Dimensions are read straight from the IHDR header so
+/// we never hand a pixel bomb to the rasterizer.
+fn logo_within_limits(png: &[u8]) -> bool {
+    const PNG_SIG: [u8; 8] = [0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A];
+    if png.len() < 24 || png.len() > MAX_LOGO_BYTES {
+        return false;
+    }
+    if png[..8] != PNG_SIG || &png[12..16] != b"IHDR" {
+        return false;
+    }
+    let w = u32::from_be_bytes([png[16], png[17], png[18], png[19]]) as u64;
+    let h = u32::from_be_bytes([png[20], png[21], png[22], png[23]]) as u64;
+    w.saturating_mul(h) <= MAX_LOGO_PIXELS
+}
+
 /// Logo tile: the protocol's PNG when available, otherwise a monogram fallback.
 fn emit_logo(s: &mut String, x: f32, y: f32, size: f32, data: &CardData) {
     let r = 20.0;
@@ -164,7 +188,7 @@ fn emit_logo(s: &mut String, x: f32, y: f32, size: f32, data: &CardData) {
         r#"<clipPath id="{clip_id}"><rect x="{x}" y="{y}" width="{size}" height="{size}" rx="{r}" ry="{r}"/></clipPath>"#,
     );
 
-    if let Some(png) = data.logo_png.as_deref().filter(|b| !b.is_empty()) {
+    if let Some(png) = data.logo_png.as_deref().filter(|b| logo_within_limits(b)) {
         let b64 = base64::engine::general_purpose::STANDARD.encode(png);
         let _ = write!(
             s,
@@ -385,6 +409,28 @@ mod tests {
         data.description = None;
         let png = render_card(&data).expect("render minimal");
         assert!(png.len() > 1000);
+    }
+
+    fn fake_png(width: u32, height: u32, pad: usize) -> Vec<u8> {
+        let mut v = vec![0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A];
+        v.extend_from_slice(&[0, 0, 0, 13]); // IHDR length
+        v.extend_from_slice(b"IHDR");
+        v.extend_from_slice(&width.to_be_bytes());
+        v.extend_from_slice(&height.to_be_bytes());
+        v.extend(std::iter::repeat(0u8).take(pad));
+        v
+    }
+
+    #[test]
+    fn logo_guard_accepts_and_rejects() {
+        assert!(logo_within_limits(&fake_png(512, 512, 0)));
+        // Pixel bomb: small file, huge dimensions.
+        assert!(!logo_within_limits(&fake_png(20_000, 20_000, 0)));
+        // Oversized file.
+        assert!(!logo_within_limits(&fake_png(64, 64, MAX_LOGO_BYTES)));
+        // Not a PNG / too short.
+        assert!(!logo_within_limits(b"not a png"));
+        assert!(!logo_within_limits(&[]));
     }
 
     #[test]

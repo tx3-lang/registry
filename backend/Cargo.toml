@@ -16,7 +16,9 @@ sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres",
 hex = "0.4.3"
 oci-client = "0.14.0"
 reqwest = { version = "0.12.12", features = ["json"] }
-resvg = "0.45"
+# We build our own fontdb (bundled Inter) and embed a PNG logo, so we only need
+# text rendering + raster-image support — drop system/mmap font scanning.
+resvg = { version = "0.45", default-features = false, features = ["text", "raster-images"] }
 rocket = "0.5.1"
 rocket_cors = "0.6.0"
 serde = { version = "1.0", features = ["derive"] }
