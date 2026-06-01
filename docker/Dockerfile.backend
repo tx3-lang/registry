@@ -8,6 +8,8 @@ RUN apt install -y build-essential pkg-config libssl-dev cmake
 COPY ./backend/Cargo.toml ./backend/Cargo.toml
 COPY ./backend/Cargo.lock ./backend/Cargo.lock
 COPY ./backend/src ./backend/src
+# Fonts baked into the binary via `include_bytes!` (see og_card.rs) — required at build time.
+COPY ./backend/assets ./backend/assets
 
 WORKDIR /app/backend
 
