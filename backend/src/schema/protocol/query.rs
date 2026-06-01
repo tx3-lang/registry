@@ -5,16 +5,30 @@ use urlencoding::encode;
 use crate::{oci, schema::pagination::AdditionalInfo};
 use super::{Protocol, ProtocolSort, TiiFile};
 
-/// Load a single protocol and the OCI image it was assembled from.
-///
-/// Shared by the GraphQL `protocol` resolver and the social-card route: the
-/// route reuses the already-pulled [`ImageData`] to read the logo layer without
-/// a second registry round-trip. Returns `None` when the repo or its newest
-/// image cannot be resolved.
-pub async fn load_protocol(
-    scope: &str,
-    name: &str,
-) -> Result<Option<(Protocol, ImageData)>, Error> {
+/// A protocol's newest image resolved from the registry search, *before* the
+/// (heavy) OCI pull. Carries everything needed to build a cache key and, on a
+/// miss, to assemble the full [`Protocol`] via [`build_protocol`].
+pub struct ResolvedProtocol {
+    /// Canonical lowercase `scope/name` repository path.
+    pub repo: String,
+    /// Repo summary name, used as the protocol `id`.
+    pub id: String,
+    /// The chosen image summary (newest, with the documented fallback).
+    pub image: oci::ImageSummary,
+}
+
+impl ResolvedProtocol {
+    /// The image tag, i.e. the published version. Drives cache keys and ETags.
+    pub fn tag(&self) -> String {
+        self.image.tag.clone().unwrap_or_default()
+    }
+}
+
+/// Resolve a protocol's newest image via the zot `ExpandedRepoInfo` search,
+/// without pulling the OCI artifact. Cheap (one HTTP round-trip); lets callers
+/// key a cache on the tag and skip the heavy pull on a hit. Returns `None` when
+/// the repo or its newest image cannot be resolved.
+pub async fn resolve_protocol(scope: &str, name: &str) -> Result<Option<ResolvedProtocol>, Error> {
     // OCI repository names are canonically lowercase, but the `scope` exposed to
     // clients comes from the image's `Vendor` annotation, which preserves the
     // publisher's display casing (e.g. `SundaeSwap-finance`). Lowercase both path
@@ -55,6 +69,14 @@ pub async fn load_protocol(
         .or_else(|| info.images.as_ref().and_then(|v| v.first().cloned()));
     let Some(image) = image else { return Ok(None) };
 
+    Ok(Some(ResolvedProtocol { repo, id: summary.name, image }))
+}
+
+/// Pull the OCI artifact for an already-resolved protocol and assemble the full
+/// [`Protocol`] plus the [`ImageData`] it was built from. This is the heavy step
+/// (full layer pull); call it only on a cache miss.
+pub async fn build_protocol(resolved: ResolvedProtocol) -> Result<(Protocol, ImageData), Error> {
+    let ResolvedProtocol { repo, id, image } = resolved;
     let tag = image.tag.clone().unwrap_or_default();
     let oci_image = oci::get_oci_image(&repo, &tag).await?;
 
@@ -70,7 +92,7 @@ pub async fn load_protocol(
     } else { 0 };
 
     let protocol = Protocol {
-        id: ID::from(summary.name.clone()),
+        id: ID::from(id),
         version: tag,
         name: image.title.unwrap_or_default(),
         scope: image.vendor.unwrap_or_default(),
@@ -82,7 +104,21 @@ pub async fn load_protocol(
         tii,
     };
 
-    Ok(Some((protocol, oci_image)))
+    Ok((protocol, oci_image))
+}
+
+/// Load a single protocol and the OCI image it was assembled from.
+///
+/// Shared by the GraphQL `protocol` resolver and the social-card route: the
+/// route reuses the already-pulled [`ImageData`] to read the logo layer without
+/// a second registry round-trip. Returns `None` when the repo or its newest
+/// image cannot be resolved.
+pub async fn load_protocol(
+    scope: &str,
+    name: &str,
+) -> Result<Option<(Protocol, ImageData)>, Error> {
+    let Some(resolved) = resolve_protocol(scope, name).await? else { return Ok(None) };
+    Ok(Some(build_protocol(resolved).await?))
 }
 
 #[derive(Default)]
