@@ -241,54 +241,97 @@ impl Protocol {
         Some(protocol)
     }
 
+    /// Builds the parameter list from the params declared in the `tx` block.
+    ///
+    /// We read the declared params straight from the AST rather than walking the
+    /// lowered TIR: the TIR's required values also include env vars and party
+    /// references, which are not transaction parameters and must not appear in
+    /// the parameter list (or the transaction diagram).
     fn extract_params(protocol: &tx3_lang::ast::Program, tx_name: &str) -> Vec<TxParam> {
-        let mut parameters = vec![];
+        let Some(tx_def) = protocol.txs.iter().find(|t| t.name.value == tx_name) else {
+            return vec![];
+        };
 
-        if let Ok(tx_tir) = tx3_lang::lowering::lower(protocol, tx_name) {
-            for (name, ty) in tx_tir.params() {
-                parameters.push(TxParam {
-                    name: name.clone(),
-                    r#type: format!("{:?}", ty.clone()),
-                    description: None,
-                });
-            }
-            parameters.sort_by_key(|p| p.name.clone());
-        }
+        let mut parameters: Vec<TxParam> = tx_def
+            .parameters
+            .parameters
+            .iter()
+            .map(|param| TxParam {
+                name: param.name.value.clone(),
+                r#type: format!("{:?}", param.r#type),
+                description: None,
+            })
+            .collect();
 
+        parameters.sort_by(|a, b| a.name.cmp(&b.name));
         parameters
     }
 
-    /// Pulls per-property `description` values out of a JSON Schema object
-    /// shaped like `{ "properties": { "<name>": { "description": "..." } } }`.
-    fn descriptions_from_params_schema(
-        params: Option<&serde_json::Value>,
-    ) -> HashMap<String, String> {
-        params
-            .and_then(|p| p.get("properties"))
-            .and_then(|p| p.as_object())
-            .map(|props| {
-                props
-                    .iter()
-                    .filter_map(|(name, schema)| {
-                        schema
-                            .get("description")
-                            .and_then(|d| d.as_str())
-                            .map(|d| (name.clone(), d.to_string()))
-                    })
-                    .collect()
+    /// Builds the parameter list from a transaction's TII params JSON Schema,
+    /// shaped like `{ "properties": { "<name>": { <type schema>, "description": "..." } } }`.
+    ///
+    /// The schema's properties are exactly the params declared in the `tx`
+    /// block, so this is the authoritative source for the parameter list — see
+    /// [`Self::extract_params`] for why the lowered TIR is unsuitable.
+    fn params_from_schema(params: &serde_json::Value) -> Vec<TxParam> {
+        let Some(properties) = params.get("properties").and_then(|p| p.as_object()) else {
+            return vec![];
+        };
+
+        let mut parameters: Vec<TxParam> = properties
+            .iter()
+            .map(|(name, schema)| TxParam {
+                name: name.clone(),
+                r#type: Self::schema_type_label(schema),
+                description: schema
+                    .get("description")
+                    .and_then(|d| d.as_str())
+                    .map(|d| d.to_string()),
             })
-            .unwrap_or_default()
+            .collect();
+
+        parameters.sort_by(|a, b| a.name.cmp(&b.name));
+        parameters
+    }
+
+    /// Renders a human-readable tx3 type name from a JSON Schema fragment
+    /// produced by the compiler's `map_ast_type_to_json_schema`.
+    fn schema_type_label(schema: &serde_json::Value) -> String {
+        // Reference types encode the tx3 type name as the last path segment,
+        // e.g. ".../tii#/$defs/Address" -> "Address".
+        if let Some(reference) = schema.get("$ref").and_then(|r| r.as_str()) {
+            return reference.rsplit('/').next().unwrap_or(reference).to_string();
+        }
+
+        match schema.get("type").and_then(|t| t.as_str()) {
+            Some("integer") => "Int".to_string(),
+            Some("boolean") => "Bool".to_string(),
+            Some("null") => "Unit".to_string(),
+            Some("array") => {
+                let inner = schema
+                    .get("items")
+                    .map(Self::schema_type_label)
+                    .unwrap_or_else(|| "Unknown".to_string());
+                format!("List<{inner}>")
+            }
+            Some("object") => match schema.get("additionalProperties") {
+                Some(value) => format!("Map<{}>", Self::schema_type_label(value)),
+                None => "Object".to_string(),
+            },
+            Some(other) => other.to_string(),
+            None => "Unknown".to_string(),
+        }
     }
 
     fn transactions_from_tii(&self, tii_file: &TiiFile) -> Vec<Tx> {
         tii_file.transactions.iter().map(|(name, tx)| {
-            let descriptions = Self::descriptions_from_params_schema(tx.params.as_ref());
-            let mut parameters = Self::extract_params_from_tir(&tx.tir);
-            for param in &mut parameters {
-                if let Some(desc) = descriptions.get(&param.name) {
-                    param.description = Some(desc.clone());
-                }
-            }
+            // The TII params schema lists exactly the declared transaction
+            // params; prefer it over the lowered TIR, which also surfaces env
+            // vars and party references as required values.
+            let parameters = match tx.params.as_ref() {
+                Some(schema) => Self::params_from_schema(schema),
+                None => Self::extract_params_from_tir(&tx.tir),
+            };
             let inputs = Self::extract_inputs_from_tir(&tx.tir);
             let outputs = Self::extract_outputs_from_tir(&tx.tir);
 
@@ -395,12 +438,28 @@ impl Tx {
     async fn svg(&self) -> Option<String> {
         let param_names: Vec<String> = self.parameters.iter().map(|p| p.name.clone()).collect();
 
+        // Output names live only in the source AST (the TIR Output model has no
+        // name field), so recover them by position to label the diagram.
+        let output_names: Vec<Option<String>> = self
+            .protocol_source
+            .as_ref()
+            .and_then(|src| tx3_lang::parsing::parse_string(src).ok())
+            .and_then(|ast| ast.txs.into_iter().find(|t| t.name.value == self.name))
+            .map(|tx_def| {
+                tx_def
+                    .outputs
+                    .iter()
+                    .map(|o| o.name.as_ref().map(|n| n.value.clone()))
+                    .collect()
+            })
+            .unwrap_or_default();
+
         let tir_envelope = TiiTirEnvelope {
             content: self.tir.clone(),
             version: self.tir_version.clone(),
         };
         if let Some(tx3_tir::encoding::AnyTir::V1Beta0(tx)) = Protocol::decode_tir(&tir_envelope) {
-            return Some(ast_to_svg::tir_to_svg(&self.name, &tx, param_names));
+            return Some(ast_to_svg::tir_to_svg(&self.name, &tx, param_names, &output_names));
         }
 
         let source = self.protocol_source.as_ref()?;
