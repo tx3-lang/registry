@@ -220,12 +220,17 @@ fn get_inputs_from_tir(tx: &tir::Tx) -> Vec<Parameter> {
         .collect()
 }
 
-fn get_outputs_from_tir(tx: &tir::Tx) -> Vec<Parameter> {
+fn get_outputs_from_tir(tx: &tir::Tx, output_names: &[Option<String>]) -> Vec<Parameter> {
     tx.outputs
         .iter()
         .enumerate()
         .map(|(i, output)| Parameter {
-            name: format!("output {}", i + 1),
+            // The TIR Output model carries no name, so use the source-provided
+            // name when available and fall back to a positional label otherwise.
+            name: output_names
+                .get(i)
+                .and_then(|n| n.clone())
+                .unwrap_or_else(|| format!("output {}", i + 1)),
             party: extract_party_from_expr(&output.address),
         })
         .collect()
@@ -461,11 +466,16 @@ pub fn tx_to_svg(ast: &Program, tx: &TxDef, params: Vec<String>) -> String {
     build_svg(&tx.name.value, &params, input_parties, output_parties, inputs, outputs)
 }
 
-pub fn tir_to_svg(name: &str, tx: &tir::Tx, params: Vec<String>) -> String {
+pub fn tir_to_svg(
+    name: &str,
+    tx: &tir::Tx,
+    params: Vec<String>,
+    output_names: &[Option<String>],
+) -> String {
     let input_parties = get_input_parties_from_tir(tx);
     let output_parties = get_output_parties_from_tir(tx);
     let inputs = get_inputs_from_tir(tx);
-    let outputs = get_outputs_from_tir(tx);
+    let outputs = get_outputs_from_tir(tx, output_names);
 
     build_svg(name, &params, input_parties, output_parties, inputs, outputs)
 }
