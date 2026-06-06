@@ -20,10 +20,14 @@ export interface QuickStartTx {
 
 export interface SetupStep {
   // `kind` describes intent for the reader; `lang` drives syntax highlighting.
-  kind: 'shell' | 'toml';
+  // 'shell'/'toml' render `body` as a code block. 'link' renders `body` as the
+  // label of a button that opens `href` — used to defer to external docs
+  // instead of inlining commands.
+  kind: 'shell' | 'toml' | 'link';
   lang: SupportedLanguages;
   title: string;
   body: string;
+  href?: string;
   note?: string;
 }
 
@@ -139,8 +143,8 @@ const LANG_LABEL: Record<SDKKey, string> = {
 // `trix codegen` writes each protocol's binding into a subfolder named after
 // the protocol (raw name, no casing transform) under the plugin output dir,
 // alongside a README with language-specific usage instructions.
-function generatedReadmePath(lang: SDKKey, protocol: Protocol): string {
-  return `${OUTPUT_DIR[lang]}/${protocol.name}/README.md`;
+function generatedOutputDir(lang: SDKKey, protocol: Protocol): string {
+  return `${OUTPUT_DIR[lang]}/${protocol.name}`;
 }
 
 export function bindingPlugin(lang: SDKKey): string {
@@ -164,11 +168,12 @@ export function commonSetupSteps(lang: SDKKey, protocol: Protocol): SetupStep[] 
   const ref = `${protocol.scope}/${protocol.name}:${protocol.version}`;
   return [
     {
-      kind: 'shell',
+      kind: 'link',
       lang: 'bash',
       title: 'Install the Tx3 toolchain',
-      body: 'brew install txpipe/tap/tx3up && tx3up',
-      note: 'Skip if `trix` is already on your PATH. See https://docs.txpipe.io/tx3/installation for other platforms.',
+      body: 'Read the installation guide',
+      href: 'https://docs.txpipe.io/tx3/installation',
+      note: 'Install `trix` for your platform by following the official guide. Skip if it is already on your PATH.',
     },
     {
       kind: 'shell',
@@ -182,14 +187,7 @@ export function commonSetupSteps(lang: SDKKey, protocol: Protocol): SetupStep[] 
       lang: 'bash',
       title: 'Generate the client',
       body: `trix codegen --plugin ${CODEGEN_PLUGIN[lang]}`,
-      note: `Adds the [[codegen]] entry to trix.toml on first run and writes the typed client (defaults to .tx3/codegen/${CODEGEN_PLUGIN[lang]}/; override with output_dir in trix.toml).`,
-    },
-    {
-      kind: 'shell',
-      lang: 'bash',
-      title: 'Read the generated client\'s README',
-      body: generatedReadmePath(lang, protocol),
-      note: `Open this README for ${LANG_LABEL[lang]}-specific instructions on installing the runtime SDK dependency and using the generated client.`,
+      note: `Adds the [[codegen]] entry to trix.toml on first run and writes the typed client to ${generatedOutputDir(lang, protocol)}/. Open the README there for ${LANG_LABEL[lang]}-specific instructions on installing the runtime SDK and using the client.`,
     },
   ];
 }

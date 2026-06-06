@@ -2,9 +2,11 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 
 // Components
+import { Button } from '~/components/ui/Button';
 import { CodeBlock } from '~/components/ui/CodeBlock';
 import { Dropdown } from '~/components/ui/Dropdown';
 import { ChevronRightIcon } from '~/components/icons/chevron-right';
+import { FileDescriptionIcon } from '~/components/icons/file-description';
 
 // Config
 import { getTrpForProfile, TRP_ENDPOINTS } from '~/trp-config';
@@ -152,7 +154,23 @@ function SetupSection({ steps }: SetupSectionProps) {
             {step.note && (
               <p className="text-zinc-400 text-sm">{step.note}</p>
             )}
-            <CodeBlock lang={step.lang} code={step.body} className={codeBlockClasses} />
+            {step.kind === 'link' && step.href
+              ? (
+                <Button
+                  type="button"
+                  size="s"
+                  variant="outlined"
+                  color="zinc"
+                  className="w-fit rounded-lg"
+                  onClick={() => window.open(step.href, '_blank', 'noopener,noreferrer')}
+                >
+                  <FileDescriptionIcon width="18" height="18" />
+                  {step.body}
+                </Button>
+              )
+              : (
+                <CodeBlock lang={step.lang} code={step.body} className={codeBlockClasses} />
+              )}
           </li>
         ))}
       </ol>
