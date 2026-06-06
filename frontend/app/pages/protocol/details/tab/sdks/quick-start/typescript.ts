@@ -2,7 +2,6 @@ import {
   placeholderFor,
   profileSuppliedNames,
   type SdkRenderer,
-  type SetupStep,
   toCamelCase,
   toPascalCase,
   type TrpConfig,
@@ -85,17 +84,8 @@ function lifecycle(_protocol: Protocol): string {
   ].join('\n');
 }
 
-const postCodegenInstall: SetupStep = {
-  kind: 'shell',
-  lang: 'bash',
-  title: 'Install the generated client\'s dependencies',
-  body: 'cd gen/typescript && npm install',
-  note: 'The generated package.json declares tx3-sdk as a dependency.',
-};
-
 export const typescriptRenderer: SdkRenderer = {
   lang: 'typescript',
-  postCodegenInstall,
   quickStart,
   txBlock,
   lifecycle,

@@ -105,7 +105,6 @@ function lifecycle(_protocol: Protocol): string {
 
 export const rustRenderer: SdkRenderer = {
   lang: 'rust',
-  postCodegenInstall: null,
   quickStart,
   txBlock,
   lifecycle,
