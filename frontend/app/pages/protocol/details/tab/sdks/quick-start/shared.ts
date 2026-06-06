@@ -20,10 +20,14 @@ export interface QuickStartTx {
 
 export interface SetupStep {
   // `kind` describes intent for the reader; `lang` drives syntax highlighting.
-  kind: 'shell' | 'toml';
+  // 'shell'/'toml' render `body` as a code block. 'link' renders `body` as the
+  // label of a button that opens `href` — used to defer to external docs
+  // instead of inlining commands.
+  kind: 'shell' | 'toml' | 'link';
   lang: SupportedLanguages;
   title: string;
   body: string;
+  href?: string;
   note?: string;
 }
 
@@ -164,11 +168,12 @@ export function commonSetupSteps(lang: SDKKey, protocol: Protocol): SetupStep[] 
   const ref = `${protocol.scope}/${protocol.name}:${protocol.version}`;
   return [
     {
-      kind: 'shell',
+      kind: 'link',
       lang: 'bash',
       title: 'Install the Tx3 toolchain',
-      body: 'brew install txpipe/tap/tx3up && tx3up',
-      note: 'Skip if `trix` is already on your PATH. See https://docs.txpipe.io/tx3/installation for other platforms.',
+      body: 'Read the installation guide',
+      href: 'https://docs.txpipe.io/tx3/installation',
+      note: 'Install `trix` for your platform by following the official guide. Skip if it is already on your PATH.',
     },
     {
       kind: 'shell',
