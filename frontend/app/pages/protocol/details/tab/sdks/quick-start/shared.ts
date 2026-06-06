@@ -143,8 +143,8 @@ const LANG_LABEL: Record<SDKKey, string> = {
 // `trix codegen` writes each protocol's binding into a subfolder named after
 // the protocol (raw name, no casing transform) under the plugin output dir,
 // alongside a README with language-specific usage instructions.
-function generatedReadmePath(lang: SDKKey, protocol: Protocol): string {
-  return `${OUTPUT_DIR[lang]}/${protocol.name}/README.md`;
+function generatedOutputDir(lang: SDKKey, protocol: Protocol): string {
+  return `${OUTPUT_DIR[lang]}/${protocol.name}`;
 }
 
 export function bindingPlugin(lang: SDKKey): string {
@@ -187,14 +187,7 @@ export function commonSetupSteps(lang: SDKKey, protocol: Protocol): SetupStep[] 
       lang: 'bash',
       title: 'Generate the client',
       body: `trix codegen --plugin ${CODEGEN_PLUGIN[lang]}`,
-      note: `Adds the [[codegen]] entry to trix.toml on first run and writes the typed client (defaults to .tx3/codegen/${CODEGEN_PLUGIN[lang]}/; override with output_dir in trix.toml).`,
-    },
-    {
-      kind: 'shell',
-      lang: 'bash',
-      title: 'Read the generated client\'s README',
-      body: generatedReadmePath(lang, protocol),
-      note: `Open this README for ${LANG_LABEL[lang]}-specific instructions on installing the runtime SDK dependency and using the generated client.`,
+      note: `Adds the [[codegen]] entry to trix.toml on first run and writes the typed client to ${generatedOutputDir(lang, protocol)}/. Open the README there for ${LANG_LABEL[lang]}-specific instructions on installing the runtime SDK and using the client.`,
     },
   ];
 }
