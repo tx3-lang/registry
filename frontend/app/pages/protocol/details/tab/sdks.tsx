@@ -152,7 +152,20 @@ function SetupSection({ steps }: SetupSectionProps) {
             {step.note && (
               <p className="text-zinc-400 text-sm">{step.note}</p>
             )}
-            <CodeBlock lang={step.lang} code={step.body} className={codeBlockClasses} />
+            {step.kind === 'link' && step.href
+              ? (
+                <a
+                  href={step.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-fit items-center rounded-md border border-zinc-800 px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-900"
+                >
+                  {step.body}
+                </a>
+              )
+              : (
+                <CodeBlock lang={step.lang} code={step.body} className={codeBlockClasses} />
+              )}
           </li>
         ))}
       </ol>
