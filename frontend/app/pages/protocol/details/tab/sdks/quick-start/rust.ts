@@ -55,12 +55,12 @@ function quickStart(protocol: Protocol, profile: Profile | null, trp: TrpConfig)
   const lines: string[] = [
     `use ${crate}::Client;`,
     'use tx3_sdk::Party;',
-    'use tx3_sdk::signer::Ed25519Signer;',
+    'use tx3_sdk::signer::CardanoSigner;',
     'use tx3_sdk::trp::ClientOptions;',
     '',
     ...clientOptionsBlock(trp),
     '',
-    'let signer = Ed25519Signer::from_hex("addr_test1...", "deadbeef...")?;',
+    'let signer = CardanoSigner::from_hex("addr_test1...", "deadbeef...")?;',
     '',
   ];
   if (partyLines.length === 0) {
