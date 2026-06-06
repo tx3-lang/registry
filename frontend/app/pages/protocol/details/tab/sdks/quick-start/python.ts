@@ -2,7 +2,6 @@ import {
   placeholderFor,
   profileSuppliedNames,
   type SdkRenderer,
-  type SetupStep,
   toPascalCase,
   toSnakeCase,
   type TrpConfig,
@@ -91,17 +90,8 @@ function lifecycle(_protocol: Protocol): string {
   ].join('\n');
 }
 
-const postCodegenInstall: SetupStep = {
-  kind: 'shell',
-  lang: 'bash',
-  title: 'Install the generated client\'s dependencies',
-  body: 'cd gen/python && pip install -r requirements.txt',
-  note: 'The generated requirements.txt pins tx3-sdk and its deps.',
-};
-
 export const pythonRenderer: SdkRenderer = {
   lang: 'python',
-  postCodegenInstall,
   quickStart,
   txBlock,
   lifecycle,

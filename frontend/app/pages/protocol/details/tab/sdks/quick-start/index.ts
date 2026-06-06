@@ -49,11 +49,9 @@ export function generateQuickStart(
   const { profile, trp } = options;
   const txs = [...(protocol.transactions ?? [])].sort(byName);
   const renderer = RENDERERS[sdk];
-  const setupSteps = [...commonSetupSteps(sdk, protocol)];
-  if (renderer.postCodegenInstall) setupSteps.push(renderer.postCodegenInstall);
   return {
     lang: renderer.lang,
-    setupSteps,
+    setupSteps: commonSetupSteps(sdk, protocol),
     quickStart: renderer.quickStart(protocol, profile, trp),
     transactions: txs.map(tx => ({
       name: tx.name,

@@ -2,7 +2,6 @@ import {
   placeholderFor,
   profileSuppliedNames,
   type SdkRenderer,
-  type SetupStep,
   toPascalCase,
   type TrpConfig,
   unboundParties,
@@ -124,17 +123,8 @@ function lifecycle(_protocol: Protocol): string {
   ].join('\n');
 }
 
-const postCodegenInstall: SetupStep = {
-  kind: 'shell',
-  lang: 'bash',
-  title: 'Install the generated client\'s dependencies',
-  body: 'cd gen/go && go mod tidy',
-  note: 'The generated go.mod declares the tx3 go-sdk; `go mod tidy` resolves it.',
-};
-
 export const goRenderer: SdkRenderer = {
   lang: 'go',
-  postCodegenInstall,
   quickStart,
   txBlock,
   lifecycle,

@@ -38,10 +38,6 @@ export interface QuickStartSnippet {
 // Plug a new SDK in by implementing this and registering it in `index.ts`.
 export interface SdkRenderer {
   lang: SupportedLanguages;
-  // Optional follow-up after `trix codegen` to install the dependencies of the
-  // generated client (the codegen output declares its SDK dep — Cargo picks it
-  // up on build, so Rust doesn't need this; npm/pip/go need an explicit step).
-  postCodegenInstall: SetupStep | null;
   quickStart(protocol: Protocol, profile: Profile | null, trp: TrpConfig): string;
   txBlock(tx: Tx, protocol: Protocol): string;
   // The sign + submit chain that takes any resolved tx from `txBlock` and pushes
@@ -132,6 +128,21 @@ const OUTPUT_DIR: Record<SDKKey, string> = {
   python: './gen/python',
 };
 
+// Human-readable SDK names, used in prose.
+const LANG_LABEL: Record<SDKKey, string> = {
+  typescript: 'TypeScript',
+  rust: 'Rust',
+  go: 'Go',
+  python: 'Python',
+};
+
+// `trix codegen` writes each protocol's binding into a subfolder named after
+// the protocol (raw name, no casing transform) under the plugin output dir,
+// alongside a README with language-specific usage instructions.
+function generatedReadmePath(lang: SDKKey, protocol: Protocol): string {
+  return `${OUTPUT_DIR[lang]}/${protocol.name}/README.md`;
+}
+
 export function bindingPlugin(lang: SDKKey): string {
   return CODEGEN_PLUGIN[lang];
 }
@@ -148,7 +159,7 @@ export function outputDir(lang: SDKKey): string {
   return OUTPUT_DIR[lang];
 }
 
-// Shared install-flow steps. Each renderer prepends its own SDK install step.
+// Shared install-flow steps, covering every SDK end to end.
 export function commonSetupSteps(lang: SDKKey, protocol: Protocol): SetupStep[] {
   const ref = `${protocol.scope}/${protocol.name}:${protocol.version}`;
   return [
@@ -172,6 +183,13 @@ export function commonSetupSteps(lang: SDKKey, protocol: Protocol): SetupStep[] 
       title: 'Generate the client',
       body: `trix codegen --plugin ${CODEGEN_PLUGIN[lang]}`,
       note: `Adds the [[codegen]] entry to trix.toml on first run and writes the typed client (defaults to .tx3/codegen/${CODEGEN_PLUGIN[lang]}/; override with output_dir in trix.toml).`,
+    },
+    {
+      kind: 'shell',
+      lang: 'bash',
+      title: 'Read the generated client\'s README',
+      body: generatedReadmePath(lang, protocol),
+      note: `Open this README for ${LANG_LABEL[lang]}-specific instructions on installing the runtime SDK dependency and using the generated client.`,
     },
   ];
 }
