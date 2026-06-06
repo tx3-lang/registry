@@ -61,7 +61,7 @@ function quickStart(protocol: Protocol, profile: Profile | null, trp: TrpConfig)
     'ctx := context.Background()',
     ...clientOptionsBlock(trp),
     '',
-    'mySigner, err := signer.Ed25519FromHex("addr_test1...", "deadbeef...")',
+    'mySigner, err := signer.CardanoSignerFromHex("addr_test1...", "deadbeef...")',
     'if err != nil {',
     '    log.Fatal(err)',
     '}',

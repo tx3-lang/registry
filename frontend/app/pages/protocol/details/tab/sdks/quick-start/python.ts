@@ -44,10 +44,10 @@ function quickStart(protocol: Protocol, profile: Profile | null, trp: TrpConfig)
   return [
     `from ${module} import Client${hasProfiles ? ', Profile' : ''}`,
     'from tx3_sdk import Party',
-    'from tx3_sdk.signer import Ed25519Signer',
+    'from tx3_sdk.signer import CardanoSigner',
     'from tx3_sdk.trp.client import ClientOptions',
     '',
-    'signer = Ed25519Signer.from_hex("addr_test1...", "deadbeef...")',
+    'signer = CardanoSigner.from_hex("addr_test1...", "deadbeef...")',
     '',
     `client = Client(${clientOptionsLiteral(trp)}${profileArg})`,
     ...partyLines,

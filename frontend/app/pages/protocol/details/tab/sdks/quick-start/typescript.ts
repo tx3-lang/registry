@@ -41,9 +41,9 @@ function quickStart(protocol: Protocol, profile: Profile | null, trp: TrpConfig)
 
   const lines: string[] = [
     `import { Client } from "./gen/typescript/${protocol.name}";`,
-    'import { Ed25519Signer, Party } from "tx3-sdk";',
+    'import { CardanoSigner, Party } from "tx3-sdk";',
     '',
-    'const signer = Ed25519Signer.fromHex("addr_test1...", "deadbeef...");',
+    'const signer = await CardanoSigner.fromHex("addr_test1...", "deadbeef...");',
     '',
   ];
   if (partyLines.length === 0) {
