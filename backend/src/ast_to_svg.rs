@@ -252,6 +252,7 @@ pub(crate) fn extract_party_from_expr(expr: &tir::Expression) -> Option<String> 
             tir::BuiltInOp::Add(a, b)
             | tir::BuiltInOp::Sub(a, b)
             | tir::BuiltInOp::Mul(a, b)
+            | tir::BuiltInOp::Div(a, b)
             | tir::BuiltInOp::Concat(a, b)
             | tir::BuiltInOp::Property(a, b) => {
                 extract_party_from_expr(a).or_else(|| extract_party_from_expr(b))
