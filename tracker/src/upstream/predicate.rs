@@ -21,7 +21,7 @@ pub fn compile(cfg: &UpstreamFilter) -> Result<Option<TxPredicate>> {
         let bytes = decode_bech32_address(addr).map_err(Error::Lift)?;
         alternatives.push(predicate_from_pattern(TxPattern {
             has_address: Some(AddressPattern {
-                exact_address: Bytes::from(bytes),
+                exact_address: Some(Bytes::from(bytes)),
                 ..Default::default()
             }),
             ..Default::default()
@@ -32,7 +32,7 @@ pub fn compile(cfg: &UpstreamFilter) -> Result<Option<TxPredicate>> {
         let bytes = hex::decode(policy_hex)?;
         alternatives.push(predicate_from_pattern(TxPattern {
             moves_asset: Some(AssetPattern {
-                policy_id: Bytes::from(bytes),
+                policy_id: Some(Bytes::from(bytes)),
                 ..Default::default()
             }),
             ..Default::default()
@@ -43,7 +43,7 @@ pub fn compile(cfg: &UpstreamFilter) -> Result<Option<TxPredicate>> {
         let bytes = hex::decode(policy_hex)?;
         alternatives.push(predicate_from_pattern(TxPattern {
             mints_asset: Some(AssetPattern {
-                policy_id: Bytes::from(bytes),
+                policy_id: Some(Bytes::from(bytes)),
                 ..Default::default()
             }),
             ..Default::default()

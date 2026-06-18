@@ -119,12 +119,6 @@ struct NewestImage {
 
 const LIMIT: i64 = 100;
 const TII_MEDIA_TYPE: &str = "application/tii+json";
-// Layer media types `trix publish` may produce alongside the TII. We don't
-// consume the protocol source or README, but oci-client's `pull` validates
-// every layer against `accepted_media_types` before returning, so they must
-// all be listed or the whole pull errors with `IncompatibleLayerMediaType`.
-const PROTOCOL_MEDIA_TYPE: &str = "application/tx3";
-const MARKDOWN_MEDIA_TYPE: &str = "text/markdown";
 
 /// Derive the `oci_client::client::ClientProtocol` from a registry URL string.
 fn oci_protocol(registry_url: &str) -> oci_client::client::ClientProtocol {
@@ -237,15 +231,18 @@ async fn pull_tii(
         Reference::try_from(format!("{registry_host_str}/{scope}/{name}:{version}"))
             .map_err(|e| Error::Config(format!("invalid OCI reference: {e}")))?;
 
-    let image = oci
-        .pull(
-            &reference,
-            &RegistryAuth::Anonymous,
-            vec![TII_MEDIA_TYPE, PROTOCOL_MEDIA_TYPE, MARKDOWN_MEDIA_TYPE],
-        )
+    // Fetch the manifest, then pull only the `application/tii+json` layer's
+    // blob by digest. `oci-client`'s high-level `pull` validates *every* layer
+    // against an accepted-media-type allowlist and errors the whole pull on any
+    // unlisted layer — but `trix publish` attaches extra layers the tracker
+    // neither needs nor wants to enumerate (a README markdown, a logo PNG).
+    // Pulling by digest ignores those layers entirely, so a new layer type on
+    // the publisher side can never break discovery.
+    let (manifest, _digest) = oci
+        .pull_image_manifest(&reference, &RegistryAuth::Anonymous)
         .await?;
 
-    let layer = image
+    let tii_layer = manifest
         .layers
         .iter()
         .find(|l| l.media_type == TII_MEDIA_TYPE)
@@ -255,7 +252,10 @@ async fn pull_tii(
             ))
         })?;
 
-    let tii = serde_json::from_slice::<TiiFile>(&layer.data).map_err(|e| {
+    let mut data: Vec<u8> = Vec::new();
+    oci.pull_blob(&reference, tii_layer, &mut data).await?;
+
+    let tii = serde_json::from_slice::<TiiFile>(&data).map_err(|e| {
         crate::error::Error::Config(format!(
             "failed to decode tii+json layer for {scope}/{name}:{version}: {e}"
         ))

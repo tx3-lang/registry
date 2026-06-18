@@ -6,6 +6,9 @@
 //! `WatchTx` predicate that narrows what gets forwarded to us.
 
 pub mod predicate;
+pub mod retry;
+
+use std::time::Duration;
 
 use prost::bytes::Bytes;
 use tonic::codegen::InterceptedService;
@@ -39,7 +42,16 @@ impl Interceptor for ApiKeyInterceptor {
 
 pub async fn connect(cfg: &UpstreamConfig) -> Result<WatchServiceClient<Channeled>> {
     let mut endpoint = Channel::from_shared(cfg.endpoint.clone())
-        .map_err(|e| Error::Config(format!("invalid endpoint {:?}: {e}", cfg.endpoint)))?;
+        .map_err(|e| Error::Config(format!("invalid endpoint {:?}: {e}", cfg.endpoint)))?
+        // Keep the long-lived stream's HTTP/2 connection warm. Without these,
+        // an idle intermediary (NAT/LB/proxy) silently drops the connection
+        // during inter-block gaps, surfacing later as an h2 body-read error.
+        // The keepalive PINGs also let us detect a dead connection promptly
+        // instead of blocking forever on a half-open socket.
+        .http2_keep_alive_interval(Duration::from_secs(20))
+        .keep_alive_timeout(Duration::from_secs(20))
+        .keep_alive_while_idle(true)
+        .tcp_keepalive(Some(Duration::from_secs(60)));
     if cfg.endpoint.starts_with("https://") {
         endpoint = endpoint.tls_config(ClientTlsConfig::new().with_native_roots())?;
     }

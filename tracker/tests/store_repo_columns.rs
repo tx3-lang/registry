@@ -26,6 +26,8 @@ async fn apply_block_persists_repo_columns(pool: PgPool) {
         tx_name: "burn".to_string(),
         profile_name: "mainnet".to_string(),
         lifted_json: r#"{"tx_id":"10","protocol_name":"orcfax-burn"}"#.to_string(),
+        score: 0,
+        match_rank: 1,
     };
 
     store
@@ -75,6 +77,8 @@ async fn apply_block_handles_multiple_versions_distinctly(pool: PgPool) {
         tx_name: "burn".to_string(),
         profile_name: "mainnet".to_string(),
         lifted_json: r#"{"tx_id":"20","protocol_name":"orcfax-burn"}"#.to_string(),
+        score: 0,
+        match_rank: 1,
     };
 
     let row_b = OwnedMatchRow {
@@ -89,6 +93,8 @@ async fn apply_block_handles_multiple_versions_distinctly(pool: PgPool) {
         tx_name: "burn".to_string(),
         profile_name: "mainnet".to_string(),
         lifted_json: r#"{"tx_id":"21","protocol_name":"orcfax-burn"}"#.to_string(),
+        score: 0,
+        match_rank: 1,
     };
 
     store

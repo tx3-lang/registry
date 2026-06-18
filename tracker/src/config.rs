@@ -9,6 +9,8 @@ pub struct Config {
     pub upstream: UpstreamConfig,
     pub storage: StorageConfig,
     pub oci: OciConfig,
+    #[serde(default)]
+    pub matching: MatchingConfig,
 }
 
 /// Where the tracker pulls chain data from.
@@ -106,6 +108,63 @@ pub struct ProfileOverride {
     #[serde(rename = "match")]
     pub match_: String,
     pub profile: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const BASE: &str = r#"
+[upstream]
+endpoint = "http://localhost:50051"
+profile = "mainnet"
+
+[storage]
+database_url = "postgres://localhost/test"
+
+[oci]
+registry_url = "http://localhost:5000"
+"#;
+
+    #[test]
+    fn matching_defaults_to_all_when_block_omitted() {
+        let cfg: Config = toml::from_str(BASE).unwrap();
+        assert_eq!(cfg.matching.mode, MatchMode::All);
+    }
+
+    #[test]
+    fn matching_mode_best_is_parsed() {
+        let s = format!("{}\n[matching]\nmode = \"best\"\n", BASE);
+        let cfg: Config = toml::from_str(&s).unwrap();
+        assert_eq!(cfg.matching.mode, MatchMode::Best);
+    }
+
+    #[test]
+    fn matching_mode_all_is_parsed() {
+        let s = format!("{}\n[matching]\nmode = \"all\"\n", BASE);
+        let cfg: Config = toml::from_str(&s).unwrap();
+        assert_eq!(cfg.matching.mode, MatchMode::All);
+    }
+
+    #[test]
+    fn matching_mode_unknown_value_fails() {
+        let s = format!("{}\n[matching]\nmode = \"bogus\"\n", BASE);
+        assert!(toml::from_str::<Config>(&s).is_err());
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum MatchMode {
+    #[default]
+    All,
+    Best,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct MatchingConfig {
+    #[serde(default)]
+    pub mode: MatchMode,
 }
 
 pub fn load(path: impl AsRef<Path>) -> Result<Config> {
