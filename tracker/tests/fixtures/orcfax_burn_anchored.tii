@@ -23,7 +23,9 @@
   },
   "profiles": {
     "mainnet": {
-      "environment": {},
+      "environment": {
+        "anchor_policy": "00112233445566778899aabbccddeeff00112233445566778899aabb"
+      },
       "parties": {}
     }
   }
