@@ -20,8 +20,8 @@ fn anchored_source() -> DiscoveredSource {
 
 fn anchorless_source() -> DiscoveredSource {
     let tii: TiiFile =
-        serde_json::from_str(include_str!("fixtures/orcfax_burn.tii"))
-            .expect("failed to parse orcfax_burn.tii");
+        serde_json::from_str(include_str!("fixtures/orcfax_burn_anchorless.tii"))
+            .expect("failed to parse orcfax_burn_anchorless.tii");
 
     DiscoveredSource {
         source_name: "txpipe/orcfax-burn:1.0.0".to_string(),
