@@ -123,6 +123,49 @@ fn manifest_json_no_tii_layer() -> Vec<u8> {
     json.into_bytes()
 }
 
+/// OCI manifest JSON with a TII layer AND a non-TII `image/png` logo layer —
+/// the shape `trix publish` produces when `[protocol].logo` is set. The tracker
+/// must pull only the TII blob by digest and ignore the logo layer entirely.
+fn manifest_json_with_logo(tii_bytes: &[u8]) -> Vec<u8> {
+    let tii_digest = sha256_hex(tii_bytes);
+    let tii_size = tii_bytes.len();
+
+    let config_bytes = dummy_config_bytes();
+    let config_digest = sha256_hex(&config_bytes);
+    let config_size = config_bytes.len();
+
+    // A fake PNG logo layer. Its blob is deliberately NOT stubbed by the test,
+    // so a regression that pulls every layer would 404 here and fail.
+    let logo_bytes: &[u8] = b"\x89PNG\r\n\x1a\nfake-logo-bytes";
+    let logo_digest = sha256_hex(logo_bytes);
+    let logo_size = logo_bytes.len();
+
+    let json = format!(
+        r#"{{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.manifest.v1+json",
+  "config": {{
+    "mediaType": "application/vnd.oci.image.config.v1+json",
+    "digest": "{config_digest}",
+    "size": {config_size}
+  }},
+  "layers": [
+    {{
+      "mediaType": "application/tii+json",
+      "digest": "{tii_digest}",
+      "size": {tii_size}
+    }},
+    {{
+      "mediaType": "image/png",
+      "digest": "{logo_digest}",
+      "size": {logo_size}
+    }}
+  ]
+}}"#
+    );
+    json.into_bytes()
+}
+
 /// Returns a bare `OciConfig` pointing at `registry_url` with no filters.
 fn oci_config(registry_url: &str) -> OciConfig {
     OciConfig {
@@ -487,4 +530,99 @@ async fn fetch_catalog_errors_on_missing_tii_layer() {
             || msg.contains("Incompatible layer media type"),
         "error message should indicate missing tii+json layer, got: {msg}"
     );
+}
+
+// ---------------------------------------------------------------------------
+// Test 6: a logo (image/png) layer must not break discovery
+// ---------------------------------------------------------------------------
+
+/// Regression: `trix publish` attaches a `[protocol].logo` as an `image/png`
+/// layer. The tracker must pull only the `application/tii+json` blob by digest
+/// and ignore the logo, instead of erroring the whole pull on the unlisted
+/// media type. The logo blob is deliberately NOT stubbed, so a regression that
+/// pulls every layer would fail trying to fetch it.
+#[tokio::test]
+async fn fetch_catalog_ignores_logo_png_layer() {
+    let server = MockServer::start().await;
+
+    let tii_bytes = FIXTURE_TII;
+    let tii_digest = sha256_hex(tii_bytes);
+    let manifest = manifest_json_with_logo(tii_bytes);
+    let manifest_digest = sha256_hex(&manifest);
+
+    // Auth ping
+    Mock::given(method("GET"))
+        .and(path("/v2/"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+
+    // Single-page catalog with one repo
+    let single_page = serde_json::json!({
+        "data": {
+            "RepoListWithNewestImage": {
+                "Page": { "TotalCount": 1, "ItemCount": 0 },
+                "Results": [
+                    {
+                        "Name": "txpipe/orcfax-burn",
+                        "NewestImage": { "Tag": "1.0.0", "Vendor": null }
+                    }
+                ]
+            }
+        }
+    });
+    Mock::given(method("GET"))
+        .and(path("/v2/_zot/ext/search"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(single_page))
+        .mount(&server)
+        .await;
+
+    // Manifest carrying a TII layer + a logo (image/png) layer.
+    Mock::given(method("GET"))
+        .and(path("/v2/txpipe/orcfax-burn/manifests/1.0.0"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("Content-Type", "application/vnd.oci.image.manifest.v1+json")
+                .insert_header("Docker-Content-Digest", manifest_digest.as_str())
+                .set_body_bytes(manifest),
+        )
+        .mount(&server)
+        .await;
+
+    // Config blob — stubbed so the pre-fix code path (`oci-client`'s high-level
+    // `pull`, which fetches manifest+config *then* validates layer media types)
+    // reaches the validation step and fails with the real production error
+    // (`IncompatibleLayerMediaType: image/png`) rather than a config 404. The
+    // fixed code pulls the manifest only, so this stub is simply unused.
+    let config_bytes = dummy_config_bytes();
+    let config_digest = sha256_hex(&config_bytes);
+    Mock::given(method("GET"))
+        .and(path(format!("/v2/txpipe/orcfax-burn/blobs/{config_digest}")))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("Docker-Content-Digest", config_digest.as_str())
+                .set_body_bytes(config_bytes),
+        )
+        .mount(&server)
+        .await;
+
+    // Only the TII blob is stubbed — NOT the logo blob. If discovery tried to
+    // pull every layer, the logo fetch would 404 and fail this test.
+    Mock::given(method("GET"))
+        .and(path(format!("/v2/txpipe/orcfax-burn/blobs/{tii_digest}")))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("Docker-Content-Digest", tii_digest.as_str())
+                .set_body_bytes(tii_bytes),
+        )
+        .mount(&server)
+        .await;
+
+    let oci = oci_config(&server.uri());
+    let result = fetch_catalog(&oci, DEFAULT_PROFILE)
+        .await
+        .expect("fetch_catalog must ignore the logo layer and succeed");
+
+    assert_eq!(result.len(), 1, "should return the single protocol");
+    assert_eq!(result[0].source_name, "txpipe/orcfax-burn:1.0.0");
 }
