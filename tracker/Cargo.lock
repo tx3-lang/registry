@@ -3671,7 +3671,7 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 [[package]]
 name = "tx3-lift"
 version = "0.1.0"
-source = "git+https://github.com/tx3-lang/tx3-lift?rev=e8c91bf652fe8558eae761c2d9509d518b952b89#e8c91bf652fe8558eae761c2d9509d518b952b89"
+source = "git+https://github.com/tx3-lang/tx3-lift?rev=827b499d6f790b19b235b4ed370d9343a226fedd#827b499d6f790b19b235b4ed370d9343a226fedd"
 dependencies = [
  "bech32 0.11.1",
  "hex",
@@ -3686,7 +3686,7 @@ dependencies = [
 [[package]]
 name = "tx3-lift-cardano"
 version = "0.1.0"
-source = "git+https://github.com/tx3-lang/tx3-lift?rev=e8c91bf652fe8558eae761c2d9509d518b952b89#e8c91bf652fe8558eae761c2d9509d518b952b89"
+source = "git+https://github.com/tx3-lang/tx3-lift?rev=827b499d6f790b19b235b4ed370d9343a226fedd#827b499d6f790b19b235b4ed370d9343a226fedd"
 dependencies = [
  "hex",
  "pallas",
@@ -3842,9 +3842,9 @@ checksum = "b6c140620e7ffbb22c2dee59cafe6084a59b5ffc27a8859a5f0d494b5d52b6be"
 
 [[package]]
 name = "utxorpc-spec"
-version = "0.19.0"
+version = "0.19.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53c5b06a64d715d79a25bebafacd4c24bfed6fd1e9725fab03e02fb67db08663"
+checksum = "aa35373e6fbf0ea73651328aecd1641f92684de54bd908e3aa9855866b1c9875"
 dependencies = [
  "bytes",
  "futures-core",
