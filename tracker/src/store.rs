@@ -29,6 +29,8 @@ pub struct OwnedMatchRow {
     pub tx_name: String,
     pub profile_name: String,
     pub lifted_json: String,
+    pub score: u32,
+    pub match_rank: u32,
 }
 
 /// Postgres-backed persistence for the tracker daemon.
@@ -101,8 +103,9 @@ impl Store {
                 "INSERT INTO matches \
                    (tx_hash, block_slot, block_hash, source_name, \
                     repo_scope, repo_name, repo_version, \
-                    protocol_name, tx_name, profile_name, lifted) \
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb) \
+                    protocol_name, tx_name, profile_name, lifted, \
+                    score, match_rank) \
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12, $13) \
                  ON CONFLICT (tx_hash, source_name) DO NOTHING",
             )
             .bind(&row.tx_hash)
@@ -116,6 +119,8 @@ impl Store {
             .bind(&row.tx_name)
             .bind(&row.profile_name)
             .bind(&row.lifted_json) // bound as String; cast ::jsonb in SQL
+            .bind(row.score as i32)
+            .bind(row.match_rank as i32)
             .execute(&mut *tx)
             .await?
             .rows_affected();
