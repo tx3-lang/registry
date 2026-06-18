@@ -71,7 +71,7 @@ pub async fn run(config_path: PathBuf) -> Result<()> {
                 };
                 match response.action {
                     Some(watch_tx_response::Action::Apply(any_tx)) => {
-                        process::apply_tx(any_tx, &specialized, &lifter, &store).await?;
+                        process::apply_tx(any_tx, &specialized, &lifter, &store, cfg.matching.mode).await?;
                     }
                     Some(watch_tx_response::Action::Undo(any_tx)) => {
                         process::undo_tx(any_tx, &store).await?;
