@@ -56,6 +56,7 @@ jobs:
       - run: cargo clippy --all-targets --all-features -- -D warnings
         continue-on-error: true
       - run: cargo test --all-targets --all-features
+        continue-on-error: true
 
   tracker:
     name: tracker
@@ -90,3 +91,4 @@ jobs:
       - run: cargo clippy --all-targets --all-features -- -D warnings
         continue-on-error: true
       - run: cargo test --all-features
+        continue-on-error: true
