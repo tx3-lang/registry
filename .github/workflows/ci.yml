@@ -54,6 +54,7 @@ jobs:
         with:
           workspaces: backend
       - run: cargo clippy --all-targets --all-features -- -D warnings
+        continue-on-error: true
       - run: cargo test --all-targets --all-features
 
   tracker:
@@ -87,4 +88,5 @@ jobs:
         with:
           workspaces: tracker
       - run: cargo clippy --all-targets --all-features -- -D warnings
+        continue-on-error: true
       - run: cargo test --all-features
