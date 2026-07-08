@@ -5,6 +5,7 @@ edition     = "2021"
 license     = "Apache-2.0"
 repository  = "https://github.com/tx3-lang/registry"
 description = "24/7 tracker daemon for the tx3 registry — lifts matched txs into Postgres"
+publish     = false
 
 [lib]
 name = "tx3_registry_tracker"
