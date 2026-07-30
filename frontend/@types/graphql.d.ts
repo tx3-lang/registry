@@ -95,8 +95,15 @@ interface ProfileParty {
 interface Protocol {
   description: Maybe<Scalars['String']['output']>;
   environment: Array<EnvironmentParam>;
+  /**
+   * Project homepage, read from the `org.opencontainers.image.url`
+   * annotation of the published OCI manifest. Populated on the detail
+   * query (which pulls the manifest); `None` on list queries.
+   */
+  homepageUrl: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
+  /** Parties in a stable order (sorted by name); see [`Self::transactions`]. */
   parties: Array<Party>;
   profiles: Array<Profile>;
   publishedDate: Scalars['Int']['output'];
@@ -104,6 +111,11 @@ interface Protocol {
   repositoryUrl: Maybe<Scalars['String']['output']>;
   scope: Scalars['String']['output'];
   source: Maybe<Scalars['String']['output']>;
+  /**
+   * Transactions in a stable order (sorted by name). The TII stores them in
+   * a map, whose iteration order must never leak into the API: it would
+   * reshuffle the UI on every load.
+   */
   transactions: Array<Tx>;
   version: Scalars['String']['output'];
 }

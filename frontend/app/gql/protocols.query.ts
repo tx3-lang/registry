@@ -84,6 +84,7 @@ export const DETAIL_QUERY = gql`
       version
       publishedDate
       repositoryUrl
+      homepageUrl
       readme
       description
       source

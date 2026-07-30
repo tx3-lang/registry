@@ -4,7 +4,7 @@ import {
   type SdkRenderer,
   toPascalCase,
   type TrpConfig,
-  unboundParties,
+  unboundPartyBindings,
   userProvidedParams,
 } from './shared';
 
@@ -33,14 +33,14 @@ function clientOptionsBlock(trp: TrpConfig): string[] {
 function quickStart(protocol: Protocol, profile: Profile | null, trp: TrpConfig): string {
   const hasProfiles = (protocol.profiles ?? []).length > 0;
   const supplied = profileSuppliedNames(profile);
-  const unbound = unboundParties(protocol, supplied);
+  const unbound = unboundPartyBindings(protocol, profile, supplied);
   const profileArg = hasProfiles && profile
     ? `, protocol.Profile${toPascalCase(profile.name)}`
     : '';
 
-  const partyLines = unbound.map((p, i) => {
+  const partyLines = unbound.map(p => {
     const setter = `With${toPascalCase(p.name)}`;
-    if (i === 0) {
+    if (p.kind === 'signer') {
       return `    .${setter}(facade.SignerParty(signer))`;
     }
     return `    .${setter}(facade.AddressParty(${JSON.stringify(p.address)}))`;
@@ -54,7 +54,9 @@ function quickStart(protocol: Protocol, profile: Profile | null, trp: TrpConfig)
     '    "github.com/tx3-lang/go-sdk/sdk/facade"',
     '    "github.com/tx3-lang/go-sdk/sdk/signer"',
     '    "github.com/tx3-lang/go-sdk/sdk/trp"',
-    '    "./gen/go/protocol"',
+    '',
+    '    // The generated module; its package name is `protocol`.',
+    `    ${JSON.stringify(`yourapp/${protocol.name}`)}`,
     ')',
     '',
     'ctx := context.Background()',

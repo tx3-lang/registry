@@ -53,18 +53,83 @@ export const byName = <T extends { name: string; }>(a: T, b: T) => a.name.locale
 
 export const PARTY_ADDRESS_PLACEHOLDER = 'addr_test1...';
 
+export type PartyBindingKind = 'signer' | 'address';
+
 export interface PartyBinding {
   name: string;
+  kind: PartyBindingKind;
+  // Meaningful when `kind` is 'address': a concrete address from the profile
+  // env, or a placeholder naming what the caller must provide.
   address: string;
 }
 
+// Script parties (`positionscript`, `commitscript`, ...) are protocol-owned
+// addresses. They must never receive the caller's signer or wallet address.
+export function isScriptParty(name: string): boolean {
+  return /script$/i.test(name);
+}
+
+function normalizeKey(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+const BECH32_ADDRESS = /^(addr|addr_test|stake|stake_test)1[02-9ac-hj-np-z]+$/i;
+
+// Script-party address sourced from the selected profile's environment: an env
+// key matching the party name (optionally suffixed `address`/`addr`) whose
+// value is a bech32 address.
+export function envScriptAddress(profile: Profile | null, partyName: string): string | null {
+  if (!profile?.environment) return null;
+  let env: Record<string, unknown>;
+  try {
+    env = JSON.parse(profile.environment) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+  const target = normalizeKey(partyName);
+  for (const [key, value] of Object.entries(env)) {
+    const norm = normalizeKey(key);
+    const matches = norm === target || norm === `${target}address` || norm === `${target}addr`;
+    if (matches && typeof value === 'string' && BECH32_ADDRESS.test(value)) {
+      return value;
+    }
+  }
+  return null;
+}
+
+export function scriptAddressPlaceholder(partyName: string): string {
+  return `<${partyName} script address>`;
+}
+
 // Parties declared by the protocol that the profile does NOT supply — these
-// need a `.with<Name>(...)` call on the generated Client.
-export function unboundParties(protocol: Protocol, supplied: Set<string>): PartyBinding[] {
-  return [...(protocol.parties ?? [])]
+// need a `.with<Name>(...)` call on the generated Client. The signer belongs
+// to the first non-script party (the caller's own wallet, e.g. `user` or
+// `participant`); a script party takes its address from the profile env when
+// one is published, and an explicit script-address placeholder otherwise.
+export function unboundPartyBindings(
+  protocol: Protocol,
+  profile: Profile | null,
+  supplied: Set<string>,
+): PartyBinding[] {
+  const unbound = [...(protocol.parties ?? [])]
     .filter(p => !supplied.has(p.name))
-    .sort(byName)
-    .map(p => ({ name: p.name, address: PARTY_ADDRESS_PLACEHOLDER }));
+    .sort(byName);
+
+  const signerName = unbound.find(p => !isScriptParty(p.name))?.name ?? null;
+
+  return unbound.map(p => {
+    if (p.name === signerName) {
+      return { name: p.name, kind: 'signer' as const, address: '' };
+    }
+    if (isScriptParty(p.name)) {
+      return {
+        name: p.name,
+        kind: 'address' as const,
+        address: envScriptAddress(profile, p.name) ?? scriptAddressPlaceholder(p.name),
+      };
+    }
+    return { name: p.name, kind: 'address' as const, address: PARTY_ADDRESS_PLACEHOLDER };
+  });
 }
 
 export function toCamelCase(name: string): string {
@@ -125,11 +190,14 @@ const CODEGEN_PLUGIN: Record<SDKKey, string> = {
   python: 'python-client',
 };
 
+// Default output dir used by `trix codegen` when the `[[codegen]]` entry sets
+// no explicit `output_dir`: `.tx3/codegen/{plugin}/` (see trix
+// `CodegenConfig::output_dir`).
 const OUTPUT_DIR: Record<SDKKey, string> = {
-  typescript: './gen/typescript',
-  rust: './gen/rust',
-  go: './gen/go',
-  python: './gen/python',
+  typescript: '.tx3/codegen/ts-client',
+  rust: '.tx3/codegen/rust-client',
+  go: '.tx3/codegen/go-client',
+  python: '.tx3/codegen/python-client',
 };
 
 // Human-readable SDK names, used in prose.
@@ -145,22 +213,6 @@ const LANG_LABEL: Record<SDKKey, string> = {
 // alongside a README with language-specific usage instructions.
 function generatedOutputDir(lang: SDKKey, protocol: Protocol): string {
   return `${OUTPUT_DIR[lang]}/${protocol.name}`;
-}
-
-export function bindingPlugin(lang: SDKKey): string {
-  return CODEGEN_PLUGIN[lang];
-}
-
-export function bindingsTomlBlock(lang: SDKKey): string {
-  return [
-    '[[codegen]]',
-    `plugin = ${JSON.stringify(CODEGEN_PLUGIN[lang])}`,
-    `output_dir = ${JSON.stringify(OUTPUT_DIR[lang])}`,
-  ].join('\n');
-}
-
-export function outputDir(lang: SDKKey): string {
-  return OUTPUT_DIR[lang];
 }
 
 // Shared install-flow steps, covering every SDK end to end.

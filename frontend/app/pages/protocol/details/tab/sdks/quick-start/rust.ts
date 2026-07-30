@@ -5,7 +5,7 @@ import {
   toPascalCase,
   toSnakeCase,
   type TrpConfig,
-  unboundParties,
+  unboundPartyBindings,
   userProvidedParams,
 } from './shared';
 
@@ -39,14 +39,14 @@ function quickStart(protocol: Protocol, profile: Profile | null, trp: TrpConfig)
   const crate = cratePath(protocol);
   const hasProfiles = (protocol.profiles ?? []).length > 0;
   const supplied = profileSuppliedNames(profile);
-  const unbound = unboundParties(protocol, supplied);
+  const unbound = unboundPartyBindings(protocol, profile, supplied);
   const profileArg = hasProfiles && profile
     ? `, ${crate}::Profile::${toPascalCase(profile.name)}`
     : '';
 
-  const partyLines = unbound.map((p, i) => {
+  const partyLines = unbound.map(p => {
     const setter = `with_${toSnakeCase(p.name)}`;
-    if (i === 0) {
+    if (p.kind === 'signer') {
       return `    .${setter}(Party::signer(signer))`;
     }
     return `    .${setter}(Party::address(${JSON.stringify(p.address)}))`;

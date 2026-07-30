@@ -9,6 +9,9 @@ import { Dropdown } from '~/components/ui/Dropdown';
 // Config
 import { getTrpForProfile } from '~/trp-config';
 
+// Internal
+import { profileHasData } from './sdks/quick-start';
+
 interface Props {
   protocol: Protocol;
 }
@@ -227,7 +230,11 @@ const Transaction: React.FunctionComponent<TransactionProps> = props => {
 };
 
 export function TabTryOut({ protocol }: Props) {
-  const profiles = protocol.profiles ?? [];
+  // Gate channels on actual profile presence in the protocol's `.tii`: a
+  // channel whose profile is an empty stub is not executable and must not be
+  // offered. When a missing profile is later published, it appears here
+  // without further UI work.
+  const profiles = (protocol.profiles ?? []).filter(profileHasData);
 
   return (
     <div className="container pt-8 pb-14 flex flex-col gap-8">
