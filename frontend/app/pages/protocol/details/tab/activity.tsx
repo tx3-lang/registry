@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useFetcher, useSearchParams } from 'react-router';
 import { type darkStyles, JsonView } from 'react-json-view-lite';
 
-import { parseLifted, truncateHex } from '~/lib/tracker/lifted';
+import { type LiftedReference, parseLifted, truncateHex } from '~/lib/tracker/lifted';
 import { useFetcherPolling } from '~/hooks/useFetcherPolling';
 import { PartyChip } from './activity/PartyChip';
 import { TxNamePill } from './activity/TxNamePill';
@@ -326,7 +326,7 @@ function DetailView({ match, hash, loading }: { match: Match | null; hash: strin
     );
   }
 
-  const { parties } = parseLifted(match.lifted);
+  const { parties, references } = parseLifted(match.lifted);
 
   return (
     <div className="space-y-6">
@@ -334,6 +334,7 @@ function DetailView({ match, hash, loading }: { match: Match | null; hash: strin
       <article className="space-y-8">
         <DetailHeader match={match} />
         <PartiesSection parties={parties} />
+        <ReferencesSection references={references} />
         <RawLiftedDetails rawLifted={match.lifted} />
       </article>
     </div>
@@ -385,6 +386,32 @@ function PartiesSection({ parties }: { parties: Record<string, { address: string
             ))}
           </div>
         )}
+    </section>
+  );
+}
+
+// Reference inputs of the matched transaction, as `txhash#index`. This is the
+// discovery surface for ref-UTxO parameters (e.g. bodega's `project_info_ref`):
+// callers can read the concrete values real on-chain transactions used.
+function ReferencesSection({ references }: { references: LiftedReference[]; }) {
+  if (references.length === 0) return null;
+
+  return (
+    <section className="space-y-3">
+      <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+        Reference inputs ({references.length})
+      </h3>
+      <div className="rounded-md border border-zinc-800 bg-zinc-950 overflow-hidden">
+        {references.map((reference, i) => (
+          <div
+            key={`${reference.name}-${i}`}
+            className="px-4 py-2.5 border-b last:border-b-0 border-zinc-800/50 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-0"
+          >
+            <span className="sm:w-40 text-zinc-400 font-mono text-sm break-all">{reference.name || '—'}</span>
+            <span className="flex-1 font-mono text-sm text-zinc-50 break-all select-all">{reference.ref}</span>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }

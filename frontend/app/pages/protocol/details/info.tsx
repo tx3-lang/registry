@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import dayjs from 'dayjs';
 
 import { GitIcon } from '~/components/icons/git';
+import { WorldIcon } from '~/components/icons/world';
 
 interface Props {
   className?: string;
@@ -26,6 +27,16 @@ export function Info({ protocol, className }: Props) {
         <p className="text-zinc-500">Published by</p>
         <p className="mt-2 text-lg text-primary-600">@{protocol.scope}</p>
       </div>
+
+      {protocol.homepageUrl && (
+        <div>
+          <p className="text-zinc-500">Homepage</p>
+          <a href={protocol.homepageUrl} className="w-fit mt-2 text-zinc-100 flex items-center gap-2" target="_blank" rel="noreferrer">
+            <WorldIcon width="20" height="20" />
+            <span className="underline">{protocol.homepageUrl.replace(/http(s)?:\/\//i, '').replace(/\/$/, '')}</span>
+          </a>
+        </div>
+      )}
 
       {protocol.repositoryUrl && (
         <div>

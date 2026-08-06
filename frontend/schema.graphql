@@ -107,12 +107,26 @@ type Protocol {
 	name: String!
 	scope: String!
 	repositoryUrl: String
+	"""
+	Project homepage, read from the `org.opencontainers.image.url`
+	annotation of the published OCI manifest. Populated on the detail
+	query (which pulls the manifest); `None` on list queries.
+	"""
+	homepageUrl: String
 	publishedDate: Int!
 	version: String!
 	readme: String
 	source: String
 	description: String
+	"""
+	Transactions in a stable order (sorted by name). The TII stores them in
+	a map, whose iteration order must never leak into the API: it would
+	reshuffle the UI on every load.
+	"""
 	transactions: [Tx!]!
+	"""
+	Parties in a stable order (sorted by name); see [`Self::transactions`].
+	"""
 	parties: [Party!]!
 	profiles: [Profile!]!
 	environment: [EnvironmentParam!]!

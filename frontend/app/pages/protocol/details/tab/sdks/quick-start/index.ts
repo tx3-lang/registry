@@ -24,7 +24,11 @@ const RENDERERS: Record<SDKKey, SdkRenderer> = {
   go: goRenderer,
 };
 
-function profileHasData(profile: Profile): boolean {
+// A profile "exists" only when the published `.tii` gives it actual content —
+// party addresses or environment values. Publishers emit empty stubs for every
+// known channel (`profiles.{channel}: { environment: {}, parties: {} }`), so
+// key presence alone would list channels the protocol does not really support.
+export function profileHasData(profile: Profile): boolean {
   if (profile.parties.length > 0) return true;
   if (!profile.environment) return false;
   try {

@@ -11,9 +11,21 @@ export interface LiftedParty {
   readonly role: string;
 }
 
+export interface LiftedReference {
+  readonly name: string;
+  /** UTxO reference as `txhash#index`, lowercase hex. */
+  readonly ref: string;
+}
+
 export interface Lifted {
   readonly txName: string;
   readonly parties: Record<string, LiftedParty>;
+  /**
+   * Reference inputs of the matched transaction. This is how callers discover
+   * the concrete UTxO refs a protocol expects as parameters (e.g. bodega's
+   * `project_info_ref`): the values real on-chain transactions used.
+   */
+  readonly references: LiftedReference[];
   readonly raw: string;
 }
 
@@ -46,9 +58,15 @@ interface RawLiftedParty {
   role?: unknown;
 }
 
+interface RawLiftedReference {
+  tir_input_name?: unknown;
+  utxo_ref?: unknown;
+}
+
 interface RawLifted {
   tx_name?: unknown;
   parties?: Record<string, unknown>;
+  references?: unknown;
 }
 
 /**
@@ -73,5 +91,26 @@ export function parseLifted(json: string): Lifted {
     }
   }
 
-  return { txName, parties, raw: json };
+  // The tracker writes a reference input as
+  // `{ tir_input_name, utxo_ref: [[...tx hash bytes], index], ... }`.
+  const references: LiftedReference[] = [];
+  if (Array.isArray(data.references)) {
+    for (const value of data.references) {
+      if (!value || typeof value !== 'object') continue;
+      const entry = value as RawLiftedReference;
+      if (!Array.isArray(entry.utxo_ref) || entry.utxo_ref.length !== 2) continue;
+      const [hash, index] = entry.utxo_ref as [unknown, unknown];
+      if (!Array.isArray(hash) || typeof index !== 'number') continue;
+      try {
+        references.push({
+          name: typeof entry.tir_input_name === 'string' ? entry.tir_input_name : '',
+          ref: `${bytesToHex(hash as number[])}#${index}`,
+        });
+      } catch {
+        // malformed byte array — skip this entry, keep the rest
+      }
+    }
+  }
+
+  return { txName, parties, references, raw: json };
 }

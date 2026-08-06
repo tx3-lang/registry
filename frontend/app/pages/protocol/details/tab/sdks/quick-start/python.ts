@@ -5,12 +5,14 @@ import {
   toPascalCase,
   toSnakeCase,
   type TrpConfig,
-  unboundParties,
+  unboundPartyBindings,
   userProvidedParams,
 } from './shared';
 
+// The generated package is the protocol's own folder (snake_cased so the
+// module name stays a valid Python identifier); there is no `gen.` prefix.
 function pythonModule(protocol: Protocol): string {
-  return `gen.python.${toSnakeCase(protocol.name)}`;
+  return toSnakeCase(protocol.name);
 }
 
 function clientOptionsLiteral(trp: TrpConfig): string {
@@ -27,14 +29,14 @@ function quickStart(protocol: Protocol, profile: Profile | null, trp: TrpConfig)
   const module = pythonModule(protocol);
   const hasProfiles = (protocol.profiles ?? []).length > 0;
   const supplied = profileSuppliedNames(profile);
-  const unbound = unboundParties(protocol, supplied);
+  const unbound = unboundPartyBindings(protocol, profile, supplied);
   const profileArg = hasProfiles && profile
     ? `, Profile.${toSnakeCase(profile.name).toUpperCase()}`
     : '';
 
-  const partyLines = unbound.map((p, i) => {
+  const partyLines = unbound.map(p => {
     const setter = `with_${toSnakeCase(p.name)}`;
-    if (i === 0) {
+    if (p.kind === 'signer') {
       return `client = client.${setter}(Party.signer(signer))`;
     }
     return `client = client.${setter}(Party.address(${JSON.stringify(p.address)}))`;
