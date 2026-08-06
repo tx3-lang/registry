@@ -99,6 +99,16 @@ pub async fn build_protocol(resolved: ResolvedProtocol) -> Result<(Protocol, Ima
     let source = oci::get_protocol(&oci_image);
     let tii = oci::get_tii(&oci_image).and_then(|json| serde_json::from_str::<TiiFile>(&json).ok());
 
+    // The project homepage travels as the standard OCI `url` annotation on the
+    // published manifest (`trix publish` maps `[protocol].homepage` to it).
+    // The zot search summary does not surface it, but the full pull does.
+    let homepage_url = oci_image
+        .manifest
+        .as_ref()
+        .and_then(|m| m.annotations.as_ref())
+        .and_then(|a| a.get("org.opencontainers.image.url"))
+        .cloned();
+
     let published_date = if let Some(published_date) = image.last_updated {
         chrono::DateTime::parse_from_rfc3339(&published_date)
             .unwrap()
@@ -113,6 +123,7 @@ pub async fn build_protocol(resolved: ResolvedProtocol) -> Result<(Protocol, Ima
         name: image.title.unwrap_or_default(),
         scope: image.vendor.unwrap_or_default(),
         repository_url: image.source,
+        homepage_url,
         description: image.description,
         published_date,
         source,
@@ -230,6 +241,9 @@ impl ProtocolQuery {
                             scope: image.vendor.clone().unwrap_or_default(),
                             version: image.tag.clone().unwrap_or_default(),
                             repository_url: image.source.clone(),
+                            // Not in the zot search summary; only the detail
+                            // query (full manifest pull) can populate it.
+                            homepage_url: None,
                             description: image.description.clone(),
                             published_date,
                             source,

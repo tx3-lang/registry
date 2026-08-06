@@ -5,7 +5,7 @@ import {
   toCamelCase,
   toPascalCase,
   type TrpConfig,
-  unboundParties,
+  unboundPartyBindings,
   userProvidedParams,
 } from './shared';
 
@@ -27,19 +27,19 @@ function clientOptionsLiteral(trp: TrpConfig): string {
 function quickStart(protocol: Protocol, profile: Profile | null, trp: TrpConfig): string {
   const hasProfiles = (protocol.profiles ?? []).length > 0;
   const supplied = profileSuppliedNames(profile);
-  const unbound = unboundParties(protocol, supplied);
+  const unbound = unboundPartyBindings(protocol, profile, supplied);
   const profileArg = hasProfiles && profile ? `, ${JSON.stringify(profile.name)}` : '';
 
-  const partyLines = unbound.map((p, i) => {
+  const partyLines = unbound.map(p => {
     const setter = `with${toPascalCase(p.name)}`;
-    if (i === 0) {
+    if (p.kind === 'signer') {
       return `  .${setter}(Party.signer(signer))`;
     }
     return `  .${setter}(Party.address(${JSON.stringify(p.address)}))`;
   });
 
   const lines: string[] = [
-    `import { Client } from "./gen/typescript/${protocol.name}";`,
+    `import { Client } from "./${protocol.name}/protocol";`,
     'import { CardanoSigner, Party } from "tx3-sdk";',
     '',
     'const signer = await CardanoSigner.fromHex("addr_test1...", "deadbeef...");',

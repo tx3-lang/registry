@@ -56,6 +56,10 @@ pub struct Protocol {
     name: String,
     scope: String,
     repository_url: Option<String>,
+    /// Project homepage, read from the `org.opencontainers.image.url`
+    /// annotation of the published OCI manifest. Populated on the detail
+    /// query (which pulls the manifest); `None` on list queries.
+    homepage_url: Option<String>,
     published_date: i64,
     version: String,
     readme: Option<String>,
@@ -131,24 +135,35 @@ pub struct Tx {
 
 #[ComplexObject]
 impl Protocol {
+    /// Transactions in a stable order (sorted by name). The TII stores them in
+    /// a map, whose iteration order must never leak into the API: it would
+    /// reshuffle the UI on every load.
     async fn transactions(&self) -> Vec<Tx> {
-        if let Some(tii) = &self.tii {
-            return self.transactions_from_tii(tii);
-        }
+        let mut txs = if let Some(tii) = &self.tii {
+            self.transactions_from_tii(tii)
+        } else {
+            self.transactions_from_source()
+        };
 
-        self.transactions_from_source()
+        txs.sort_by(|a, b| a.name.cmp(&b.name));
+        txs
     }
 
+    /// Parties in a stable order (sorted by name); see [`Self::transactions`].
     async fn parties(&self) -> Vec<Party> {
         let Some(tii) = &self.tii else { return vec![] };
 
-        tii.parties
+        let mut parties: Vec<Party> = tii
+            .parties
             .iter()
             .map(|(name, party)| Party {
                 name: name.clone(),
                 description: party.description.clone(),
             })
-            .collect()
+            .collect();
+
+        parties.sort_by(|a, b| a.name.cmp(&b.name));
+        parties
     }
 
     async fn profiles(&self) -> Vec<Profile> {
