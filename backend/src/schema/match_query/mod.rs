@@ -101,7 +101,9 @@ mod tests {
             repo_name: "orcfax-burn".to_string(),
             repo_version: "1.0.0".to_string(),
             lifted: "{}".to_string(),
-            matched_at: chrono::Utc.with_ymd_and_hms(2026, 5, 14, 10, 23, 45).unwrap(),
+            matched_at: chrono::Utc
+                .with_ymd_and_hms(2026, 5, 14, 10, 23, 45)
+                .unwrap(),
         }
     }
 

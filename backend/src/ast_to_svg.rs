@@ -270,25 +270,29 @@ pub(crate) fn extract_party_from_expr(expr: &tir::Expression) -> Option<String> 
 
 fn sort_parties_by_connections(parties: &[Party], parameters: &[Parameter]) -> Vec<usize> {
     let mut party_indices: Vec<usize> = (0..parties.len()).collect();
-    
+
     // Create connections map: party_name -> [parameter_indices]
-    let mut connections_map: std::collections::HashMap<String, Vec<usize>> = std::collections::HashMap::new();
+    let mut connections_map: std::collections::HashMap<String, Vec<usize>> =
+        std::collections::HashMap::new();
     for (param_idx, param) in parameters.iter().enumerate() {
         if let Some(ref party_name) = param.party {
-            connections_map.entry(party_name.clone()).or_insert_with(Vec::new).push(param_idx);
+            connections_map
+                .entry(party_name.clone())
+                .or_insert_with(Vec::new)
+                .push(param_idx);
         }
     }
-    
+
     // Sort using an algorithm that minimizes line crossings
     optimize_party_order(&mut party_indices, parties, &connections_map);
-    
+
     party_indices
 }
 
 fn optimize_party_order(
-    party_indices: &mut Vec<usize>, 
-    parties: &[Party], 
-    connections_map: &std::collections::HashMap<String, Vec<usize>>
+    party_indices: &mut Vec<usize>,
+    parties: &[Party],
+    connections_map: &std::collections::HashMap<String, Vec<usize>>,
 ) {
     // Simple bubble sort algorithm to minimize crossings by swapping adjacent parties
     let mut improved = true;
@@ -307,30 +311,34 @@ fn would_reduce_crossings(
     party_indices: &[usize],
     swap_pos: usize,
     parties: &[Party],
-    connections_map: &std::collections::HashMap<String, Vec<usize>>
+    connections_map: &std::collections::HashMap<String, Vec<usize>>,
 ) -> bool {
     if swap_pos + 1 >= party_indices.len() {
         return false;
     }
-    
+
     let party_a_idx = party_indices[swap_pos];
     let party_b_idx = party_indices[swap_pos + 1];
-    
+
     let party_a = &parties[party_a_idx];
     let party_b = &parties[party_b_idx];
-    
-    let connections_a = connections_map.get(&party_a.name).map(|v| v.as_slice()).unwrap_or(&[]);
-    let connections_b = connections_map.get(&party_b.name).map(|v| v.as_slice()).unwrap_or(&[]);
-    
+
+    let connections_a = connections_map
+        .get(&party_a.name)
+        .map(|v| v.as_slice())
+        .unwrap_or(&[]);
+    let connections_b = connections_map
+        .get(&party_b.name)
+        .map(|v| v.as_slice())
+        .unwrap_or(&[]);
+
     // Calculate current crossings vs crossings after swap
-    let current_crossings = count_crossings_between_parties(
-        swap_pos, swap_pos + 1, connections_a, connections_b
-    );
-    
-    let swapped_crossings = count_crossings_between_parties(
-        swap_pos + 1, swap_pos, connections_b, connections_a
-    );
-    
+    let current_crossings =
+        count_crossings_between_parties(swap_pos, swap_pos + 1, connections_a, connections_b);
+
+    let swapped_crossings =
+        count_crossings_between_parties(swap_pos + 1, swap_pos, connections_b, connections_a);
+
     swapped_crossings < current_crossings
 }
 
@@ -338,7 +346,7 @@ fn count_crossings_between_parties(
     party_a_pos: usize,
     party_b_pos: usize,
     connections_a: &[usize],
-    connections_b: &[usize]
+    connections_b: &[usize],
 ) -> usize {
     let mut crossings = 0;
     for &conn_a in connections_a {
@@ -356,31 +364,34 @@ fn count_crossings_between_parties(
     crossings
 }
 
-
 fn sort_parameters_by_connections(parameters: &[Parameter], parties: &[Party]) -> Vec<usize> {
     let mut param_indices: Vec<usize> = (0..parameters.len()).collect();
-    
+
     // Crear mapa de party_name -> posición en el array ordenado de parties
     let party_positions: std::collections::HashMap<String, usize> = parties
         .iter()
         .enumerate()
         .map(|(pos, party)| (party.name.clone(), pos))
         .collect();
-    
+
     // Ordenar parámetros para que sigan el mismo orden que sus parties conectadas
     param_indices.sort_by(|&a, &b| {
-        let party_pos_a = parameters[a].party.as_ref()
+        let party_pos_a = parameters[a]
+            .party
+            .as_ref()
             .and_then(|name| party_positions.get(name))
             .copied()
             .unwrap_or(usize::MAX);
-        let party_pos_b = parameters[b].party.as_ref()
+        let party_pos_b = parameters[b]
+            .party
+            .as_ref()
             .and_then(|name| party_positions.get(name))
             .copied()
             .unwrap_or(usize::MAX);
-        
+
         party_pos_a.cmp(&party_pos_b)
     });
-    
+
     param_indices
 }
 
@@ -422,7 +433,11 @@ fn render_parameter(param: &Parameter, x: i32, y: i32, is_input: bool) -> String
         line_end = if is_input { "100%" } else { "80%" },
         text_position = if is_input { "60%" } else { "40%" },
         circle_cx = if is_input { "20%" } else { "80%" },
-        color = if is_input { "rgba(81, 162, 255, 1)" } else { "rgba(255,0,127,1)" },
+        color = if is_input {
+            "rgba(81, 162, 255, 1)"
+        } else {
+            "rgba(255,0,127,1)"
+        },
     )
 }
 
@@ -465,7 +480,14 @@ pub fn tx_to_svg(ast: &Program, tx: &TxDef, params: Vec<String>) -> String {
     let inputs = get_inputs(tx);
     let outputs = get_outputs(tx);
 
-    build_svg(&tx.name.value, &params, input_parties, output_parties, inputs, outputs)
+    build_svg(
+        &tx.name.value,
+        &params,
+        input_parties,
+        output_parties,
+        inputs,
+        outputs,
+    )
 }
 
 pub fn tir_to_svg(
@@ -479,7 +501,14 @@ pub fn tir_to_svg(
     let inputs = get_inputs_from_tir(tx);
     let outputs = get_outputs_from_tir(tx, output_names);
 
-    build_svg(name, &params, input_parties, output_parties, inputs, outputs)
+    build_svg(
+        name,
+        &params,
+        input_parties,
+        output_parties,
+        inputs,
+        outputs,
+    )
 }
 
 fn build_svg(
@@ -495,8 +524,14 @@ fn build_svg(
     let output_party_order = sort_parties_by_connections(&output_parties, &outputs);
 
     // Ahora ordenar parámetros basándose en el orden optimizado de parties
-    let ordered_input_parties: Vec<Party> = input_party_order.iter().map(|&i| input_parties[i].clone()).collect();
-    let ordered_output_parties: Vec<Party> = output_party_order.iter().map(|&i| output_parties[i].clone()).collect();
+    let ordered_input_parties: Vec<Party> = input_party_order
+        .iter()
+        .map(|&i| input_parties[i].clone())
+        .collect();
+    let ordered_output_parties: Vec<Party> = output_party_order
+        .iter()
+        .map(|&i| output_parties[i].clone())
+        .collect();
 
     let input_param_order = sort_parameters_by_connections(&inputs, &ordered_input_parties);
     let output_param_order = sort_parameters_by_connections(&outputs, &ordered_output_parties);
@@ -536,7 +571,10 @@ fn build_svg(
         if let Some(ref name) = input.party {
             if let Some(original_party_idx) = input_parties.iter().position(|p| &p.name == name) {
                 // Encontrar la posición de renderizado de esta party
-                if let Some(party_render_pos) = input_party_order.iter().position(|&idx| idx == original_party_idx) {
+                if let Some(party_render_pos) = input_party_order
+                    .iter()
+                    .position(|&idx| idx == original_party_idx)
+                {
                     write!(
                         svg,
                         "<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0.4\" stroke-dasharray=\"1,1\" stroke-opacity=\"0.5\"/>",
@@ -556,7 +594,10 @@ fn build_svg(
         if let Some(ref name) = output.party {
             if let Some(original_party_idx) = output_parties.iter().position(|p| &p.name == name) {
                 // Encontrar la posición de renderizado de esta party
-                if let Some(party_render_pos) = output_party_order.iter().position(|&idx| idx == original_party_idx) {
+                if let Some(party_render_pos) = output_party_order
+                    .iter()
+                    .position(|&idx| idx == original_party_idx)
+                {
                     write!(
                         svg,
                         "<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0.4\" stroke-dasharray=\"1,1\" stroke-opacity=\"0.5\"/>",

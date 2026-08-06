@@ -8,7 +8,10 @@ use rocket::{
 };
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
 
-use tx3_registry_backend::{cache::{Cached, DiskCache}, db, oci, og_card, schema};
+use tx3_registry_backend::{
+    cache::{Cached, DiskCache},
+    db, oci, og_card, schema,
+};
 
 #[macro_use]
 extern crate rocket;
@@ -19,7 +22,10 @@ fn index<'a>() -> &'a str {
 }
 
 #[post("/graphql", data = "<req>", format = "application/json")]
-async fn graphql_request(schema: &State<schema::Tx3Schema>, req: GraphQLRequest) -> GraphQLResponse {
+async fn graphql_request(
+    schema: &State<schema::Tx3Schema>,
+    req: GraphQLRequest,
+) -> GraphQLResponse {
     req.execute(schema.inner()).await
 }
 
@@ -152,8 +158,7 @@ async fn protocol_og_card(
 async fn rocket() -> _ {
     let _ = dotenv();
 
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_default();
+    let database_url = std::env::var("DATABASE_URL").unwrap_or_default();
     if database_url.is_empty() {
         panic!("DATABASE_URL is required but was not set or is empty");
     }
@@ -164,12 +169,16 @@ async fn rocket() -> _ {
 
     let cors = rocket_cors::CorsOptions {
         allowed_origins: AllowedOrigins::All,
-        allowed_methods: vec![Method::Get, Method::Post, Method::Options].into_iter().map(From::from).collect(),
+        allowed_methods: vec![Method::Get, Method::Post, Method::Options]
+            .into_iter()
+            .map(From::from)
+            .collect(),
         allowed_headers: AllowedHeaders::some(&["Authorization", "Accept"]),
         allow_credentials: true,
         ..Default::default()
     }
-    .to_cors().unwrap();
+    .to_cors()
+    .unwrap();
 
     let schema = schema::build_schema(pool.clone());
 
@@ -179,6 +188,15 @@ async fn rocket() -> _ {
         .manage(pool)
         .manage(schema)
         .manage(cache)
-        .mount("/", routes![index, graphql, graphql_request, protocol_logo, protocol_og_card])
+        .mount(
+            "/",
+            routes![
+                index,
+                graphql,
+                graphql_request,
+                protocol_logo,
+                protocol_og_card
+            ],
+        )
         .attach(cors)
 }

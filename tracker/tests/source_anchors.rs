@@ -3,10 +3,8 @@ use tx3_registry_tracker::specialization::{specialize_all, SpecializedTii};
 use tx3_sdk::tii::spec::TiiFile;
 
 fn anchored_source() -> DiscoveredSource {
-    let tii: TiiFile = serde_json::from_str(include_str!(
-        "fixtures/orcfax_burn_anchored.tii"
-    ))
-    .expect("failed to parse orcfax_burn_anchored.tii");
+    let tii: TiiFile = serde_json::from_str(include_str!("fixtures/orcfax_burn_anchored.tii"))
+        .expect("failed to parse orcfax_burn_anchored.tii");
 
     DiscoveredSource {
         source_name: "txpipe/orcfax-burn-anchored:1.0.0".to_string(),
@@ -19,9 +17,8 @@ fn anchored_source() -> DiscoveredSource {
 }
 
 fn anchorless_source() -> DiscoveredSource {
-    let tii: TiiFile =
-        serde_json::from_str(include_str!("fixtures/orcfax_burn_anchorless.tii"))
-            .expect("failed to parse orcfax_burn_anchorless.tii");
+    let tii: TiiFile = serde_json::from_str(include_str!("fixtures/orcfax_burn_anchorless.tii"))
+        .expect("failed to parse orcfax_burn_anchorless.tii");
 
     DiscoveredSource {
         source_name: "txpipe/orcfax-burn:1.0.0".to_string(),
@@ -88,8 +85,5 @@ fn anchored_source_alone_is_retained() {
         specialize_all(&sources).expect("specialize_all on anchored source must succeed");
 
     assert_eq!(active.len(), 1, "anchored source must survive the filter");
-    assert!(
-        !active[0].anchors.is_empty(),
-        "anchors must be non-empty"
-    );
+    assert!(!active[0].anchors.is_empty(), "anchors must be non-empty");
 }

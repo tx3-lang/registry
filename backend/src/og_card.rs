@@ -76,14 +76,24 @@ impl std::error::Error for RenderError {}
 pub fn render_card(data: &CardData) -> Result<Vec<u8>, RenderError> {
     let svg = build_card_svg(data);
 
-    let opt = usvg::Options { fontdb: fontdb(), ..Default::default() };
+    let opt = usvg::Options {
+        fontdb: fontdb(),
+        ..Default::default()
+    };
 
     let tree = usvg::Tree::from_str(&svg, &opt).map_err(RenderError::Parse)?;
 
-    let mut pixmap = tiny_skia::Pixmap::new(WIDTH as u32, HEIGHT as u32).ok_or(RenderError::Pixmap)?;
-    resvg::render(&tree, tiny_skia::Transform::identity(), &mut pixmap.as_mut());
+    let mut pixmap =
+        tiny_skia::Pixmap::new(WIDTH as u32, HEIGHT as u32).ok_or(RenderError::Pixmap)?;
+    resvg::render(
+        &tree,
+        tiny_skia::Transform::identity(),
+        &mut pixmap.as_mut(),
+    );
 
-    pixmap.encode_png().map_err(|e| RenderError::Encode(e.to_string()))
+    pixmap
+        .encode_png()
+        .map_err(|e| RenderError::Encode(e.to_string()))
 }
 
 /// Shared, lazily-built font database (Inter Regular + SemiBold).
@@ -111,8 +121,14 @@ fn build_card_svg(data: &CardData) -> String {
     );
 
     // Background + subtle accent rule along the top.
-    let _ = write!(s, r#"<rect x="0" y="0" width="{WIDTH}" height="{HEIGHT}" fill="{BG}"/>"#);
-    let _ = write!(s, r#"<rect x="0" y="0" width="{WIDTH}" height="8" fill="{ACCENT}"/>"#);
+    let _ = write!(
+        s,
+        r#"<rect x="0" y="0" width="{WIDTH}" height="{HEIGHT}" fill="{BG}"/>"#
+    );
+    let _ = write!(
+        s,
+        r#"<rect x="0" y="0" width="{WIDTH}" height="8" fill="{ACCENT}"/>"#
+    );
 
     // Header: logo tile with the protocol name on the first line and the
     // scope + version on the second line beside it.
@@ -143,7 +159,12 @@ fn build_card_svg(data: &CardData) -> String {
     );
 
     // Description, wrapped to at most two lines.
-    if let Some(desc) = data.description.as_deref().map(str::trim).filter(|d| !d.is_empty()) {
+    if let Some(desc) = data
+        .description
+        .as_deref()
+        .map(str::trim)
+        .filter(|d| !d.is_empty())
+    {
         let lines = wrap_to_lines(desc, CONTENT_W, 34.0, 2);
         let mut dy = 300.0;
         for line in lines {
@@ -297,7 +318,8 @@ fn text_width(text: &str, font_size: f32, bold: bool) -> f32 {
     let mut units = 0.0f32;
     for c in text.chars() {
         units += match c {
-            'i' | 'l' | 'j' | 'I' | '.' | ',' | '\'' | '|' | '!' | ':' | ';' | '(' | ')' | '[' | ']' => 0.30,
+            'i' | 'l' | 'j' | 'I' | '.' | ',' | '\'' | '|' | '!' | ':' | ';' | '(' | ')' | '['
+            | ']' => 0.30,
             'f' | 't' | 'r' | ' ' => 0.34,
             'm' | 'M' | 'w' | 'W' => 0.88,
             'A'..='Z' => 0.68,

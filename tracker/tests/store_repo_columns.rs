@@ -114,7 +114,10 @@ async fn apply_block_handles_multiple_versions_distinctly(pool: PgPool) {
     .expect("count query failed");
 
     let count: i64 = count_row.get(0);
-    assert_eq!(count, 2, "expected two distinct rows for different versions");
+    assert_eq!(
+        count, 2,
+        "expected two distinct rows for different versions"
+    );
 
     let version_rows = sqlx::query(
         "SELECT repo_version FROM matches WHERE repo_scope = 'txpipe' AND repo_name = 'orcfax-burn' ORDER BY repo_version",

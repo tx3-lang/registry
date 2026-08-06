@@ -1,11 +1,16 @@
-use std::fs;
-use oci_client::{client::{Config, ImageLayer}, manifest, secrets::RegistryAuth, Client, Reference};
+use oci_client::{
+    client::{Config, ImageLayer},
+    manifest,
+    secrets::RegistryAuth,
+    Client, Reference,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Number;
+use std::fs;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct DataJson {
-    pub protocols: Vec<ProtocolJson>
+    pub protocols: Vec<ProtocolJson>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -41,26 +46,24 @@ fn get_client() -> Client {
 const MARKDOWN_MEDIA_TYPE: &str = "text/markdown";
 const PROTOCOL_MEDIA_TYPE: &str = "application/tx3";
 
-async fn push(protocol: &ProtocolJson, protocol_file: String) -> Result<(), Box<dyn std::error::Error>> {
-
+async fn push(
+    protocol: &ProtocolJson,
+    protocol_file: String,
+) -> Result<(), Box<dyn std::error::Error>> {
     let mut layers = vec![];
 
-    layers.push(
-        ImageLayer::new(
-            protocol_file.as_bytes().to_vec(),
-            PROTOCOL_MEDIA_TYPE.to_string(),
-            None
-        )
-    );
+    layers.push(ImageLayer::new(
+        protocol_file.as_bytes().to_vec(),
+        PROTOCOL_MEDIA_TYPE.to_string(),
+        None,
+    ));
 
     if protocol.readme.is_some() {
-        layers.push(
-            ImageLayer::new(
-                protocol.readme.clone().unwrap().as_bytes().to_vec(),
-                MARKDOWN_MEDIA_TYPE.to_string(),
-                None
-            )
-        );
+        layers.push(ImageLayer::new(
+            protocol.readme.clone().unwrap().as_bytes().to_vec(),
+            MARKDOWN_MEDIA_TYPE.to_string(),
+            None,
+        ));
     }
 
     let config = Config {
@@ -82,25 +85,48 @@ async fn push(protocol: &ProtocolJson, protocol_file: String) -> Result<(), Box<
         Some(std::collections::BTreeMap::from([
             (
                 "org.opencontainers.image.created".to_string(),
-                chrono::DateTime::from_timestamp(protocol.published_date.as_i64().unwrap_or_default(), 0)
+                chrono::DateTime::from_timestamp(
+                    protocol.published_date.as_i64().unwrap_or_default(),
+                    0,
+                )
                 .unwrap()
-                .to_rfc3339()
+                .to_rfc3339(),
             ),
-            ("org.opencontainers.image.vendor".to_string(), protocol.scope.clone()),
-            ("org.opencontainers.image.title".to_string(), protocol.name.clone()),
-            ("org.opencontainers.image.version".to_string(), "1.0.0".to_string()),
-            ("org.opencontainers.image.source".to_string(), protocol.repository_url.clone().unwrap_or_default()),
-            ("org.opencontainers.image.description".to_string(), protocol.description.clone().unwrap_or_default()),
-        ]))
+            (
+                "org.opencontainers.image.vendor".to_string(),
+                protocol.scope.clone(),
+            ),
+            (
+                "org.opencontainers.image.title".to_string(),
+                protocol.name.clone(),
+            ),
+            (
+                "org.opencontainers.image.version".to_string(),
+                "1.0.0".to_string(),
+            ),
+            (
+                "org.opencontainers.image.source".to_string(),
+                protocol.repository_url.clone().unwrap_or_default(),
+            ),
+            (
+                "org.opencontainers.image.description".to_string(),
+                protocol.description.clone().unwrap_or_default(),
+            ),
+        ])),
     );
 
-    let reference = Reference::try_from(format!("localhost:3000/{}/{}:1.0.0", protocol.scope, protocol.name))?;
+    let reference = Reference::try_from(format!(
+        "localhost:3000/{}/{}:1.0.0",
+        protocol.scope, protocol.name
+    ))?;
 
     let client = get_client();
 
     let auth = RegistryAuth::Anonymous;
 
-    let digest =  client.push(&reference, &layers, config, &auth, Some(image_manifest)).await?;
+    let digest = client
+        .push(&reference, &layers, config, &auth, Some(image_manifest))
+        .await?;
 
     println!("Config URL: {}", digest.config_url);
     println!("Manifest URL: {}", digest.manifest_url);
@@ -109,14 +135,19 @@ async fn push(protocol: &ProtocolJson, protocol_file: String) -> Result<(), Box<
 }
 
 async fn pull(repo: &str, version: &str) -> Result<(), Box<dyn std::error::Error>> {
-
     let reference = Reference::try_from(format!("localhost:3000/{}:{}", repo, version))?;
 
     let client = get_client();
 
     let auth = RegistryAuth::Anonymous;
 
-    let content = client.pull(&reference, &auth, vec![MARKDOWN_MEDIA_TYPE, PROTOCOL_MEDIA_TYPE]).await?;
+    let content = client
+        .pull(
+            &reference,
+            &auth,
+            vec![MARKDOWN_MEDIA_TYPE, PROTOCOL_MEDIA_TYPE],
+        )
+        .await?;
 
     println!("Config Metadata: {:?}", content.config.data);
 
@@ -134,7 +165,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let data: DataJson = serde_json::from_str(&json).expect("Unable to parse");
 
     for protocol in data.protocols.iter() {
-        let protocol_file = fs::read_to_string(format!("../../data/{}", protocol.protocol_path)).expect("Unable to read file");
+        let protocol_file = fs::read_to_string(format!("../../data/{}", protocol.protocol_path))
+            .expect("Unable to read file");
         push(protocol, protocol_file).await?;
     }
 

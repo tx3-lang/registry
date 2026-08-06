@@ -54,7 +54,10 @@ async fn fetch_matches_orders_newest_first(pool: PgPool) {
     assert_eq!(rows.len(), 3);
     // ids should be in descending order
     for window in rows.windows(2) {
-        assert!(window[0].id > window[1].id, "rows should be ordered by id DESC");
+        assert!(
+            window[0].id > window[1].id,
+            "rows should be ordered by id DESC"
+        );
     }
 }
 
@@ -64,10 +67,9 @@ async fn fetch_matches_filters_by_version(pool: PgPool) {
     insert_match(&pool, "txpipe", "orcfax-burn", "2.0.0", &[2u8; 32]).await;
     insert_match(&pool, "txpipe", "orcfax-burn", "2.0.0", &[3u8; 32]).await;
 
-    let (rows, has_next) =
-        fetch_matches(&pool, "txpipe", "orcfax-burn", Some("2.0.0"), 10, None)
-            .await
-            .expect("fetch_matches failed");
+    let (rows, has_next) = fetch_matches(&pool, "txpipe", "orcfax-burn", Some("2.0.0"), 10, None)
+        .await
+        .expect("fetch_matches failed");
 
     assert_eq!(rows.len(), 2);
     assert!(!has_next);
@@ -90,10 +92,16 @@ async fn fetch_matches_paginates_with_after_id(pool: PgPool) {
     // after_id = id of the oldest row in page1 (last element since DESC order)
     let oldest_in_page1 = page1.last().unwrap().id;
 
-    let (page2, _) =
-        fetch_matches(&pool, "txpipe", "orcfax-burn", None, 2, Some(oldest_in_page1))
-            .await
-            .expect("page2 fetch failed");
+    let (page2, _) = fetch_matches(
+        &pool,
+        "txpipe",
+        "orcfax-burn",
+        None,
+        2,
+        Some(oldest_in_page1),
+    )
+    .await
+    .expect("page2 fetch failed");
     assert_eq!(page2.len(), 2);
 
     // no overlapping ids
@@ -111,7 +119,10 @@ async fn fetch_matches_paginates_with_after_id(pool: PgPool) {
     // natural order: every id in page1 > every id in page2 (newest first across pages)
     let min_p1 = ids_p1.iter().copied().min().unwrap();
     let max_p2 = ids_p2.iter().copied().max().unwrap();
-    assert!(min_p1 > max_p2, "page1 ids should all be newer than page2 ids");
+    assert!(
+        min_p1 > max_p2,
+        "page1 ids should all be newer than page2 ids"
+    );
 }
 
 #[sqlx::test(migrations = "../tracker/migrations")]

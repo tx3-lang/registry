@@ -90,11 +90,7 @@ impl Store {
     /// database transaction.  Re-inserting the same `(tx_hash, source_name)`
     /// pair is silently ignored (`ON CONFLICT DO NOTHING`).  Returns the
     /// number of rows actually inserted.
-    pub async fn apply_block(
-        &self,
-        cursor: ChainPoint,
-        rows: Vec<OwnedMatchRow>,
-    ) -> Result<usize> {
+    pub async fn apply_block(&self, cursor: ChainPoint, rows: Vec<OwnedMatchRow>) -> Result<usize> {
         let mut tx = self.pool.begin().await?;
         let mut inserted = 0usize;
 

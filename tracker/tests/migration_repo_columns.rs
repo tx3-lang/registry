@@ -66,5 +66,8 @@ async fn idx_matches_repo_exists(pool: PgPool) {
     .await
     .expect("pg_indexes query failed");
 
-    assert!(row.is_some(), "index idx_matches_repo not found in pg_indexes");
+    assert!(
+        row.is_some(),
+        "index idx_matches_repo not found in pg_indexes"
+    );
 }

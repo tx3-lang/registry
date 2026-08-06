@@ -43,7 +43,10 @@ async fn reinserting_same_match_is_noop(pool: PgPool) {
         .expect("second apply_block failed");
 
     assert_eq!(n1, 1, "first apply_block should insert exactly one row");
-    assert_eq!(n2, 0, "second apply_block must be a no-op: UNIQUE(tx_hash, source_name) + ON CONFLICT DO NOTHING");
+    assert_eq!(
+        n2, 0,
+        "second apply_block must be a no-op: UNIQUE(tx_hash, source_name) + ON CONFLICT DO NOTHING"
+    );
 }
 
 #[sqlx::test(migrations = "./migrations")]
@@ -67,5 +70,8 @@ async fn apply_block_persists_score_and_rank(pool: PgPool) {
     let db_rank: i32 = result.get(1);
 
     assert_eq!(db_score, row.score as i32, "score must be persisted");
-    assert_eq!(db_rank, row.match_rank as i32, "match_rank must be persisted");
+    assert_eq!(
+        db_rank, row.match_rank as i32,
+        "match_rank must be persisted"
+    );
 }
