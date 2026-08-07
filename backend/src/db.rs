@@ -29,8 +29,7 @@ pub struct MatchRow {
     pub matched_at: chrono::DateTime<chrono::Utc>,
 }
 
-const SELECT_COLS: &str =
-    "id, tx_hash, block_slot, block_hash, source_name, protocol_name, \
+const SELECT_COLS: &str = "id, tx_hash, block_slot, block_hash, source_name, protocol_name, \
      profile_name, tx_name, repo_scope, repo_name, repo_version, \
      lifted::text AS lifted, matched_at";
 

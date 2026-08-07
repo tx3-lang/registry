@@ -3,9 +3,9 @@ use std::{fs::File, io::Write};
 use async_graphql::{EmptyMutation, EmptySubscription, MergedObject, Schema};
 use sqlx::PgPool;
 
-pub mod protocol;
-pub mod pagination;
 mod match_query;
+pub mod pagination;
+pub mod protocol;
 
 pub use match_query::{Match, MatchConnection, MatchCursor};
 
@@ -24,9 +24,10 @@ pub fn build_schema(pool: PgPool) -> Tx3Schema {
 
     let sdl = schema.sdl();
     let mut file = File::create("schema.graphql").expect("Failed to create schema file");
-    file.write_all(sdl.as_bytes()).expect("Failed to write schema");
+    file.write_all(sdl.as_bytes())
+        .expect("Failed to write schema");
 
-    return schema
+    return schema;
 }
 
 #[cfg(test)]
@@ -37,9 +38,16 @@ mod tests {
     fn regenerate_sdl() {
         let schema = Schema::build(Query::default(), EmptyMutation, EmptySubscription).finish();
         let sdl = schema.sdl();
-        assert!(sdl.contains("protocolMatches"), "SDL must contain protocolMatches");
-        assert!(sdl.contains("protocolMatch("), "SDL must contain protocolMatch");
+        assert!(
+            sdl.contains("protocolMatches"),
+            "SDL must contain protocolMatches"
+        );
+        assert!(
+            sdl.contains("protocolMatch("),
+            "SDL must contain protocolMatch"
+        );
         let mut file = File::create("schema.graphql").expect("Failed to create schema file");
-        file.write_all(sdl.as_bytes()).expect("Failed to write schema");
+        file.write_all(sdl.as_bytes())
+            .expect("Failed to write schema");
     }
 }

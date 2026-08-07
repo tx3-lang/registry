@@ -96,14 +96,18 @@ impl DiskCache {
     /// Store `bytes` under `key`. No-op when disabled; errors are swallowed (the
     /// cache is best-effort and must never fail a request).
     pub async fn put(&self, key: &str, bytes: Vec<u8>) {
-        let Some(inner) = self.inner.clone() else { return };
+        let Some(inner) = self.inner.clone() else {
+            return;
+        };
         let key = key.to_string();
         let _ = rocket::tokio::task::spawn_blocking(move || inner.put_sync(&key, &bytes)).await;
     }
 
     /// Remember that `key` is not found, with the short negative TTL.
     pub async fn put_negative(&self, key: &str) {
-        let Some(inner) = self.inner.clone() else { return };
+        let Some(inner) = self.inner.clone() else {
+            return;
+        };
         let key = key.to_string();
         let _ = rocket::tokio::task::spawn_blocking(move || inner.put_negative_sync(&key)).await;
     }
@@ -213,8 +217,12 @@ impl Inner {
 /// True when `path` exists and was modified within `ttl`. Any error (missing
 /// file, clock skew) is treated as not-fresh.
 fn fresh(path: &Path, ttl: Duration) -> bool {
-    let Ok(meta) = std::fs::metadata(path) else { return false };
-    let Ok(modified) = meta.modified() else { return false };
+    let Ok(meta) = std::fs::metadata(path) else {
+        return false;
+    };
+    let Ok(modified) = meta.modified() else {
+        return false;
+    };
     SystemTime::now()
         .duration_since(modified)
         .map(|age| age < ttl)
@@ -228,7 +236,9 @@ fn with_suffix(path: &Path, suffix: &str) -> PathBuf {
 }
 
 fn collect_files(dir: &Path, out: &mut Vec<(PathBuf, SystemTime, u64)>) {
-    let Ok(entries) = std::fs::read_dir(dir) else { return };
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
     for entry in entries.flatten() {
         let path = entry.path();
         let Ok(meta) = entry.metadata() else { continue };
@@ -277,7 +287,8 @@ mod tests {
     }
 
     fn tmp_dir(tag: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("tx3-cache-test-{}-{}", tag, uuid::Uuid::new_v4()));
+        let dir =
+            std::env::temp_dir().join(format!("tx3-cache-test-{}-{}", tag, uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&dir).unwrap();
         dir
     }
@@ -285,9 +296,16 @@ mod tests {
     #[test]
     fn put_get_round_trip() {
         let dir = tmp_dir("roundtrip");
-        let inner = inner_in(&dir, Duration::from_secs(60), Duration::from_secs(60), 1 << 30);
+        let inner = inner_in(
+            &dir,
+            Duration::from_secs(60),
+            Duration::from_secs(60),
+            1 << 30,
+        );
 
-        inner.put_sync("og/v1/acme/widget/1.0.0", b"PNGDATA").unwrap();
+        inner
+            .put_sync("og/v1/acme/widget/1.0.0", b"PNGDATA")
+            .unwrap();
         match inner.get_sync("og/v1/acme/widget/1.0.0") {
             Some(Cached::Bytes(b)) => assert_eq!(b, b"PNGDATA"),
             _ => panic!("expected positive hit"),
@@ -300,7 +318,12 @@ mod tests {
     #[test]
     fn positive_expires_past_ttl() {
         let dir = tmp_dir("ttl");
-        let inner = inner_in(&dir, Duration::from_millis(1), Duration::from_secs(60), 1 << 30);
+        let inner = inner_in(
+            &dir,
+            Duration::from_millis(1),
+            Duration::from_secs(60),
+            1 << 30,
+        );
 
         inner.put_sync("logo/acme/widget/1.0.0", b"x").unwrap();
         std::thread::sleep(Duration::from_millis(10));
@@ -312,10 +335,18 @@ mod tests {
     #[test]
     fn negative_sentinel_is_cached() {
         let dir = tmp_dir("neg");
-        let inner = inner_in(&dir, Duration::from_secs(60), Duration::from_secs(60), 1 << 30);
+        let inner = inner_in(
+            &dir,
+            Duration::from_secs(60),
+            Duration::from_secs(60),
+            1 << 30,
+        );
 
         inner.put_negative_sync("nf/acme/ghost").unwrap();
-        assert!(matches!(inner.get_sync("nf/acme/ghost"), Some(Cached::Negative)));
+        assert!(matches!(
+            inner.get_sync("nf/acme/ghost"),
+            Some(Cached::Negative)
+        ));
 
         std::fs::remove_dir_all(&dir).ok();
     }
@@ -323,7 +354,12 @@ mod tests {
     #[test]
     fn negative_expires_on_short_ttl() {
         let dir = tmp_dir("neg-ttl");
-        let inner = inner_in(&dir, Duration::from_secs(60), Duration::from_millis(1), 1 << 30);
+        let inner = inner_in(
+            &dir,
+            Duration::from_secs(60),
+            Duration::from_millis(1),
+            1 << 30,
+        );
 
         inner.put_negative_sync("nf/acme/ghost").unwrap();
         std::thread::sleep(Duration::from_millis(10));
@@ -339,7 +375,9 @@ mod tests {
         let inner = inner_in(&dir, Duration::from_secs(60), Duration::from_secs(60), 30);
 
         for i in 0..10 {
-            inner.put_sync(&format!("og/v1/acme/p{i}"), &[b'a'; 10]).unwrap();
+            inner
+                .put_sync(&format!("og/v1/acme/p{i}"), &[b'a'; 10])
+                .unwrap();
             std::thread::sleep(Duration::from_millis(5)); // distinct mtimes
         }
 
@@ -348,7 +386,9 @@ mod tests {
         let total: u64 = files.iter().map(|(_, _, len)| *len).sum();
         assert!(total <= 30, "cache exceeded budget: {total}");
         assert!(
-            files.iter().all(|(p, _, _)| !p.to_string_lossy().ends_with(TMP_SUFFIX)),
+            files
+                .iter()
+                .all(|(p, _, _)| !p.to_string_lossy().ends_with(TMP_SUFFIX)),
             "left a stray temp file"
         );
 

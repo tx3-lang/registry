@@ -19,7 +19,9 @@ pub fn encode_cursor(id: i64) -> String {
 }
 
 pub fn decode_cursor(cursor: &str) -> Result<i64, CursorError> {
-    let bytes = STANDARD.decode(cursor).map_err(|_| CursorError::Malformed)?;
+    let bytes = STANDARD
+        .decode(cursor)
+        .map_err(|_| CursorError::Malformed)?;
     let s = std::str::from_utf8(&bytes).map_err(|_| CursorError::Malformed)?;
     let suffix = s.strip_prefix("id:").ok_or(CursorError::Malformed)?;
     let id: i64 = suffix.parse().map_err(|_| CursorError::Malformed)?;

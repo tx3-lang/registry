@@ -424,7 +424,8 @@ async fn fetch_catalog_errors_on_empty_catalog() {
         .expect_err("should fail on empty catalog");
 
     assert!(
-        err.to_string().contains("OCI registry returned no protocols"),
+        err.to_string()
+            .contains("OCI registry returned no protocols"),
         "error message should mention empty catalog, got: {err}"
     );
 }
@@ -472,10 +473,7 @@ async fn fetch_catalog_errors_on_missing_tii_layer() {
         .and(path("/v2/txpipe/orcfax-burn/manifests/1.0.0"))
         .respond_with(
             ResponseTemplate::new(200)
-                .insert_header(
-                    "Content-Type",
-                    "application/vnd.oci.image.manifest.v1+json",
-                )
+                .insert_header("Content-Type", "application/vnd.oci.image.manifest.v1+json")
                 .insert_header("Docker-Content-Digest", bad_manifest_digest.as_str())
                 .set_body_bytes(bad_manifest),
         )
@@ -504,9 +502,7 @@ async fn fetch_catalog_errors_on_missing_tii_layer() {
     let layer_bytes = b"fake tx3 blob".to_vec();
     let layer_digest = sha256_hex(&layer_bytes);
     Mock::given(method("GET"))
-        .and(path(format!(
-            "/v2/txpipe/orcfax-burn/blobs/{layer_digest}"
-        )))
+        .and(path(format!("/v2/txpipe/orcfax-burn/blobs/{layer_digest}")))
         .respond_with(
             ResponseTemplate::new(200)
                 .insert_header("Docker-Content-Digest", layer_digest.as_str())
@@ -597,7 +593,9 @@ async fn fetch_catalog_ignores_logo_png_layer() {
     let config_bytes = dummy_config_bytes();
     let config_digest = sha256_hex(&config_bytes);
     Mock::given(method("GET"))
-        .and(path(format!("/v2/txpipe/orcfax-burn/blobs/{config_digest}")))
+        .and(path(format!(
+            "/v2/txpipe/orcfax-burn/blobs/{config_digest}"
+        )))
         .respond_with(
             ResponseTemplate::new(200)
                 .insert_header("Docker-Content-Digest", config_digest.as_str())

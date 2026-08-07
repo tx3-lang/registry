@@ -85,7 +85,10 @@ async fn protocol_matches_pagination_chain(pool: PgPool) {
     assert!(res1.errors.is_empty(), "page1 errors: {:?}", res1.errors);
 
     let data1 = res1.data.into_json().unwrap();
-    let nodes1 = data1["protocolMatches"]["nodes"].as_array().unwrap().clone();
+    let nodes1 = data1["protocolMatches"]["nodes"]
+        .as_array()
+        .unwrap()
+        .clone();
     assert_eq!(nodes1.len(), 2, "page1 should have 2 nodes");
 
     let end_cursor = data1["protocolMatches"]["pageInfo"]["endCursor"]
@@ -105,7 +108,10 @@ async fn protocol_matches_pagination_chain(pool: PgPool) {
     assert!(res2.errors.is_empty(), "page2 errors: {:?}", res2.errors);
 
     let data2 = res2.data.into_json().unwrap();
-    let nodes2 = data2["protocolMatches"]["nodes"].as_array().unwrap().clone();
+    let nodes2 = data2["protocolMatches"]["nodes"]
+        .as_array()
+        .unwrap()
+        .clone();
     assert_eq!(nodes2.len(), 2, "page2 should have 2 nodes");
 
     let has_next_page2 = data2["protocolMatches"]["pageInfo"]["hasNextPage"]
@@ -122,7 +128,10 @@ async fn protocol_matches_pagination_chain(pool: PgPool) {
         .map(|n| n["id"].as_str().unwrap().to_string())
         .collect();
 
-    assert!(ids1.is_disjoint(&ids2), "pages should have no overlapping ids");
+    assert!(
+        ids1.is_disjoint(&ids2),
+        "pages should have no overlapping ids"
+    );
 
     let all_ids: std::collections::HashSet<_> = ids1.union(&ids2).collect();
     assert_eq!(all_ids.len(), 4, "combined pages should cover all 4 rows");
@@ -172,7 +181,10 @@ async fn protocol_matches_clamps_first(pool: PgPool) {
         .as_array()
         .unwrap()
         .len();
-    assert!(count <= 200, "clamped first should not return more than 200 rows");
+    assert!(
+        count <= 200,
+        "clamped first should not return more than 200 rows"
+    );
 }
 
 #[sqlx::test(migrations = "../tracker/migrations")]

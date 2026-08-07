@@ -39,8 +39,8 @@ fn source(name: &str) -> DiscoveredSource {
 /// → `total == 1`, `gates() == false`.
 #[test]
 fn dex_swap_iusd_does_not_gate_indigo() {
-    let active = specialize_all(&[source("indigo")])
-        .expect("specialize_all on indigo/mainnet must succeed");
+    let active =
+        specialize_all(&[source("indigo")]).expect("specialize_all on indigo/mainnet must succeed");
     assert_eq!(active.len(), 1, "indigo/mainnet must survive the filter");
     let anchors = &active[0].anchors;
 
@@ -72,8 +72,8 @@ fn dex_swap_iusd_does_not_gate_indigo() {
 /// the indigo/mainnet anchor set: `gates() == true` and `gating >= 1`.
 #[test]
 fn indigo_create_staking_gates_indigo() {
-    let active = specialize_all(&[source("indigo")])
-        .expect("specialize_all on indigo/mainnet must succeed");
+    let active =
+        specialize_all(&[source("indigo")]).expect("specialize_all on indigo/mainnet must succeed");
     assert_eq!(active.len(), 1, "indigo/mainnet must survive the filter");
     let anchors = &active[0].anchors;
 

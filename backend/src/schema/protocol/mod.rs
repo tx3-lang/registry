@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-use std::fmt;
 use async_graphql::{ComplexObject, Enum, SimpleObject, ID};
 use serde::Deserialize;
+use std::collections::HashMap;
+use std::fmt;
 
 mod query;
 pub use query::{build_protocol, load_protocol, resolve_protocol, ProtocolQuery, ResolvedProtocol};
@@ -153,10 +153,14 @@ impl Protocol {
     async fn parties(&self) -> Vec<Party> {
         let Some(tii) = &self.tii else { return vec![] };
 
-        let mut parties: Vec<Party> = tii.parties.iter().map(|(name, party)| Party {
-            name: name.clone(),
-            description: party.description.clone(),
-        }).collect();
+        let mut parties: Vec<Party> = tii
+            .parties
+            .iter()
+            .map(|(name, party)| Party {
+                name: name.clone(),
+                description: party.description.clone(),
+            })
+            .collect();
 
         parties.sort_by(|a, b| a.name.cmp(&b.name));
         parties
@@ -167,19 +171,27 @@ impl Protocol {
 
         const KNOWN_ORDER: &[&str] = &["local", "preview", "preprod", "mainnet"];
 
-        let mut profiles: Vec<Profile> = tii.profiles.iter().map(|(name, profile)| Profile {
-            name: name.clone(),
-            description: profile.description.clone(),
-            environment: if profile.environment.is_null() {
-                None
-            } else {
-                Some(profile.environment.to_string())
-            },
-            parties: profile.parties.iter().map(|(name, address)| ProfileParty {
+        let mut profiles: Vec<Profile> = tii
+            .profiles
+            .iter()
+            .map(|(name, profile)| Profile {
                 name: name.clone(),
-                address: address.clone(),
-            }).collect(),
-        }).collect();
+                description: profile.description.clone(),
+                environment: if profile.environment.is_null() {
+                    None
+                } else {
+                    Some(profile.environment.to_string())
+                },
+                parties: profile
+                    .parties
+                    .iter()
+                    .map(|(name, address)| ProfileParty {
+                        name: name.clone(),
+                        address: address.clone(),
+                    })
+                    .collect(),
+            })
+            .collect();
 
         profiles.sort_by(|a, b| {
             let pos_a = KNOWN_ORDER.iter().position(|&k| k == a.name);
@@ -198,31 +210,41 @@ impl Protocol {
 
     async fn environment(&self) -> Vec<EnvironmentParam> {
         let Some(tii) = &self.tii else { return vec![] };
-        let Some(env) = &tii.environment else { return vec![] };
-        let Some(props) = env.get("properties").and_then(|p| p.as_object()) else { return vec![] };
+        let Some(env) = &tii.environment else {
+            return vec![];
+        };
+        let Some(props) = env.get("properties").and_then(|p| p.as_object()) else {
+            return vec![];
+        };
 
-        props.iter().map(|(name, schema)| {
-            let r#type = schema.get("type")
-                .and_then(|t| t.as_str())
-                .map(String::from)
-                .or_else(|| {
-                    schema.get("$ref")
-                        .and_then(|r| r.as_str())
-                        .and_then(|r| r.rsplit_once('#'))
-                        .map(|(_, fragment)| fragment.to_string())
-                })
-                .unwrap_or_else(|| "unknown".to_string());
+        props
+            .iter()
+            .map(|(name, schema)| {
+                let r#type = schema
+                    .get("type")
+                    .and_then(|t| t.as_str())
+                    .map(String::from)
+                    .or_else(|| {
+                        schema
+                            .get("$ref")
+                            .and_then(|r| r.as_str())
+                            .and_then(|r| r.rsplit_once('#'))
+                            .map(|(_, fragment)| fragment.to_string())
+                    })
+                    .unwrap_or_else(|| "unknown".to_string());
 
-            let description = schema.get("description")
-                .and_then(|d| d.as_str())
-                .map(String::from);
+                let description = schema
+                    .get("description")
+                    .and_then(|d| d.as_str())
+                    .map(String::from);
 
-            EnvironmentParam {
-                name: name.clone(),
-                description,
-                r#type,
-            }
-        }).collect()
+                EnvironmentParam {
+                    name: name.clone(),
+                    description,
+                    r#type,
+                }
+            })
+            .collect()
     }
 }
 
@@ -314,7 +336,11 @@ impl Protocol {
         // Reference types encode the tx3 type name as the last path segment,
         // e.g. ".../tii#/$defs/Address" -> "Address".
         if let Some(reference) = schema.get("$ref").and_then(|r| r.as_str()) {
-            return reference.rsplit('/').next().unwrap_or(reference).to_string();
+            return reference
+                .rsplit('/')
+                .next()
+                .unwrap_or(reference)
+                .to_string();
         }
 
         match schema.get("type").and_then(|t| t.as_str()) {
@@ -338,28 +364,32 @@ impl Protocol {
     }
 
     fn transactions_from_tii(&self, tii_file: &TiiFile) -> Vec<Tx> {
-        tii_file.transactions.iter().map(|(name, tx)| {
-            // The TII params schema lists exactly the declared transaction
-            // params; prefer it over the lowered TIR, which also surfaces env
-            // vars and party references as required values.
-            let parameters = match tx.params.as_ref() {
-                Some(schema) => Self::params_from_schema(schema),
-                None => Self::extract_params_from_tir(&tx.tir),
-            };
-            let inputs = Self::extract_inputs_from_tir(&tx.tir);
-            let outputs = Self::extract_outputs_from_tir(&tx.tir);
+        tii_file
+            .transactions
+            .iter()
+            .map(|(name, tx)| {
+                // The TII params schema lists exactly the declared transaction
+                // params; prefer it over the lowered TIR, which also surfaces env
+                // vars and party references as required values.
+                let parameters = match tx.params.as_ref() {
+                    Some(schema) => Self::params_from_schema(schema),
+                    None => Self::extract_params_from_tir(&tx.tir),
+                };
+                let inputs = Self::extract_inputs_from_tir(&tx.tir);
+                let outputs = Self::extract_outputs_from_tir(&tx.tir);
 
-            Tx {
-                name: name.clone(),
-                description: tx.description.clone(),
-                parameters,
-                inputs,
-                outputs,
-                tir: tx.tir.content.clone(),
-                tir_version: tx.tir.version.clone(),
-                protocol_source: self.source.clone(),
-            }
-        }).collect()
+                Tx {
+                    name: name.clone(),
+                    description: tx.description.clone(),
+                    parameters,
+                    inputs,
+                    outputs,
+                    tir: tx.tir.content.clone(),
+                    tir_version: tx.tir.version.clone(),
+                    protocol_source: self.source.clone(),
+                }
+            })
+            .collect()
     }
 
     fn decode_tir(tir: &TiiTirEnvelope) -> Option<tx3_tir::encoding::AnyTir> {
@@ -369,7 +399,9 @@ impl Protocol {
     }
 
     fn extract_params_from_tir(tir: &TiiTirEnvelope) -> Vec<TxParam> {
-        let Some(any_tir) = Self::decode_tir(tir) else { return vec![] };
+        let Some(any_tir) = Self::decode_tir(tir) else {
+            return vec![];
+        };
 
         let mut parameters: Vec<TxParam> = any_tir
             .params()
@@ -386,33 +418,43 @@ impl Protocol {
     }
 
     fn extract_inputs_from_tir(tir: &TiiTirEnvelope) -> Vec<TxInput> {
-        let Some(tx3_tir::encoding::AnyTir::V1Beta0(tx)) = Self::decode_tir(tir) else { return vec![] };
+        let Some(tx3_tir::encoding::AnyTir::V1Beta0(tx)) = Self::decode_tir(tir) else {
+            return vec![];
+        };
 
-        tx.inputs.iter().map(|input| {
-            let party = ast_to_svg::extract_party_from_expr(&input.utxos);
-            let has_redeemer = !input.redeemer.is_none();
+        tx.inputs
+            .iter()
+            .map(|input| {
+                let party = ast_to_svg::extract_party_from_expr(&input.utxos);
+                let has_redeemer = !input.redeemer.is_none();
 
-            TxInput {
-                name: input.name.clone(),
-                party,
-                has_redeemer,
-            }
-        }).collect()
+                TxInput {
+                    name: input.name.clone(),
+                    party,
+                    has_redeemer,
+                }
+            })
+            .collect()
     }
 
     fn extract_outputs_from_tir(tir: &TiiTirEnvelope) -> Vec<TxOutput> {
-        let Some(tx3_tir::encoding::AnyTir::V1Beta0(tx)) = Self::decode_tir(tir) else { return vec![] };
+        let Some(tx3_tir::encoding::AnyTir::V1Beta0(tx)) = Self::decode_tir(tir) else {
+            return vec![];
+        };
 
-        tx.outputs.iter().map(|output| {
-            let party = ast_to_svg::extract_party_from_expr(&output.address);
-            let has_datum = !output.datum.is_none();
+        tx.outputs
+            .iter()
+            .map(|output| {
+                let party = ast_to_svg::extract_party_from_expr(&output.address);
+                let has_datum = !output.datum.is_none();
 
-            TxOutput {
-                party,
-                has_datum,
-                optional: output.optional,
-            }
-        }).collect()
+                TxOutput {
+                    party,
+                    has_datum,
+                    optional: output.optional,
+                }
+            })
+            .collect()
     }
 
     fn transactions_from_source(&self) -> Vec<Tx> {
@@ -421,29 +463,33 @@ impl Protocol {
             None => return vec![],
         };
 
-        protocol.txs.iter().map(|tx| {
-            let parameters = Self::extract_params(&protocol, &tx.name.value);
-            let tx_tir = tx3_lang::lowering::lower(&protocol, &tx.name.value).unwrap();
-            let (tx_bytes, version) = tx3_tir::encoding::to_bytes(&tx_tir);
+        protocol
+            .txs
+            .iter()
+            .map(|tx| {
+                let parameters = Self::extract_params(&protocol, &tx.name.value);
+                let tx_tir = tx3_lang::lowering::lower(&protocol, &tx.name.value).unwrap();
+                let (tx_bytes, version) = tx3_tir::encoding::to_bytes(&tx_tir);
 
-            let tir_envelope = TiiTirEnvelope {
-                content: hex::encode(&tx_bytes),
-                version: version.to_string(),
-            };
-            let inputs = Self::extract_inputs_from_tir(&tir_envelope);
-            let outputs = Self::extract_outputs_from_tir(&tir_envelope);
+                let tir_envelope = TiiTirEnvelope {
+                    content: hex::encode(&tx_bytes),
+                    version: version.to_string(),
+                };
+                let inputs = Self::extract_inputs_from_tir(&tir_envelope);
+                let outputs = Self::extract_outputs_from_tir(&tir_envelope);
 
-            Tx {
-                name: tx.name.value.clone(),
-                description: None,
-                parameters,
-                inputs,
-                outputs,
-                tir: tir_envelope.content,
-                tir_version: tir_envelope.version,
-                protocol_source: self.source.clone(),
-            }
-        }).collect()
+                Tx {
+                    name: tx.name.value.clone(),
+                    description: None,
+                    parameters,
+                    inputs,
+                    outputs,
+                    tir: tir_envelope.content,
+                    tir_version: tir_envelope.version,
+                    protocol_source: self.source.clone(),
+                }
+            })
+            .collect()
     }
 }
 
@@ -473,7 +519,12 @@ impl Tx {
             version: self.tir_version.clone(),
         };
         if let Some(tx3_tir::encoding::AnyTir::V1Beta0(tx)) = Protocol::decode_tir(&tir_envelope) {
-            return Some(ast_to_svg::tir_to_svg(&self.name, &tx, param_names, &output_names));
+            return Some(ast_to_svg::tir_to_svg(
+                &self.name,
+                &tx,
+                param_names,
+                &output_names,
+            ));
         }
 
         let source = self.protocol_source.as_ref()?;

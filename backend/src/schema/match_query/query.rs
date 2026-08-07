@@ -1,4 +1,7 @@
-use async_graphql::{connection::{CursorType, Edge}, Context, Error, Object};
+use async_graphql::{
+    connection::{CursorType, Edge},
+    Context, Error, Object,
+};
 
 use crate::db;
 
@@ -54,24 +57,27 @@ impl MatchQuery {
         let after_id: Option<i64> = match after.as_deref() {
             None => None,
             Some(cursor) => {
-                let mc = MatchCursor::decode_cursor(cursor)
-                    .map_err(|_| Error::new("invalid cursor"))?;
+                let mc =
+                    MatchCursor::decode_cursor(cursor).map_err(|_| Error::new("invalid cursor"))?;
                 Some(mc.0)
             }
         };
 
         let pool = ctx.data_unchecked::<sqlx::PgPool>();
 
-        let (rows, has_next) = db::fetch_matches(pool, &scope, &name, version.as_deref(), first_i64, after_id)
-            .await
-            .map_err(|e| {
-                eprintln!("database error in protocol_matches: {e}");
-                Error::new("database unavailable")
-            })?;
+        let (rows, has_next) =
+            db::fetch_matches(pool, &scope, &name, version.as_deref(), first_i64, after_id)
+                .await
+                .map_err(|e| {
+                    eprintln!("database error in protocol_matches: {e}");
+                    Error::new("database unavailable")
+                })?;
 
         let mut connection = MatchConnection::new(after.is_some(), has_next);
         for row in rows {
-            connection.edges.push(Edge::new(MatchCursor(row.id), Match::from(row)));
+            connection
+                .edges
+                .push(Edge::new(MatchCursor(row.id), Match::from(row)));
         }
 
         Ok(connection)

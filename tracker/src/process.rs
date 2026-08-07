@@ -309,10 +309,7 @@ fn select_matches<T>(candidates: Vec<Candidate<'_, T>>, mode: MatchMode) -> Vec<
 /// pull the resolved-output CBOR from `as_output.original_cbor`. This is what
 /// the v1beta spec carries for free, removing the need for a follow-up
 /// ReadUtxos round-trip (which can't return spent inputs anyway).
-fn collect_resolved_inputs(
-    tx: &u5c_cardano::Tx,
-    era: Era,
-) -> BTreeMap<UtxoRef, ResolvedOutput> {
+fn collect_resolved_inputs(tx: &u5c_cardano::Tx, era: Era) -> BTreeMap<UtxoRef, ResolvedOutput> {
     let mut out = BTreeMap::new();
     let all_inputs = tx.inputs.iter().chain(tx.reference_inputs.iter());
     for input in all_inputs {

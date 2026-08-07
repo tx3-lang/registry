@@ -143,10 +143,7 @@ fn registry_host(registry_url: &str) -> &str {
 /// Loops in steps of `LIMIT` until `Page.ItemCount < LIMIT`. Returns the
 /// assembled list of `RepoSummary` values (tag-less entries are skipped with a
 /// warning).
-async fn query_repo_list(
-    http: &reqwest::Client,
-    base_url: &str,
-) -> Result<Vec<RepoSummary>> {
+async fn query_repo_list(http: &reqwest::Client, base_url: &str) -> Result<Vec<RepoSummary>> {
     let mut repos: Vec<RepoSummary> = Vec::new();
     let mut offset: i64 = 0;
 
@@ -182,9 +179,7 @@ async fn query_repo_list(
             .unwrap()
             .repo_list_with_newest_image
             .ok_or_else(|| {
-                Error::Config(
-                    "zot response missing RepoListWithNewestImage field".to_string(),
-                )
+                Error::Config("zot response missing RepoListWithNewestImage field".to_string())
             })?;
 
         let item_count = page_data.page.item_count;
@@ -197,7 +192,8 @@ async fn query_repo_list(
                     continue;
                 }
             };
-            let scope = wire.name
+            let scope = wire
+                .name
                 .split_once('/')
                 .map(|(s, _)| s.to_string())
                 .unwrap_or_default();
@@ -227,9 +223,8 @@ async fn pull_tii(
     name: &str,
     version: &str,
 ) -> Result<TiiFile> {
-    let reference =
-        Reference::try_from(format!("{registry_host_str}/{scope}/{name}:{version}"))
-            .map_err(|e| Error::Config(format!("invalid OCI reference: {e}")))?;
+    let reference = Reference::try_from(format!("{registry_host_str}/{scope}/{name}:{version}"))
+        .map_err(|e| Error::Config(format!("invalid OCI reference: {e}")))?;
 
     // Fetch the manifest, then pull only the `application/tii+json` layer's
     // blob by digest. `oci-client`'s high-level `pull` validates *every* layer
@@ -273,7 +268,10 @@ async fn pull_tii(
 ///
 /// Errors if the registry is unreachable, the catalog is empty, every
 /// protocol is filtered out, or any individual protocol fails to pull/decode.
-pub async fn fetch_catalog(oci: &OciConfig, default_profile: &str) -> Result<Vec<DiscoveredSource>> {
+pub async fn fetch_catalog(
+    oci: &OciConfig,
+    default_profile: &str,
+) -> Result<Vec<DiscoveredSource>> {
     let http = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(30))
         .build()
@@ -353,8 +351,7 @@ pub async fn fetch_catalog(oci: &OciConfig, default_profile: &str) -> Result<Vec
 ///   in `exclude_scopes` **or** its `scope/name` is in `exclude_names`.
 /// - Exclude always wins over include.
 fn apply_filters(repos: Vec<RepoSummary>, oci: &OciConfig) -> Vec<RepoSummary> {
-    let include_all =
-        oci.include_scopes.is_empty() && oci.include_names.is_empty();
+    let include_all = oci.include_scopes.is_empty() && oci.include_names.is_empty();
 
     repos
         .into_iter()

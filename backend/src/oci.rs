@@ -89,7 +89,7 @@ pub struct ProtocolJson {
 pub fn get_registry_api_url() -> String {
     let registry_host = std::env::var("REGISTRY_HOST").unwrap_or_default();
     let registry_protocol = std::env::var("REGISTRY_PROTOCOL").unwrap_or_default();
-    
+
     return format!("{}://{}/v2", registry_protocol, registry_host);
 }
 
@@ -110,17 +110,27 @@ fn get_client() -> Client {
 
 /// Resolve the newest tag for a `<scope>/<name>` repo via the zot search API.
 /// Returns `None` when the repo does not exist or has no images.
-pub async fn newest_tag(repo: &str) -> Result<Option<String>, Box<dyn std::error::Error + Send + Sync>> {
+pub async fn newest_tag(
+    repo: &str,
+) -> Result<Option<String>, Box<dyn std::error::Error + Send + Sync>> {
     let registry_api = get_registry_api_url();
     let query = format!(
         r#"query ExpandedRepoInfo {{ ExpandedRepoInfo(repo: "{}") {{ Summary {{ Name NewestImage {{ Tag }} }} Images {{ Tag }} }} }}"#,
         repo
     );
-    let url = format!("{}/_zot/ext/search?query={}", registry_api, urlencoding::encode(&query));
+    let url = format!(
+        "{}/_zot/ext/search?query={}",
+        registry_api,
+        urlencoding::encode(&query)
+    );
     let response = reqwest::get(&url).await?.json::<ZotResponse>().await?;
 
-    let Some(data) = response.data else { return Ok(None) };
-    let Some(info) = data.expanded_repo_info else { return Ok(None) };
+    let Some(data) = response.data else {
+        return Ok(None);
+    };
+    let Some(info) = data.expanded_repo_info else {
+        return Ok(None);
+    };
 
     if let Some(summary) = info.summary {
         if let Some(image) = summary.newest_image {
@@ -137,23 +147,36 @@ pub async fn newest_tag(repo: &str) -> Result<Option<String>, Box<dyn std::error
     Ok(None)
 }
 
-pub async fn get_oci_image(repo: &str, tag: &str) -> Result<ImageData, Box<dyn std::error::Error + Send + Sync>> {
+pub async fn get_oci_image(
+    repo: &str,
+    tag: &str,
+) -> Result<ImageData, Box<dyn std::error::Error + Send + Sync>> {
     let registry_host = std::env::var("REGISTRY_HOST").unwrap_or_default();
     let reference = Reference::try_from(format!("{}/{}:{}", registry_host, repo, tag))?;
     let client = get_client();
     let auth = RegistryAuth::Anonymous;
 
-    let content = client.pull(
-        &reference,
-        &auth,
-        vec![MARKDOWN_MEDIA_TYPE, PROTOCOL_MEDIA_TYPE, TII_MEDIA_TYPE, LOGO_PNG_MEDIA_TYPE]
-    ).await?;
+    let content = client
+        .pull(
+            &reference,
+            &auth,
+            vec![
+                MARKDOWN_MEDIA_TYPE,
+                PROTOCOL_MEDIA_TYPE,
+                TII_MEDIA_TYPE,
+                LOGO_PNG_MEDIA_TYPE,
+            ],
+        )
+        .await?;
 
     Ok(content)
 }
 
 pub fn get_readme(image: &ImageData) -> Option<String> {
-    let readme = image.layers.iter().find(|l| l.media_type == MARKDOWN_MEDIA_TYPE);
+    let readme = image
+        .layers
+        .iter()
+        .find(|l| l.media_type == MARKDOWN_MEDIA_TYPE);
 
     if let Some(readme) = readme {
         return Some(String::from_utf8_lossy(&readme.data).to_string());
@@ -163,7 +186,10 @@ pub fn get_readme(image: &ImageData) -> Option<String> {
 }
 
 pub fn get_protocol(image: &ImageData) -> Option<String> {
-    let protocol = image.layers.iter().find(|l| l.media_type == PROTOCOL_MEDIA_TYPE);
+    let protocol = image
+        .layers
+        .iter()
+        .find(|l| l.media_type == PROTOCOL_MEDIA_TYPE);
 
     if let Some(protocol) = protocol {
         return Some(String::from_utf8_lossy(&protocol.data).to_string());
