@@ -16,6 +16,7 @@ import {
   generateQuickStart,
   pickDefaultProfile,
   type QuickStartSnippet,
+  type SDKKey,
   type SetupStep,
 } from './sdks/quick-start';
 
@@ -29,8 +30,6 @@ const trpOptions: { label: string; value: TrpKind; }[] = [
 function pickDefaultTrpKind(profileName: string | null): TrpKind {
   return profileName === 'local' ? 'local' : 'demeter';
 }
-
-type SDKKey = 'typescript' | 'rust' | 'go' | 'python';
 
 interface SDKDef {
   key: SDKKey;
@@ -63,6 +62,18 @@ const sdks: SDKDef[] = [
     name: 'Python',
     title: 'Python SDK',
     icon: <img src="/images/sdks/python.png" className="w-8 h-8" />,
+  },
+  {
+    key: 'java',
+    name: 'Java',
+    title: 'Java SDK',
+    icon: <img src="/images/sdks/java.png" className="w-8 h-8" />,
+  },
+  {
+    key: 'swift',
+    name: 'Swift',
+    title: 'Swift SDK',
+    icon: <img src="/images/sdks/swift.png" className="w-8 h-8" />,
   },
 ];
 

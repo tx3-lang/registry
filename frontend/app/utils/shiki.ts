@@ -1,7 +1,7 @@
 import { createHighlighterCore } from 'shiki/core';
 import { createOnigurumaEngine } from 'shiki/engine/oniguruma';
 
-export type SupportedLanguages = 'tx3' | 'typescript' | 'python' | 'rust' | 'go' | 'bash' | 'toml' | 'json';
+export type SupportedLanguages = 'tx3' | 'typescript' | 'python' | 'rust' | 'go' | 'java' | 'swift' | 'bash' | 'toml' | 'json';
 
 // To include new languages, add them to the `langs` array below.
 // See https://shiki.matsu.io/languages for available languages.
@@ -18,6 +18,8 @@ export const highlighter = await createHighlighterCore({
     import('shiki/langs/python.mjs'),
     import('shiki/langs/rust.mjs'),
     import('shiki/langs/go.mjs'),
+    import('shiki/langs/java.mjs'),
+    import('shiki/langs/swift.mjs'),
     import('shiki/langs/bash.mjs'),
     import('shiki/langs/toml.mjs'),
     import('shiki/langs/json.mjs'),

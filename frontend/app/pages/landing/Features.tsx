@@ -14,7 +14,7 @@ const FEATURES = [
     number: '02',
     eyebrow: 'For developers',
     title: 'Ready-to-use protocol SDKs.',
-    body: 'Production endpoints backed by a managed provider. Drop the typed SDK in TypeScript, Rust, Go or Python and call your dApp like any other API.',
+    body: 'Production endpoints backed by a managed provider. Drop the typed SDK in TypeScript, Rust, Go, Python, Java or Swift and call your dApp like any other API.',
     icon: <CommandIcon width={24} height={24} />,
   },
   {

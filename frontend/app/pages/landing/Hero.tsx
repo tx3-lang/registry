@@ -87,7 +87,7 @@ export function Hero() {
 
             <p className="text-[15px] leading-6 text-zinc-300">
               Generate a typed client from a published .tii and invoke protocol
-              transactions from TypeScript, Rust, Go or Python.
+              transactions from TypeScript, Rust, Go, Python, Java or Swift.
             </p>
 
             <div className="mt-auto flex flex-wrap items-center gap-4 pt-2">

@@ -14,7 +14,7 @@ import type { Route } from './+types/protocols';
 export function meta({}: Route.MetaArgs) {
   return socialMeta({
     title: 'Tx3 Registry — UTxO protocols',
-    description: 'Browse machine-readable specs for UTxO blockchain protocols. Generate typed clients in TypeScript, Rust, Go, or Python.',
+    description: 'Browse machine-readable specs for UTxO blockchain protocols. Generate typed clients in TypeScript, Rust, Go, Python, Java, or Swift.',
     url: '/protocols',
   });
 }
