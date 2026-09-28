@@ -31,6 +31,43 @@ export const UNOFFICIAL_DISCLAIMER
   = 'Preliminary, reverse-engineered version published by the tx3 team for testing and exploration. '
     + 'It is not endorsed by the original protocol authors. Do not use in mainnet.';
 
+// `open-tx3` mappings whose original protocol authors have signed off on them.
+// They stay in the `open-tx3` scope but drop the Unofficial badge and banner.
+export const VERIFIED_PROTOCOLS: ReadonlySet<string> = new Set([
+  'open-tx3/bodega-market',
+]);
+export const VERIFIED_NOTE
+  = 'Published by the tx3 team and signed off by the original protocol authors.';
+
+export function isVerified(protocol: Pick<Protocol, 'scope' | 'name'>): boolean {
+  return VERIFIED_PROTOCOLS.has(`${protocol.scope}/${protocol.name}`);
+}
+
+export function isUnofficial(protocol: Pick<Protocol, 'scope' | 'name'>): boolean {
+  return protocol.scope === UNOFFICIAL_SCOPE && !isVerified(protocol);
+}
+
+function VerifiedBadge() {
+  return (
+    <span className="group relative inline-flex items-center gap-1.5 rounded-sm border border-emerald-800/60 bg-emerald-950/40 px-2 py-0.5 text-emerald-300 font-mono text-sm">
+      Verified
+      <InfoCircleIcon width="16" height="16" />
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute left-0 top-full z-10 mt-2 w-80 rounded-md border border-zinc-800 bg-woodsmoke-950 p-3 text-xs font-sans font-normal text-zinc-300 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+      >
+        {VERIFIED_NOTE}
+      </span>
+    </span>
+  );
+}
+
+function ScopeLabel({ protocol }: { protocol: Protocol; }) {
+  if (isUnofficial(protocol)) return <UnofficialBadge />;
+  if (isVerified(protocol)) return <VerifiedBadge />;
+  return <h2 className="inline text-primary-600">@{protocol.scope}</h2>;
+}
+
 function UnofficialBadge() {
   return (
     <span className="group relative inline-flex items-center gap-1.5 rounded-sm border border-amber-800/60 bg-amber-950/40 px-2 py-0.5 text-amber-300 font-mono text-sm">
@@ -80,9 +117,7 @@ export function ProtocolDetails({ protocol, rpcDocsUrl }: ProtocolDetailsProps) 
             <div className="border-l-[7px] border-zinc-800 rounded-sm pl-4">
               <h1 className="text-3xl font-semibold">{protocol.name}</h1>
               <div className="mt-2 flex items-center gap-2">
-                {protocol.scope === 'open-tx3'
-                  ? <UnofficialBadge />
-                  : <h2 className="inline text-primary-600">@{protocol.scope}</h2>}
+                <ScopeLabel protocol={protocol} />
                 <span className="opacity-50"> • v{protocol.version}</span>
               </div>
             </div>

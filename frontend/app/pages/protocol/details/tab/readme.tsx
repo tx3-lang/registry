@@ -8,7 +8,7 @@ import remarkGfm from 'remark-gfm';
 import { EmptyState } from '~/components/EmptyState';
 import { ChevronDownIcon } from '~/components/icons/chevron-down';
 import { Info } from '../info';
-import { UNOFFICIAL_DISCLAIMER, UNOFFICIAL_SCOPE } from '../index';
+import { isUnofficial, UNOFFICIAL_DISCLAIMER } from '../index';
 import { txAnchor } from './protocol';
 
 interface Props {
@@ -20,13 +20,11 @@ export function TabReadme({ protocol }: Props) {
     + ' prose-headings:border-b prose-headings:border-zinc-800 prose-headings:pb-1.5' // Headings
     + ' prose-pre:whitespace-pre-wrap prose-pre:break-words'; // Preformatted
 
-  const isUnofficial = protocol.scope === UNOFFICIAL_SCOPE;
-
   return (
     <div className="bg-zinc-950 flex flex-col flex-1">
       <div className="flex flex-col lg:flex-row container flex-1 bg-woodsmoke-950 lg:bg-gradient-to-r lg:from-woodsmoke-950 lg:from-50% lg:to-zinc-950 lg:to-50%">
         <div className={markdownClasses}>
-          {isUnofficial && <UnofficialBanner />}
+          {isUnofficial(protocol) && <UnofficialBanner />}
           {protocol.readme
             ? (
               <CollapsibleReadme>
