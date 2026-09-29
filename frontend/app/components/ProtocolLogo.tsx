@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 
 interface ProtocolLogoProps {
@@ -25,6 +25,14 @@ function initialsFor(scope: string, name: string): string {
 // card layout is stable whether or not the publisher shipped a logo.
 export function ProtocolLogo({ scope, name, size, className }: ProtocolLogoProps) {
   const [failed, setFailed] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  // The server-rendered <img> can finish loading (and fail) before React
+  // hydrates and attaches `onError`, so check once after mount as well.
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img?.complete && img.naturalWidth === 0) setFailed(true);
+  }, []);
 
   const wrapper = clsx(
     SIZE_CLASSES[size],
@@ -43,6 +51,7 @@ export function ProtocolLogo({ scope, name, size, className }: ProtocolLogoProps
   return (
     <div className={wrapper}>
       <img
+        ref={imgRef}
         src={`/api/protocols/${encodeURIComponent(scope)}/${encodeURIComponent(name)}/logo`}
         alt=""
         className="w-full h-full object-cover"
