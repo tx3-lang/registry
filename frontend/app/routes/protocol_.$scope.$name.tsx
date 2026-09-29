@@ -11,7 +11,7 @@ export function meta({ params, data }: Route.MetaArgs) {
   const scope = protocol?.scope ?? params.scope;
   const title = `${name} — Tx3 Registry`;
   const description = protocol?.description
-    || `Machine-readable spec for the @${scope}/${name} UTxO protocol. Generate typed clients in TypeScript, Rust, Go, or Python.`;
+    || `Machine-readable spec for the @${scope}/${name} UTxO protocol. Generate typed clients in TypeScript, Rust, Go, Python, Java, or Swift.`;
   return socialMeta({
     title,
     description,

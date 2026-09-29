@@ -10,8 +10,10 @@ import {
   type TrpConfig,
 } from './shared';
 import { goRenderer } from './go';
+import { javaRenderer } from './java';
 import { pythonRenderer } from './python';
 import { rustRenderer } from './rust';
+import { swiftRenderer } from './swift';
 import { typescriptRenderer } from './typescript';
 
 export type { SDKKey, TrpConfig, QuickStartOptions, QuickStartTx, QuickStartSnippet, SetupStep };
@@ -22,6 +24,8 @@ const RENDERERS: Record<SDKKey, SdkRenderer> = {
   rust: rustRenderer,
   python: pythonRenderer,
   go: goRenderer,
+  java: javaRenderer,
+  swift: swiftRenderer,
 };
 
 // A profile "exists" only when the published `.tii` gives it actual content —

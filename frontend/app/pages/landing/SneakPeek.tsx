@@ -10,7 +10,7 @@ import type { SupportedLanguages } from '~/utils/shiki';
 
 type TabName = 'Activity' | 'Web API' | 'SDKs' | 'Try out' | 'Tx3 File';
 
-const SDK_LANGUAGES = ['TypeScript', 'Rust', 'Go', 'Python'] as const;
+const SDK_LANGUAGES = ['TypeScript', 'Rust', 'Go', 'Python', 'Java', 'Swift'] as const;
 type SdkLanguage = typeof SDK_LANGUAGES[number];
 
 const SDK_SHIKI: Record<SdkLanguage, SupportedLanguages> = {
@@ -18,6 +18,8 @@ const SDK_SHIKI: Record<SdkLanguage, SupportedLanguages> = {
   Rust: 'rust',
   Go: 'go',
   Python: 'python',
+  Java: 'java',
+  Swift: 'swift',
 };
 
 const SDK_SNIPPETS: Record<SdkLanguage, string> = {
@@ -63,6 +65,26 @@ unstake = await (tx3.tx("unstake")
   .arg("position_utxo", "tx_hash#0")
   .resolve())
 submitted = await (await unstake.sign()).submit()`,
+  Java: `import land.tx3.sdk.*;
+var tii = Protocol.fromFile(Path.of("indigo.tii"));
+var tx3 = tii.client().trpEndpoint(endpoint)
+  .withHeader("dmtr-api-key", key).build();
+
+var unstake = tx3.tx("unstake")
+  .arg("owner_pkh", "0011…")
+  .arg("position_utxo", "tx_hash#0")
+  .resolve().join();
+var submitted = unstake.sign().submit().join();`,
+  Swift: `import Tx3SDK
+let tii = try Protocol.fromFile(tiiURL)
+let tx3 = try tii.client().trpEndpoint(endpoint)
+  .withHeader("dmtr-api-key", key).build()
+
+let unstake = try await tx3.tx("unstake")
+  .arg("owner_pkh", "0011…")
+  .arg("position_utxo", "tx_hash#0")
+  .resolve()
+let submitted = try await unstake.sign().submit()`,
 };
 
 const API_SNIPPET = `{
@@ -161,7 +183,7 @@ export function SneakPeek() {
           Generated from one .tx3 spec.
         </h2>
         <p className="text-center text-base leading-6 text-zinc-400">
-          Each protocol page on tx3.land exposes typed SDKs (TS · Rust · Go · Python),
+          Each protocol page on tx3.land exposes typed SDKs (TS · Rust · Go · Python · Java · Swift),
           <br className="hidden sm:inline" /> a TRP-backed HTTP endpoint and a live transaction stream — all derived from the same TII.
         </p>
       </div>
@@ -216,10 +238,10 @@ function SdkPreviewCard() {
       tabs={['Activity', 'Web API', 'SDKs']}
       active="SDKs"
       title="Production SDKs."
-      description="TypeScript · Rust · Go · Python — all typed, all ready."
+      description="TypeScript · Rust · Go · Python · Java · Swift — all typed, all ready."
     >
       <div className="flex h-full flex-col">
-        <div className="flex items-center gap-1 mb-2 -mt-1">
+        <div className="flex flex-wrap items-center gap-1 mb-2 -mt-1">
           {SDK_LANGUAGES.map(lang => (
             <button
               key={lang}

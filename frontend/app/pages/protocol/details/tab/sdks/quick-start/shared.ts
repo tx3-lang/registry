@@ -1,6 +1,6 @@
 import type { SupportedLanguages } from '~/utils/shiki';
 
-export type SDKKey = 'typescript' | 'rust' | 'go' | 'python';
+export type SDKKey = 'typescript' | 'rust' | 'go' | 'python' | 'java' | 'swift';
 
 export interface TrpConfig {
   endpoint: string;
@@ -188,6 +188,8 @@ const CODEGEN_PLUGIN: Record<SDKKey, string> = {
   rust: 'rust-client',
   go: 'go-client',
   python: 'python-client',
+  java: 'java-client',
+  swift: 'swift-client',
 };
 
 // Default output dir used by `trix codegen` when the `[[codegen]]` entry sets
@@ -198,6 +200,8 @@ const OUTPUT_DIR: Record<SDKKey, string> = {
   rust: '.tx3/codegen/rust-client',
   go: '.tx3/codegen/go-client',
   python: '.tx3/codegen/python-client',
+  java: '.tx3/codegen/java-client',
+  swift: '.tx3/codegen/swift-client',
 };
 
 // Human-readable SDK names, used in prose.
@@ -206,6 +210,8 @@ const LANG_LABEL: Record<SDKKey, string> = {
   rust: 'Rust',
   go: 'Go',
   python: 'Python',
+  java: 'Java',
+  swift: 'Swift',
 };
 
 // `trix codegen` writes each protocol's binding into a subfolder named after

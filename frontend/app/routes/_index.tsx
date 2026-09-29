@@ -13,7 +13,7 @@ const TICKER_PAGE_SIZE = 25;
 export function meta({}: Route.MetaArgs) {
   return socialMeta({
     title: 'Tx3 — A machine-readable interface for UTxO blockchain protocols',
-    description: 'Protocol authors publish a .tx3 spec. Application developers generate typed clients in TypeScript, Rust, Go or Python. The interface is data, not lore.',
+    description: 'Protocol authors publish a .tx3 spec. Application developers generate typed clients in TypeScript, Rust, Go, Python, Java or Swift. The interface is data, not lore.',
     url: '/',
   });
 }
