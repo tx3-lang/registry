@@ -114,8 +114,10 @@ jobs:
       - name: Create manifest list and push
         working-directory: ${{ runner.temp }}/digests
         run: |
+          # `steps.meta.outputs.tags` is newline-separated, so splicing it into
+          # the script breaks the shell; read the tags from the JSON output.
           docker buildx imagetools create \
-            $(for tag in ${{ steps.meta.outputs.tags }}; do echo "-t $tag"; done) \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf "${IMAGE}@sha256:%s " *)
 
       - name: Inspect image
